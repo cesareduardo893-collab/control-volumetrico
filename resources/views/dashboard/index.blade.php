@@ -3,9 +3,200 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="row">
+<!-- Módulos de acceso rápido -->
+<div class="row mb-4">
     <div class="col-12">
-        <h2 class="mb-4">Dashboard</h2>
+        <h5 class="mb-3">Módulos</h5>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('alarmas.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Alarmas</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('bitacora.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-journal-text text-primary" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Bitácora</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('certificados-verificacion.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-patch-check-fill text-success" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Certificados</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('cfdi.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-receipt text-info" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">CFDI</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('contribuyentes.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-building text-secondary" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Contribuyentes</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('dictamenes.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-text text-warning" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Dictámenes</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('dispensarios.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-fuel-pump-fill text-primary" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Dispensarios</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('existencias.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-bar-chart-fill text-success" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Existencias</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('instalaciones.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-geo-alt-fill text-dark" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Instalaciones</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('mangueras.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-droplet-fill text-info" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Mangueras</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('medidores.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-speedometer2 text-danger" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Medidores</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('pedimentos.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-arrow-up text-warning" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Pedimentos</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('permissions.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-shield-lock-fill text-secondary" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Permisos</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('productos.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-box-seam-fill text-primary" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Productos</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('registros-volumetricos.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-graph-up-arrow text-success" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Reg. Volumétricos</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('reportes-sat.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-file-spreadsheet-fill text-danger" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Reportes SAT</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('roles.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-person-badge-fill text-info" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Roles</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('tanques.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-droplet-half text-warning" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Tanques</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <a href="{{ route('users.index') }}" class="text-decoration-none">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-people-fill text-primary" style="font-size: 2.5rem;"></i>
+                    <h6 class="card-title mt-2">Usuarios</h6>
+                </div>
+            </div>
+        </a>
     </div>
 </div>
 
@@ -239,6 +430,8 @@ function cargarGraficaMovimientos(dias) {
                 }
             }
         });
+    }).fail(function() {
+        console.error('Error al cargar gráfica de movimientos');
     });
 }
 
@@ -272,6 +465,8 @@ function cargarGraficaProductos() {
                 }
             }
         });
+    }).fail(function() {
+        console.error('Error al cargar gráfica de productos');
     });
 }
 </script>

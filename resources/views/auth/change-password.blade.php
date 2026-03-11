@@ -23,7 +23,7 @@
                     </div>
                 @endif
                 
-                <form method="POST" action="{{ route('password.change') }}">
+                <form method="POST" action="{{ route('auth.password.change') }}"> <!-- CORREGIDO -->
                     @csrf
                     
                     <div class="mb-3">

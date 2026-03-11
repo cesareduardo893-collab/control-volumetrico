@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
-class AlarmasController extends BaseController
+class AlarmaController extends BaseController
 {
     /**
      * Listar alarmas

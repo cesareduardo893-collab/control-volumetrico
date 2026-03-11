@@ -18,6 +18,11 @@ class AuthenticateFront
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Permitir acceso a rutas específicas sin autenticación
+        if ($request->is('login') || $request->is('register') || $request->is('/')) {
+            return $next($request);
+        }
+        
         // Verificar si el usuario está autenticado a través de tu ApiService
         if (!$this->apiService->isAuthenticated()) {
             // Redirigir al login si no está autenticado

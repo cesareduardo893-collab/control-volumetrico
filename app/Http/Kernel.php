@@ -46,5 +46,6 @@ class Kernel extends HttpKernel
         // ELIGE SOLO UNO de estos dos middlewares:
         // 'auth.front' => \App\Http\Middleware\AuthenticateFront::class, // Opción 1
         'auth.front' => \App\Http\Middleware\CheckFrontendAuth::class, // Opción 2 (mejor)
+        'api.auth' => \App\Http\Middleware\ApiAuthenticated::class,
     ];
 }

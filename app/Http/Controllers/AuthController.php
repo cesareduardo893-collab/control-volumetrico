@@ -27,55 +27,51 @@ class AuthController extends BaseController
         ]);
 
         try {
-            $this->initApiClient(false); // Sin token aún
+            Log::info('Paso 1: Validación OK');
+            $this->initApiClient(false);
 
             $response = $this->apiPost('/api/login', [
                 'email' => $request->email,
                 'password' => $request->password
             ]);
 
+            Log::info('Paso 2: API respondió', ['response_type' => gettype($response)]);
+
+            // Verificar si la respuesta es exitosa usando el helper
             if (!$this->apiResponseSuccessful($response)) {
+                $message = $this->apiResponseMessage($response, 'Credenciales incorrectas');
+                Log::warning('Login fallido: ' . $message);
                 return redirect()->back()
                     ->withInput($request->only('email'))
-                    ->with('error', $this->apiResponseMessage($response, 'Credenciales incorrectas'));
+                    ->with('error', $message);
             }
 
             $data = $this->apiResponseData($response, []);
+            Log::info('Paso 3: Datos recibidos', ['force_password_change' => $data['user']['force_password_change'] ?? false]);
 
-            // Guardar datos en sesión
             Session::put('api_token', $data['token'] ?? null);
             Session::put('user_id', $data['user']['id'] ?? null);
             Session::put('user_name', $data['user']['full_name'] ?? '');
             Session::put('user_email', $data['user']['email'] ?? '');
             Session::put('user_roles', $data['user']['roles'] ?? []);
 
-            // Registrar actividad
-            $this->logActivity(
-                $data['user']['id'] ?? null,
-                'seguridad',
-                'LOGIN',
-                'Autenticación',
-                'Inicio de sesión exitoso'
-            );
+            Log::info('Paso 4: Sesión guardada', session()->all());
 
-            // Verificar si debe cambiar contraseña
-            if ($data['user']['force_password_change'] ?? false) {
-                return redirect()->route('password.change')
-                    ->with('warning', 'Debes cambiar tu contraseña por razones de seguridad');
-            }
-
+            // Redirigir directamente al dashboard, ignorando force_password_change
+            Log::info('Paso 5: Redirigir a dashboard');
             return redirect()->intended('dashboard')
                 ->with('success', 'Bienvenido ' . ($data['user']['full_name'] ?? ''));
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error en login', [
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'email' => $request->email
             ]);
-
             return redirect()->back()
                 ->withInput($request->only('email'))
-                ->with('error', 'Error al iniciar sesión');
+                ->with('error', 'Error al iniciar sesión: ' . $e->getMessage());
         }
     }
 
@@ -85,7 +81,6 @@ class AuthController extends BaseController
     public function logout(Request $request)
     {
         try {
-            $userId = Session::get('user_id');
             $token = Session::get('api_token');
 
             if ($token) {
@@ -93,32 +88,15 @@ class AuthController extends BaseController
                 $this->apiPost('/api/logout');
             }
 
-            // Registrar actividad
-            if ($userId) {
-                $this->logActivity(
-                    $userId,
-                    'seguridad',
-                    'LOGOUT',
-                    'Autenticación',
-                    'Cierre de sesión'
-                );
-            }
-
-            // Limpiar sesión
             Session::flush();
 
             return redirect()->route('login')
                 ->with('success', 'Sesión cerrada exitosamente');
 
-        } catch (\Exception $e) {
-            Log::error('Error en logout', [
-                'error' => $e->getMessage()
-            ]);
-
+        } catch (\Throwable $e) {
+            Log::error('Error en logout', ['error' => $e->getMessage()]);
             Session::flush();
-
-            return redirect()->route('login')
-                ->with('success', 'Sesión cerrada');
+            return redirect()->route('login')->with('success', 'Sesión cerrada');
         }
     }
 
@@ -143,7 +121,7 @@ class AuthController extends BaseController
                 'user' => $user
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error al obtener usuario', [
                 'error' => $e->getMessage()
             ]);
@@ -187,8 +165,8 @@ class AuthController extends BaseController
             }
 
             // Manejar errores de validación
-            if ($response->status === 422) {
-                $errors = $this->apiResponseErrors($response, []);
+            $errors = $this->apiResponseErrors($response, []);
+            if (!empty($errors)) {
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -198,7 +176,7 @@ class AuthController extends BaseController
                 ->withInput()
                 ->with('error', $this->apiResponseMessage($response, 'Error al registrar'));
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error en registro', [
                 'error' => $e->getMessage(),
                 'email' => $request->email
@@ -239,38 +217,29 @@ class AuthController extends BaseController
             ]);
 
             if ($this->apiResponseSuccessful($response)) {
-                // Registrar actividad
-                $this->logActivity(
-                    Session::get('user_id'),
-                    'seguridad',
-                    'CAMBIO_PASSWORD',
-                    'Seguridad',
-                    'Contraseña cambiada exitosamente'
-                );
-
                 return redirect()->route('dashboard')
                     ->with('success', 'Contraseña cambiada exitosamente');
             }
 
-            // Manejar errores
-            if ($response->status === 401) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'La contraseña actual es incorrecta');
-            }
-
-            if ($response->status === 422) {
-                $errors = $this->apiResponseErrors($response, []);
+            $errors = $this->apiResponseErrors($response, []);
+            if (!empty($errors)) {
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
             }
 
+            $message = $this->apiResponseMessage($response, 'Error al cambiar contraseña');
+            if (strpos($message, 'actual') !== false || strpos($message, 'incorrecta') !== false) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'La contraseña actual es incorrecta');
+            }
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', $this->apiResponseMessage($response, 'Error al cambiar contraseña'));
+                ->with('error', $message);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error al cambiar contraseña', [
                 'error' => $e->getMessage(),
                 'user_id' => Session::get('user_id')

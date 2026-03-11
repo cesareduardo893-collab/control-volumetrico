@@ -8,13 +8,12 @@ use Illuminate\Support\Facades\Log;
 
 abstract class BaseController extends Controller
 {
-    use Traits\ConsumesApi, Traits\LogsActivity;
+    use Traits\ConsumesApi; // Solo mantenemos el trait para consumir APIs
 
     protected $apiClient;
 
     public function __construct()
     {
-        $this->middleware('auth');
         $this->initApiClient();
     }
 

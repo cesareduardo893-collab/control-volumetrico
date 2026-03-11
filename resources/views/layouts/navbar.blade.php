@@ -26,13 +26,15 @@
                         <i class="bi bi-person-circle"></i> {{ session('user_name', 'Usuario') }}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        {{-- Comentado porque la ruta auth.user no está definida
                         <li>
                             <a class="dropdown-item" href="{{ route('auth.user') }}">
                                 <i class="bi bi-person"></i> Mi Perfil
                             </a>
                         </li>
+                        --}}
                         <li>
-                            <a class="dropdown-item" href="{{ route('password.change.form') }}">
+                            <a class="dropdown-item" href="{{ route('auth.password.change.form') }}">
                                 <i class="bi bi-key"></i> Cambiar Contraseña
                             </a>
                         </li>
