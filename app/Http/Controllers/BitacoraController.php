@@ -2,120 +2,265 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class BitacoraController extends Controller
+class BitacoraController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
-     * Listar bitácora de eventos
+     * Listar eventos de bitácora
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'usuario_id', 'tipo_evento', 'fecha_inicio', 'fecha_fin', 'per_page'
-        ]);
+            $params = $request->only([
+                'usuario_id', 'tipo_evento', 'subtipo_evento', 'modulo',
+                'tabla', 'registro_id', 'fecha_inicio', 'fecha_fin',
+                'ip_address', 'numero_registro', 'descripcion', 'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/bitacora', $params);
+            $response = $this->apiGet('/api/bitacora', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $eventos = $this->apiResponseData($response);
-            return view('bitacora.index', compact('eventos'));
+            return $this->renderView('bitacora.index', $response, ['key' => 'eventos'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar bitácora', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar bitácora');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Mostrar evento de bitácora
+     * Mostrar evento específico
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/bitacora/{$id}");
+            $response = $this->apiGet("/api/bitacora/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $evento = $this->apiResponseData($response);
-            return view('bitacora.show', compact('evento'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('bitacora.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Evento no encontrado'));
+            }
+
+            $evento = $this->apiResponseData($response, []);
+
+            return view('bitacora.show', [
+                'evento' => $evento
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar evento de bitácora', [
+                'error' => $e->getMessage(),
+                'evento_id' => $id
+            ]);
+
+            return redirect()->route('bitacora.index')
+                ->with('error', 'Error al cargar evento');
         }
-
-        return redirect()->route('bitacora.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Filtrar eventos por rango de fechas
+     * Obtener resumen de actividad
      */
-    public function filtrar(Request $request)
+    public function resumenActividad(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $params = $request->validate([
+        $request->validate([
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            'tipo_evento' => 'nullable|string',
-            'usuario_id' => 'nullable|integer',
-            'per_page' => 'nullable|integer|min:1|max:100'
         ]);
 
-        $response = $this->apiGet('/api/bitacora/filtrar', $params);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            $eventos = $this->apiResponseData($response);
-            return view('bitacora.index', compact('eventos'));
+            $response = $this->apiGet('/api/bitacora/resumen-actividad', $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al generar resumen'));
+            }
+
+            $resumen = $this->apiResponseData($response, []);
+
+            return view('bitacora.resumen', [
+                'resumen' => $resumen,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener resumen de actividad', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al generar resumen');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Exportar bitácora a CSV
+     * Obtener actividad por usuario
      */
-    public function exportarCsv(Request $request)
+    public function actividadUsuario(Request $request, $usuarioId)
     {
-        $this->setApiToken(session('api_token'));
-
-        $params = $request->only([
-            'fecha_inicio', 'fecha_fin', 'tipo_evento', 'usuario_id'
+        $request->validate([
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
         ]);
 
-        $response = $this->apiGet('/api/bitacora/exportar-csv', $params);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            $csvContent = $this->apiResponseData($response);
-            return response($csvContent)
-                ->header('Content-Type', 'text/csv')
-                ->header('Content-Disposition', 'attachment; filename="bitacora-' . date('Y-m-d') . '.csv"');
+            $response = $this->apiGet("/api/bitacora/usuario/{$usuarioId}", $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar actividad'));
+            }
+
+            $actividad = $this->apiResponseData($response, []);
+
+            return view('bitacora.usuario', [
+                'actividad' => $actividad,
+                'usuarioId' => $usuarioId,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener actividad por usuario', [
+                'error' => $e->getMessage(),
+                'usuario_id' => $usuarioId
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar actividad');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Dashboard de bitácora
+     * Obtener actividad por módulo
      */
-    public function dashboard()
+    public function actividadModulo(Request $request, $modulo)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+        ]);
 
-        $response = $this->apiGet('/api/bitacora/dashboard');
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            $dashboard = $this->apiResponseData($response);
-            return view('bitacora.dashboard', compact('dashboard'));
+            $response = $this->apiGet("/api/bitacora/modulo/{$modulo}", $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar actividad'));
+            }
+
+            $actividad = $this->apiResponseData($response, []);
+
+            return view('bitacora.modulo', [
+                'actividad' => $actividad,
+                'modulo' => $modulo,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener actividad por módulo', [
+                'error' => $e->getMessage(),
+                'modulo' => $modulo
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar actividad');
         }
+    }
 
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
+    /**
+     * Obtener actividad por tabla
+     */
+    public function actividadTabla(Request $request, $tabla, $registroId = null)
+    {
+        $request->validate([
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $url = $registroId 
+                ? "/api/bitacora/tabla/{$tabla}/{$registroId}"
+                : "/api/bitacora/tabla/{$tabla}";
+
+            $response = $this->apiGet($url, $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar actividad'));
+            }
+
+            $actividad = $this->apiResponseData($response, []);
+
+            return view('bitacora.tabla', [
+                'actividad' => $actividad,
+                'tabla' => $tabla,
+                'registroId' => $registroId,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener actividad por tabla', [
+                'error' => $e->getMessage(),
+                'tabla' => $tabla,
+                'registro_id' => $registroId
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar actividad');
+        }
+    }
+
+    /**
+     * Exportar bitácora
+     */
+    public function exportar(Request $request)
+    {
+        $request->validate([
+            'formato' => 'required|in:CSV,PDF,JSON',
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet('/api/bitacora/exportar', $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al exportar'));
+            }
+
+            $this->logActivity(
+                Session::get('user_id'),
+                'reportes',
+                'BITACORA_EXPORTADA',
+                'Bitácora',
+                "Bitácora exportada en formato {$request->formato}"
+            );
+
+            // Redirigir a la descarga o mostrar el resultado según el formato
+            if ($request->formato === 'JSON') {
+                return response()->json($this->apiResponseData($response, []))
+                    ->header('Content-Disposition', 'attachment; filename="bitacora.json"');
+            }
+
+            return redirect()->back()->with('success', 'Exportación generada exitosamente');
+
+        } catch (\Exception $e) {
+            Log::error('Error al exportar bitácora', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar bitácora');
+        }
     }
 }

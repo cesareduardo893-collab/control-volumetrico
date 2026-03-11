@@ -1,203 +1,306 @@
 @extends('layouts.app')
 
 @section('title', 'Tanques')
+@section('header', 'Tanques de Almacenamiento')
+
+@section('actions')
+<a href="{{ route('tanques.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Tanque
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Tanques</h6>
-                <a href="{{ route('tanques.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Tanque
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('tanques.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="instalacion_id" class="form-label">Instalación</label>
+                <select class="form-select select2" id="instalacion_id" name="instalacion_id">
+                    <option value="">Todas</option>
+                    @foreach($instalaciones ?? [] as $instalacion)
+                        <option value="{{ $instalacion['id'] }}" {{ request('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
+                            {{ $instalacion['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="producto_id" class="form-label">Producto</label>
+                <select class="form-select select2" id="producto_id" name="producto_id">
+                    <option value="">Todos</option>
+                    @foreach($productos ?? [] as $producto)
+                        <option value="{{ $producto['id'] }}" {{ request('producto_id') == $producto['id'] ? 'selected' : '' }}>
+                            {{ $producto['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="identificador" class="form-label">Identificador</label>
+                <input type="text" class="form-control" id="identificador" name="identificador" 
+                       value="{{ request('identificador') }}" placeholder="Buscar...">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="estado" class="form-label">Estado</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option value="OPERATIVO" {{ request('estado') == 'OPERATIVO' ? 'selected' : '' }}>Operativo</option>
+                    <option value="MANTENIMIENTO" {{ request('estado') == 'MANTENIMIENTO' ? 'selected' : '' }}>Mantenimiento</option>
+                    <option value="FUERA_SERVICIO" {{ request('estado') == 'FUERA_SERVICIO' ? 'selected' : '' }}>Fuera de Servicio</option>
+                    <option value="CALIBRACION" {{ request('estado') == 'CALIBRACION' ? 'selected' : '' }}>Calibración</option>
+                </select>
+            </div>
+            
+            <div class="col-md-1">
+                <label for="activo" class="form-label">Activo</label>
+                <select class="form-select" id="activo" name="activo">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('activo') == '1' ? 'selected' : '' }}>Sí</option>
+                    <option value="0" {{ request('activo') == '0' ? 'selected' : '' }}>No</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tipo_tanque_id" class="form-label">Tipo</label>
+                <select class="form-select" id="tipo_tanque_id" name="tipo_tanque_id">
+                    <option value="">Todos</option>
+                    @foreach($tipos_tanque ?? [] as $tipo)
+                        <option value="{{ $tipo['id'] }}" {{ request('tipo_tanque_id') == $tipo['id'] ? 'selected' : '' }}>
+                            {{ $tipo['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="calibracion_proxima" class="form-label">Próx. Calibración</label>
+                <select class="form-select" id="calibracion_proxima" name="calibracion_proxima">
+                    <option value="">Todos</option>
+                    <option value="proximos" {{ request('calibracion_proxima') == 'proximos' ? 'selected' : '' }}>Próximos 30 días</option>
+                    <option value="vencidos" {{ request('calibracion_proxima') == 'vencidos' ? 'selected' : '' }}>Vencidos</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('tanques.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterClave" placeholder="Clave Tanque">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterNombre" placeholder="Nombre">
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterInstalacion">
-                            <option value="">Todas las instalaciones</option>
-                            @foreach($instalaciones ?? [] as $instalacion)
-                                <option value="{{ $instalacion['id'] }}">{{ $instalacion['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterProducto">
-                            <option value="">Todos los productos</option>
-                            @foreach($productos ?? [] as $producto)
-                                <option value="{{ $producto['id'] }}">{{ $producto['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary btn-sm w-100" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
+        </form>
+        
+        <!-- Resumen -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Total Tanques</h6>
+                        <h3>{{ $resumen['total'] ?? 0 }}</h3>
                     </div>
                 </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="tanquesTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Clave</th>
-                                <th>Nombre</th>
-                                <th>Instalación</th>
-                                <th>Producto</th>
-                                <th>Capacidad (L)</th>
-                                <th>Tipo</th>
-                                <th>Forma</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($tanques['data'] ?? [] as $tanque)
-                            <tr>
-                                <td>{{ $tanque['id'] }}</td>
-                                <td>{{ $tanque['clave_tanque'] }}</td>
-                                <td>{{ $tanque['nombre'] }}</td>
-                                <td>{{ $tanque['instalacion']['nombre'] ?? 'N/A' }}</td>
-                                <td>{{ $tanque['producto']['nombre'] ?? 'N/A' }}</td>
-                                <td class="text-end">{{ number_format($tanque['capacidad'], 2) }}</td>
-                                <td>{{ ucfirst(str_replace('_', ' ', $tanque['tipo_tanque'])) }}</td>
-                                <td>{{ ucfirst($tanque['forma']) }}</td>
-                                <td class="text-center">
-                                    @if($tanque['activo'])
-                                        <span class="badge bg-success">Activo</span>
-                                    @else
-                                        <span class="badge bg-danger">Inactivo</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('tanques.show', $tanque['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('tanques.edit', $tanque['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{{ route('tanques.existencias', $tanque['id']) }}" 
-                                           class="btn btn-secondary btn-sm" title="Existencias">
-                                            <i class="fas fa-boxes"></i>
-                                        </a>
-                                        <a href="{{ route('tanques.ultima-existencia', $tanque['id']) }}" 
-                                           class="btn btn-success btn-sm" title="Última Existencia">
-                                            <i class="fas fa-chart-line"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-delete" 
-                                                data-id="{{ $tanque['id'] }}"
-                                                data-name="{{ $tanque['nombre'] }}"
-                                                title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($tanques['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $tanques['meta']['from'] ?? 0 }} a {{ $tanques['meta']['to'] ?? 0 }} de {{ $tanques['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($tanques['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Operativos</h6>
+                        <h3>{{ $resumen['operativos'] ?? 0 }}</h3>
                     </div>
                 </div>
-                @endif
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6>En Mantenimiento</h6>
+                        <h3>{{ $resumen['mantenimiento'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6>En Calibración</h6>
+                        <h3>{{ $resumen['calibracion'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
+        
+        <!-- Tabla de tanques -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Identificador</th>
+                        <th>Instalación</th>
+                        <th>Producto</th>
+                        <th>Capacidad Total</th>
+                        <th>Volumen Actual</th>
+                        <th>% Ocupación</th>
+                        <th>Estado</th>
+                        <th>Próx. Calibración</th>
+                        <th>Activo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($tanques as $tanque)
+                        <tr>
+                            <td><strong>{{ $tanque['identificador'] }}</strong></td>
+                            <td>
+                                @if(isset($tanque['instalacion']))
+                                    {{ $tanque['instalacion']['nombre'] }}
+                                @else
+                                    {{ $tanque['instalacion_id'] }}
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($tanque['producto']))
+                                    {{ $tanque['producto']['nombre'] }}
+                                @else
+                                    <span class="text-muted">No asignado</span>
+                                @endif
+                            </td>
+                            <td>{{ number_format($tanque['capacidad_total'], 3) }} L</td>
+                            <td>
+                                @if(isset($tanque['volumen_actual']))
+                                    <strong>{{ number_format($tanque['volumen_actual'], 3) }} L</strong>
+                                @else
+                                    <span class="text-muted">N/A</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($tanque['volumen_actual']) && $tanque['capacidad_util'] > 0)
+                                    @php
+                                        $porcentaje = ($tanque['volumen_actual'] / $tanque['capacidad_util']) * 100;
+                                        $barClass = $porcentaje > 90 ? 'danger' : ($porcentaje > 75 ? 'warning' : 'success');
+                                    @endphp
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-{{ $barClass }}" role="progressbar" 
+                                             style="width: {{ $porcentaje }}%">{{ number_format($porcentaje, 1) }}%</div>
+                                    </div>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'OPERATIVO' => 'success',
+                                        'MANTENIMIENTO' => 'warning',
+                                        'FUERA_SERVICIO' => 'danger',
+                                        'CALIBRACION' => 'info'
+                                    ][$tanque['estado']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $tanque['estado'] }}</span>
+                            </td>
+                            <td>
+                                @if(isset($tanque['fecha_proxima_calibracion']))
+                                    @php
+                                        $dias = now()->diffInDays($tanque['fecha_proxima_calibracion'], false);
+                                        $badgeClass = $dias < 7 ? 'danger' : ($dias < 15 ? 'warning' : 'success');
+                                    @endphp
+                                    {{ $tanque['fecha_proxima_calibracion'] }}
+                                    <span class="badge bg-{{ $badgeClass }}">{{ round($dias) }} días</span>
+                                @else
+                                    No programada
+                                @endif
+                            </td>
+                            <td>
+                                @if($tanque['activo'])
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('tanques.show', $tanque['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('tanques.edit', $tanque['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ route('tanques.curva-calibracion', $tanque['id']) }}" class="btn btn-sm btn-secondary" title="Curva Calibración">
+                                        <i class="bi bi-graph-up"></i>
+                                    </a>
+                                    <a href="{{ route('tanques.verificar-estado', $tanque['id']) }}" class="btn btn-sm btn-primary" title="Verificar Estado">
+                                        <i class="bi bi-check-circle"></i>
+                                    </a>
+                                    <a href="{{ route('existencias.inventario-actual', $tanque['id']) }}" class="btn btn-sm btn-success" title="Inventario">
+                                        <i class="bi bi-box"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="10" class="text-center">No hay tanques registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
-
-<!-- Formulario de eliminación -->
-<form id="deleteForm" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#tanquesTable').DataTable({
-        pageLength: {{ $tanques['meta']['per_page'] ?? 10 }},
-        order: [[0, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams(window.location.search);
-        
-        if ($('#filterClave').val()) params.set('clave_tanque', $('#filterClave').val());
-        if ($('#filterNombre').val()) params.set('nombre', $('#filterNombre').val());
-        if ($('#filterInstalacion').val()) params.set('instalacion_id', $('#filterInstalacion').val());
-        if ($('#filterProducto').val()) params.set('producto_id', $('#filterProducto').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
-    });
-
-    // Botones de eliminar
-    $('.btn-delete').click(function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Deseas eliminar el tanque "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var form = $('#deleteForm');
-                form.attr('action', '{{ url("tanques") }}/' + id);
-                form.submit();
-            }
-        });
-    });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterClave').val(urlParams.get('clave_tanque') || '');
-    $('#filterNombre').val(urlParams.get('nombre') || '');
-    $('#filterInstalacion').val(urlParams.get('instalacion_id') || '');
-    $('#filterProducto').val(urlParams.get('producto_id') || '');
 });
 </script>
 @endpush

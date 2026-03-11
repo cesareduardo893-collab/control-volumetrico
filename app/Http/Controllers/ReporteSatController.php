@@ -2,38 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class ReporteSatController extends Controller
+class ReporteSatController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
      * Listar reportes SAT
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'instalacion_id', 'periodo', 'anio', 'mes', 'estado', 'per_page'
-        ]);
+            $params = $request->only([
+                'instalacion_id', 'usuario_genera_id', 'folio', 'periodo',
+                'tipo_reporte', 'estado', 'fecha_generacion_inicio',
+                'fecha_generacion_fin', 'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/reportes-sat', $params);
+            $response = $this->apiGet('/api/reportes-sat', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $reportes = $this->apiResponseData($response);
-            return view('reportes-sat.index', compact('reportes'));
+            return $this->renderView('reportes-sat.index', $response, ['key' => 'reportes'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar reportes SAT', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar reportes');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -41,15 +40,24 @@ class ReporteSatController extends Controller
      */
     public function create()
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener instalaciones para el select
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
+            // Obtener instalaciones para el select
+            $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
 
-        return view('reportes-sat.create', compact('instalaciones'));
+            return view('reportes-sat.create', [
+                'instalaciones' => $instalaciones
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('reportes-sat.index')
+                ->with('error', 'Error al cargar formulario');
+        }
     }
 
     /**
@@ -57,38 +65,61 @@ class ReporteSatController extends Controller
      */
     public function store(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'required|integer|exists:instalaciones,id',
-            'periodo' => 'required|in:diario,semanal,quincenal,mensual',
-            'anio' => 'required|integer|min:2020|max:2030',
-            'mes' => 'required|integer|min:1|max:12',
-            'semana' => 'nullable|integer|min:1|max:52',
-            'dia' => 'nullable|integer|min:1|max:31',
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            'registros_generados' => 'required|integer|min:0',
-            'registros_validos' => 'required|integer|min:0',
-            'registros_invalidos' => 'required|integer|min:0',
-            'estado' => 'required|in:generado,firmado,enviado,recibido,error',
-            'observaciones' => 'nullable|string|max:500',
-            'usuario_generacion' => 'required|integer|exists:users,id',
-            'usuario_firma' => 'nullable|integer|exists:users,id',
-            'usuario_envio' => 'nullable|integer|exists:users,id',
-            'activo' => 'sometimes|boolean'
+        $request->validate([
+            'instalacion_id' => 'required|integer',
+            'folio' => 'required|string|max:255',
+            'periodo' => 'required|string|size:7',
+            'tipo_reporte' => 'required|in:MENSUAL,ANUAL,ESPECIAL',
+            'estado' => 'required|in:PENDIENTE,GENERADO,FIRMADO,ENVIADO,ACEPTADO,RECHAZADO,ERROR,REQUIERE_REENVIO',
         ]);
 
-        $response = $this->apiPost('/api/reportes-sat', $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('reportes-sat.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $data = $request->all();
+            $data['usuario_genera_id'] = Session::get('user_id');
+            $data['fecha_generacion'] = now()->toDateString();
+
+            $response = $this->apiPost('/api/reportes-sat', $data);
+
+            if ($this->apiResponseSuccessful($response)) {
+                $reporteData = $this->apiResponseData($response, []);
+                $reporteId = $reporteData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'reportes_sat',
+                    'REPORTE_SAT_CREADO',
+                    'Reportes SAT',
+                    "Reporte SAT creado: {$request->folio}",
+                    'reportes_sat',
+                    $reporteId
+                );
+
+                return redirect()->route('reportes-sat.show', $reporteId)
+                    ->with('success', 'Reporte SAT creado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear reporte'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear reporte SAT', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear reporte');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -96,191 +127,205 @@ class ReporteSatController extends Controller
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/reportes-sat/{$id}");
+            $response = $this->apiGet("/api/reportes-sat/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $reporte = $this->apiResponseData($response);
-            return view('reportes-sat.show', compact('reporte'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('reportes-sat.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Reporte no encontrado'));
+            }
+
+            $reporte = $this->apiResponseData($response, []);
+
+            return view('reportes-sat.show', [
+                'reporte' => $reporte
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar reporte SAT', [
+                'error' => $e->getMessage(),
+                'reporte_id' => $id
+            ]);
+
+            return redirect()->route('reportes-sat.index')
+                ->with('error', 'Error al cargar reporte');
         }
-
-        return redirect()->route('reportes-sat.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Mostrar formulario de edición
+     * Enviar reporte al SAT
      */
-    public function edit($id)
+    public function enviar(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        // Obtener instalaciones para el select
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
-
-        $response = $this->apiGet("/api/reportes-sat/{$id}");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $reporte = $this->apiResponseData($response);
-            return view('reportes-sat.edit', compact('reporte', 'instalaciones'));
-        }
-
-        return redirect()->route('reportes-sat.index')
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Actualizar reporte SAT
-     */
-    public function update(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'sometimes|integer|exists:instalaciones,id',
-            'periodo' => 'sometimes|in:diario,semanal,quincenal,mensual',
-            'anio' => 'sometimes|integer|min:2020|max:2030',
-            'mes' => 'sometimes|integer|min:1|max:12',
-            'semana' => 'nullable|integer|min:1|max:52',
-            'dia' => 'nullable|integer|min:1|max:31',
-            'fecha_inicio' => 'sometimes|date',
-            'fecha_fin' => 'sometimes|date|after_or_equal:fecha_inicio',
-            'registros_generados' => 'sometimes|integer|min:0',
-            'registros_validos' => 'sometimes|integer|min:0',
-            'registros_invalidos' => 'sometimes|integer|min:0',
-            'estado' => 'sometimes|in:generado,firmado,enviado,recibido,error',
-            'observaciones' => 'nullable|string|max:500',
-            'usuario_generacion' => 'sometimes|integer|exists:users,id',
-            'usuario_firma' => 'nullable|integer|exists:users,id',
-            'usuario_envio' => 'nullable|integer|exists:users,id',
-            'activo' => 'sometimes|boolean'
+        $request->validate([
+            'fecha_envio' => 'required|date',
         ]);
 
-        $response = $this->apiPut("/api/reportes-sat/{$id}", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('reportes-sat.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost("/api/reportes-sat/{$id}/enviar", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'reportes_sat',
+                    'REPORTE_SAT_ENVIADO',
+                    'Reportes SAT',
+                    "Reporte SAT enviado ID: {$id}",
+                    'reportes_sat',
+                    $id
+                );
+
+                return redirect()->route('reportes-sat.show', $id)
+                    ->with('success', 'Reporte enviado exitosamente');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al enviar reporte'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al enviar reporte SAT', [
+                'error' => $e->getMessage(),
+                'reporte_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al enviar reporte');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Eliminar reporte SAT
+     * Firmar reporte
      */
-    public function destroy($id)
+    public function firmar(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'cadena_original' => 'required|string',
+            'sello_digital' => 'required|string',
+            'certificado_sat' => 'required|string',
+            'fecha_firma' => 'required|date',
+            'folio_firma' => 'required|string|size:36',
+        ]);
 
-        $response = $this->apiDelete("/api/reportes-sat/{$id}");
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('reportes-sat.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost("/api/reportes-sat/{$id}/firmar", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'reportes_sat',
+                    'REPORTE_SAT_FIRMADO',
+                    'Reportes SAT',
+                    "Reporte SAT firmado ID: {$id}",
+                    'reportes_sat',
+                    $id
+                );
+
+                return redirect()->route('reportes-sat.show', $id)
+                    ->with('success', 'Reporte firmado exitosamente');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al firmar reporte'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al firmar reporte SAT', [
+                'error' => $e->getMessage(),
+                'reporte_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al firmar reporte');
         }
-
-        return redirect()->route('reportes-sat.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Firmar reporte SAT
+     * Cancelar reporte
      */
-    public function firmar($id)
+    public function cancelar(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'motivo_cancelacion' => 'required|string',
+        ]);
 
-        $response = $this->apiPost("/api/reportes-sat/{$id}/firmar");
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('reportes-sat.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost("/api/reportes-sat/{$id}/cancelar", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'reportes_sat',
+                    'REPORTE_SAT_CANCELADO',
+                    'Reportes SAT',
+                    "Reporte SAT cancelado ID: {$id}",
+                    'reportes_sat',
+                    $id
+                );
+
+                return redirect()->route('reportes-sat.show', $id)
+                    ->with('success', 'Reporte cancelado exitosamente');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al cancelar reporte'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al cancelar reporte SAT', [
+                'error' => $e->getMessage(),
+                'reporte_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al cancelar reporte');
         }
-
-        return redirect()->route('reportes-sat.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Enviar reporte SAT
+     * Obtener historial de envíos
      */
-    public function enviar($id)
+    public function historialEnvios(Request $request, $instalacionId)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'anio' => 'required|integer|min:2020',
+        ]);
 
-        $response = $this->apiPost("/api/reportes-sat/{$id}/enviar");
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('reportes-sat.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiGet("/api/reportes-sat/historial-envios/{$instalacionId}", $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar historial'));
+            }
+
+            $historial = $this->apiResponseData($response, []);
+
+            return view('reportes-sat.historial', [
+                'historial' => $historial,
+                'instalacionId' => $instalacionId,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener historial de envíos', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $instalacionId
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar historial');
         }
-
-        return redirect()->route('reportes-sat.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Descargar XML del reporte SAT
-     */
-    public function descargarXml($id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiGet("/api/reportes-sat/{$id}/descargar-xml");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $xmlContent = $this->apiResponseData($response);
-            return response($xmlContent)
-                ->header('Content-Type', 'application/xml')
-                ->header('Content-Disposition', 'attachment; filename="reporte-sat-' . $id . '.xml"');
-        }
-
-        return redirect()->route('reportes-sat.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Descargar PDF del reporte SAT
-     */
-    public function descargarPdf($id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiGet("/api/reportes-sat/{$id}/descargar-pdf");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $pdfContent = $this->apiResponseData($response);
-            return response($pdfContent)
-                ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="reporte-sat-' . $id . '.pdf"');
-        }
-
-        return redirect()->route('reportes-sat.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Obtener acuse del reporte SAT
-     */
-    public function acuse($id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiGet("/api/reportes-sat/{$id}/acuse");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $acuse = $this->apiResponseData($response);
-            return view('reportes-sat.acuse', compact('acuse', 'id'));
-        }
-
-        return redirect()->route('reportes-sat.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 }

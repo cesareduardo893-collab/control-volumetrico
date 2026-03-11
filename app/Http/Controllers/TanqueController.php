@@ -2,38 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class TanqueController extends Controller
+class TanqueController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
      * Listar tanques
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'instalacion_id', 'clave_tanque', 'producto_id', 'activo', 'per_page'
-        ]);
+            $params = $request->only([
+                'instalacion_id', 'producto_id', 'identificador', 'numero_serie',
+                'estado', 'tipo_tanque_id', 'activo', 'calibracion_proxima',
+                'alerta_alteracion', 'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/tanques', $params);
+            $response = $this->apiGet('/api/tanques', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $tanques = $this->apiResponseData($response);
-            return view('tanques.index', compact('tanques'));
+            return $this->renderView('tanques.index', $response, ['key' => 'tanques'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar tanques', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar tanques');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -41,20 +40,26 @@ class TanqueController extends Controller
      */
     public function create()
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener instalaciones y productos para los selects
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
+            // Obtener catálogos para los selects
+            $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
+            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
 
-        $productosResponse = $this->apiGet('/api/productos');
-        $productos = $this->apiResponseSuccessful($productosResponse) 
-            ? $this->apiResponseData($productosResponse) 
-            : [];
+            return view('tanques.create', [
+                'instalaciones' => $instalaciones,
+                'productos' => $productos
+            ]);
 
-        return view('tanques.create', compact('instalaciones', 'productos'));
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('tanques.index')
+                ->with('error', 'Error al cargar formulario');
+        }
     }
 
     /**
@@ -62,52 +67,63 @@ class TanqueController extends Controller
      */
     public function store(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'required|integer|exists:instalaciones,id',
-            'producto_id' => 'required|integer|exists:productos,id',
-            'clave_tanque' => 'required|string|max:50|unique:tanques,clave_tanque',
-            'nombre' => 'required|string|max:255',
-            'capacidad' => 'required|numeric|min:0',
-            'capacidad_operativa' => 'required|numeric|min:0',
-            'capacidad_seguridad' => 'required|numeric|min:0',
-            'diametro' => 'nullable|numeric|min:0',
-            'longitud' => 'nullable|numeric|min:0',
-            'altura_total' => 'nullable|numeric|min:0',
-            'altura_operativa' => 'nullable|numeric|min:0',
-            'altura_seguridad' => 'nullable|numeric|min:0',
-            'forma' => 'required|in:cilindrico,rectangular,esferico',
-            'tipo_tanque' => 'required|in:atmosferico,soterrado,areometro',
+        $request->validate([
+            'instalacion_id' => 'required|integer',
+            'identificador' => 'required|string|max:255',
             'material' => 'required|string|max:100',
-            'ubicacion' => 'required|string|max:255',
-            'latitud' => 'nullable|numeric',
-            'longitud' => 'nullable|numeric',
-            'activo' => 'sometimes|boolean',
-            // Configuración de medición
-            'tipo_medicion' => 'required|in:manual,automatica',
-            'unidad_medida' => 'required|in:litros,galones,barriles',
-            'precision_medicion' => 'nullable|numeric|min:0',
-            'factor_correccion' => 'nullable|numeric|min:0',
-            // Configuración de alarmas
-            'umbral_nivel_min' => 'nullable|numeric|min:0',
-            'umbral_nivel_max' => 'nullable|numeric|min:0',
-            'umbral_temperatura_min' => 'nullable|numeric',
-            'umbral_temperatura_max' => 'nullable|numeric',
-            'umbral_presion_min' => 'nullable|numeric',
-            'umbral_presion_max' => 'nullable|numeric'
+            'capacidad_total' => 'required|numeric|min:0',
+            'capacidad_util' => 'required|numeric|min:0|lte:capacidad_total',
+            'capacidad_operativa' => 'required|numeric|min:0|lte:capacidad_util',
+            'capacidad_minima' => 'required|numeric|min:0',
+            'temperatura_referencia' => 'required|numeric',
+            'presion_referencia' => 'required|numeric',
+            'tipo_medicion' => 'required|in:estatica,dinamica',
+            'estado' => 'required|in:OPERATIVO,MANTENIMIENTO,FUERA_SERVICIO,CALIBRACION',
         ]);
 
-        $response = $this->apiPost('/api/tanques', $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('tanques.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost('/api/tanques', $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $tanqueData = $this->apiResponseData($response, []);
+                $tanqueId = $tanqueData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'configuracion',
+                    'TANQUE_CREADO',
+                    'Tanques',
+                    "Tanque creado: {$request->identificador}",
+                    'tanques',
+                    $tanqueId
+                );
+
+                return redirect()->route('tanques.show', $tanqueId)
+                    ->with('success', 'Tanque creado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear tanque'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear tanque', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear tanque');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -115,17 +131,31 @@ class TanqueController extends Controller
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/tanques/{$id}");
+            $response = $this->apiGet("/api/tanques/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $tanque = $this->apiResponseData($response);
-            return view('tanques.show', compact('tanque'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('tanques.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Tanque no encontrado'));
+            }
+
+            $tanque = $this->apiResponseData($response, []);
+
+            return view('tanques.show', [
+                'tanque' => $tanque
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar tanque', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->route('tanques.index')
+                ->with('error', 'Error al cargar tanque');
         }
-
-        return redirect()->route('tanques.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -133,28 +163,35 @@ class TanqueController extends Controller
      */
     public function edit($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener instalaciones y productos para los selects
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
+            $response = $this->apiGet("/api/tanques/{$id}");
 
-        $productosResponse = $this->apiGet('/api/productos');
-        $productos = $this->apiResponseSuccessful($productosResponse) 
-            ? $this->apiResponseData($productosResponse) 
-            : [];
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('tanques.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Tanque no encontrado'));
+            }
 
-        $response = $this->apiGet("/api/tanques/{$id}");
+            $tanque = $this->apiResponseData($response, []);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $tanque = $this->apiResponseData($response);
-            return view('tanques.edit', compact('tanque', 'instalaciones', 'productos'));
+            // Obtener productos para el select
+            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
+
+            return view('tanques.edit', [
+                'tanque' => $tanque,
+                'productos' => $productos
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de edición', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->route('tanques.index')
+                ->with('error', 'Error al cargar formulario');
         }
-
-        return redirect()->route('tanques.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -162,52 +199,59 @@ class TanqueController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'sometimes|integer|exists:instalaciones,id',
-            'producto_id' => 'sometimes|integer|exists:productos,id',
-            'clave_tanque' => 'sometimes|string|max:50|unique:tanques,clave_tanque,' . $id,
-            'nombre' => 'sometimes|string|max:255',
-            'capacidad' => 'sometimes|numeric|min:0',
-            'capacidad_operativa' => 'sometimes|numeric|min:0',
-            'capacidad_seguridad' => 'sometimes|numeric|min:0',
-            'diametro' => 'nullable|numeric|min:0',
-            'longitud' => 'nullable|numeric|min:0',
-            'altura_total' => 'nullable|numeric|min:0',
-            'altura_operativa' => 'nullable|numeric|min:0',
-            'altura_seguridad' => 'nullable|numeric|min:0',
-            'forma' => 'sometimes|in:cilindrico,rectangular,esferico',
-            'tipo_tanque' => 'sometimes|in:atmosferico,soterrado,areometro',
+        $request->validate([
+            'producto_id' => 'nullable|integer',
+            'identificador' => "sometimes|string|max:255",
             'material' => 'sometimes|string|max:100',
-            'ubicacion' => 'sometimes|string|max:255',
-            'latitud' => 'nullable|numeric',
-            'longitud' => 'nullable|numeric',
+            'capacidad_total' => 'sometimes|numeric|min:0',
+            'capacidad_util' => 'sometimes|numeric|min:0|lte:capacidad_total',
+            'capacidad_operativa' => 'sometimes|numeric|min:0|lte:capacidad_util',
+            'capacidad_minima' => 'sometimes|numeric|min:0',
+            'estado' => 'sometimes|in:OPERATIVO,MANTENIMIENTO,FUERA_SERVICIO,CALIBRACION',
             'activo' => 'sometimes|boolean',
-            // Configuración de medición
-            'tipo_medicion' => 'sometimes|in:manual,automatica',
-            'unidad_medida' => 'sometimes|in:litros,galones,barriles',
-            'precision_medicion' => 'nullable|numeric|min:0',
-            'factor_correccion' => 'nullable|numeric|min:0',
-            // Configuración de alarmas
-            'umbral_nivel_min' => 'nullable|numeric|min:0',
-            'umbral_nivel_max' => 'nullable|numeric|min:0',
-            'umbral_temperatura_min' => 'nullable|numeric',
-            'umbral_temperatura_max' => 'nullable|numeric',
-            'umbral_presion_min' => 'nullable|numeric',
-            'umbral_presion_max' => 'nullable|numeric'
         ]);
 
-        $response = $this->apiPut("/api/tanques/{$id}", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('tanques.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPut("/api/tanques/{$id}", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'configuracion',
+                    'TANQUE_ACTUALIZADO',
+                    'Tanques',
+                    "Tanque actualizado ID: {$id}",
+                    'tanques',
+                    $id
+                );
+
+                return redirect()->route('tanques.show', $id)
+                    ->with('success', 'Tanque actualizado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al actualizar tanque'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar tanque', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar tanque');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -215,54 +259,252 @@ class TanqueController extends Controller
      */
     public function destroy($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiDelete("/api/tanques/{$id}");
+            $response = $this->apiDelete("/api/tanques/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('tanques.index')
-                ->with('success', $this->apiResponseMessage($response));
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'configuracion',
+                    'TANQUE_ELIMINADO',
+                    'Tanques',
+                    "Tanque eliminado ID: {$id}",
+                    'tanques',
+                    $id
+                );
+
+                return redirect()->route('tanques.index')
+                    ->with('success', 'Tanque eliminado exitosamente');
+            }
+
+            if ($response->status === 409) {
+                $error = $this->apiResponseData($response, 'No se puede eliminar el tanque');
+                return redirect()->back()
+                    ->with('error', $error);
+            }
+
+            return redirect()->back()
+                ->with('error', $this->apiResponseMessage($response, 'Error al eliminar tanque'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar tanque', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Error al eliminar tanque');
         }
-
-        return redirect()->route('tanques.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Obtener existencias del tanque
+     * Registrar calibración
      */
-    public function existencias($id)
+    public function registrarCalibracion(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'fecha_calibracion' => 'required|date',
+            'fecha_proxima_calibracion' => 'required|date|after:fecha_calibracion',
+            'certificado_calibracion' => 'required|string|max:255',
+            'entidad_calibracion' => 'required|string|max:255',
+            'tabla_aforo' => 'required|array',
+        ]);
 
-        $params = request()->only(['per_page', 'fecha_inicio', 'fecha_fin']);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/tanques/{$id}/existencias", $params);
+            $response = $this->apiPost("/api/tanques/{$id}/calibrar", $request->all());
 
-        if ($this->apiResponseSuccessful($response)) {
-            $existencias = $this->apiResponseData($response);
-            return view('tanques.existencias', compact('existencias', 'id'));
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'mantenimiento',
+                    'CALIBRACION_TANQUE_REGISTRADA',
+                    'Tanques',
+                    "Calibración registrada para tanque ID: {$id}",
+                    'tanques',
+                    $id
+                );
+
+                return redirect()->route('tanques.show', $id)
+                    ->with('success', 'Calibración registrada exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al registrar calibración'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al registrar calibración de tanque', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al registrar calibración');
         }
-
-        return redirect()->route('tanques.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Obtener última existencia del tanque
+     * Verificar estado del tanque
      */
-    public function ultimaExistencia($id)
+    public function verificarEstado($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/tanques/{$id}/ultima-existencia");
+            $response = $this->apiGet("/api/tanques/{$id}/verificar-estado");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $existencia = $this->apiResponseData($response);
-            return view('tanques.ultima-existencia', compact('existencia', 'id'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('tanques.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al verificar estado'));
+            }
+
+            $estado = $this->apiResponseData($response, []);
+
+            return view('tanques.estado', [
+                'estado' => $estado,
+                'tanque_id' => $id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al verificar estado del tanque', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->route('tanques.show', $id)
+                ->with('error', 'Error al verificar estado');
         }
+    }
 
-        return redirect()->route('tanques.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
+    /**
+     * Cambiar producto del tanque
+     */
+    public function cambiarProducto(Request $request, $id)
+    {
+        $request->validate([
+            'producto_id' => 'required|integer',
+            'motivo' => 'required|string|max:500',
+            'fecha_cambio' => 'required|date',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiPost("/api/tanques/{$id}/cambiar-producto", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'operacion',
+                    'CAMBIO_PRODUCTO_TANQUE',
+                    'Tanques',
+                    "Producto cambiado en tanque ID: {$id}",
+                    'tanques',
+                    $id
+                );
+
+                return redirect()->route('tanques.show', $id)
+                    ->with('success', 'Producto cambiado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al cambiar producto'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al cambiar producto del tanque', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al cambiar producto');
+        }
+    }
+
+    /**
+     * Obtener curva de calibración
+     */
+    public function curvaCalibracion($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet("/api/tanques/{$id}/curva-calibracion");
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('tanques.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al cargar curva'));
+            }
+
+            $curva = $this->apiResponseData($response, []);
+
+            return view('tanques.curva-calibracion', [
+                'curva' => $curva,
+                'tanque_id' => $id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener curva de calibración', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->route('tanques.show', $id)
+                ->with('error', 'Error al cargar curva');
+        }
+    }
+
+    /**
+     * Obtener historial de calibraciones
+     */
+    public function historialCalibraciones($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet("/api/tanques/{$id}/historial-calibraciones");
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('tanques.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al cargar historial'));
+            }
+
+            $historial = $this->apiResponseData($response, []);
+
+            return view('tanques.historial-calibraciones', [
+                'historial' => $historial,
+                'tanque_id' => $id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener historial de calibraciones', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $id
+            ]);
+
+            return redirect()->route('tanques.show', $id)
+                ->with('error', 'Error al cargar historial');
+        }
     }
 }

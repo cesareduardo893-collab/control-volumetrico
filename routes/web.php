@@ -3,25 +3,25 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\ContribuyenteController;
-use App\Http\Controllers\InstalacionController;
-use App\Http\Controllers\TanqueController;
-use App\Http\Controllers\ProductoController;
-use App\Http\Controllers\MedidorController;
-use App\Http\Controllers\RegistroVolumetricoController;
-use App\Http\Controllers\ExistenciaController;
-use App\Http\Controllers\AlarmaController;
-use App\Http\Controllers\PedimentoController;
-use App\Http\Controllers\CfdiController;
-use App\Http\Controllers\DictamenController;
-use App\Http\Controllers\CertificadoVerificacionController;
-use App\Http\Controllers\ReporteSatController;
+use App\Http\Controllers\AlarmasController;
 use App\Http\Controllers\BitacoraController;
-use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\CertificadoVerificacionController;
+use App\Http\Controllers\CfdiController;
+use App\Http\Controllers\ContribuyenteController;
+use App\Http\Controllers\DictamenController;
+use App\Http\Controllers\DispensarioController;
+use App\Http\Controllers\ExistenciaController;
+use App\Http\Controllers\InstalacionController;
+use App\Http\Controllers\MangueraController;
+use App\Http\Controllers\MedidorController;
+use App\Http\Controllers\PedimentoController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\RegistroVolumetricoController;
+use App\Http\Controllers\ReporteSatController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TanqueController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,214 +29,68 @@ use App\Http\Controllers\ConfiguracionController;
 |--------------------------------------------------------------------------
 */
 
-// Rutas públicas (sin autenticación)
+// Rutas públicas (accesibles sin autenticación)
 Route::middleware('guest')->group(function () {
     // Login
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
     
     // Registro
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
-    
-    // Recuperación de contraseña
-    Route::get('/forgot-password', [AuthController::class, 'showForgot'])->name('forgot-password');
-    Route::post('/forgot-password', [AuthController::class, 'forgot'])->name('forgot-password.post');
-    Route::get('/reset-password/{token}', [AuthController::class, 'showReset'])->name('password.reset');
-    Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
+    Route::post('/register', [AuthController::class, 'register'])->name('register');
 });
 
 // Rutas protegidas (requieren autenticación)
 Route::middleware('auth')->group(function () {
+    
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('home');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/tiempo-real', [DashboardController::class, 'tiempoReal'])->name('dashboard.tiempo-real');
-    Route::get('/dashboard/grafica-movimientos', [DashboardController::class, 'graficaMovimientos'])->name('dashboard.grafica-movimientos');
-    Route::post('/notificaciones/{id}/read', [DashboardController::class, 'markNotificationAsRead'])->name('notificaciones.read');
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
     
-    // Perfil de usuario
-    Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [ProfileController::class, 'edit'])->name('edit');
-        Route::put('/', [ProfileController::class, 'update'])->name('update');
-        Route::get('/change-password', [ProfileController::class, 'showChangePassword'])->name('change-password');
-        Route::post('/change-password', [ProfileController::class, 'changePassword'])->name('change-password.post');
+    // Perfil de usuario y cambio de contraseña
+    Route::prefix('auth')->name('auth.')->group(function () {
+        Route::get('/user', [AuthController::class, 'user'])->name('user');
+        Route::get('/change-password', [AuthController::class, 'showChangePasswordForm'])->name('password.change.form');
+        Route::post('/change-password', [AuthController::class, 'changePassword'])->name('password.change');
     });
     
-    // Usuarios
-    Route::resource('usuarios', UserController::class)->parameters([
-        'usuarios' => 'id'
-    ]);
-    
-    // Roles y Permisos
-    Route::resource('roles', RoleController::class)->parameters([
-        'roles' => 'id'
-    ]);
-    Route::post('roles/{id}/asignar-permisos', [RoleController::class, 'asignarPermisos'])->name('roles.asignar-permisos');
-    Route::get('roles/{id}/permisos', [RoleController::class, 'getPermisos'])->name('roles.permisos');
-    
-    Route::resource('permissions', PermissionController::class)->parameters([
-        'permissions' => 'id'
-    ]);
-    
-    // Contribuyentes
-    Route::prefix('contribuyentes')->name('contribuyentes.')->group(function () {
-        Route::get('/', [ContribuyenteController::class, 'index'])->name('index');
-        Route::get('/create', [ContribuyenteController::class, 'create'])->name('create');
-        Route::post('/', [ContribuyenteController::class, 'store'])->name('store');
-        Route::get('/{id}', [ContribuyenteController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [ContribuyenteController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [ContribuyenteController::class, 'update'])->name('update');
-        Route::delete('/{id}', [ContribuyenteController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [ContribuyenteController::class, 'restore'])->name('restore');
-        Route::get('/{id}/instalaciones', [ContribuyenteController::class, 'instalaciones'])->name('instalaciones');
-        Route::get('/{id}/cumplimiento', [ContribuyenteController::class, 'cumplimiento'])->name('cumplimiento');
-    });
-    
-    // Instalaciones
-    Route::prefix('instalaciones')->name('instalaciones.')->group(function () {
-        Route::get('/', [InstalacionController::class, 'index'])->name('index');
-        Route::get('/create', [InstalacionController::class, 'create'])->name('create');
-        Route::post('/', [InstalacionController::class, 'store'])->name('store');
-        Route::get('/{id}', [InstalacionController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [InstalacionController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [InstalacionController::class, 'update'])->name('update');
-        Route::delete('/{id}', [InstalacionController::class, 'destroy'])->name('destroy');
-        Route::get('/{id}/tanques', [InstalacionController::class, 'tanques'])->name('tanques');
-        Route::get('/{id}/medidores', [InstalacionController::class, 'medidores'])->name('medidores');
-        Route::get('/{id}/dispensarios', [InstalacionController::class, 'dispensarios'])->name('dispensarios');
-        Route::get('/{id}/verificar-comunicacion', [InstalacionController::class, 'verificarComunicacion'])->name('verificar-comunicacion');
-        Route::get('/{id}/resumen-operativo', [InstalacionController::class, 'resumenOperativo'])->name('resumen-operativo');
-        Route::put('/{id}/configuracion-red', [InstalacionController::class, 'actualizarConfiguracionRed'])->name('configuracion-red');
-        Route::put('/{id}/umbrales-alarma', [InstalacionController::class, 'actualizarUmbralesAlarma'])->name('umbrales-alarma');
-        Route::get('/{id}/reporte-cumplimiento', [InstalacionController::class, 'reporteCumplimientoNormativo'])->name('reporte-cumplimiento');
-    });
-    
-    // Tanques
-    Route::prefix('tanques')->name('tanques.')->group(function () {
-        Route::get('/', [TanqueController::class, 'index'])->name('index');
-        Route::get('/create', [TanqueController::class, 'create'])->name('create');
-        Route::post('/', [TanqueController::class, 'store'])->name('store');
-        Route::get('/{id}', [TanqueController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [TanqueController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [TanqueController::class, 'update'])->name('update');
-        Route::delete('/{id}', [TanqueController::class, 'destroy'])->name('destroy');
-        Route::get('/{id}/existencias', [TanqueController::class, 'existencias'])->name('existencias');
-        Route::get('/{id}/ultima-existencia', [TanqueController::class, 'ultimaExistencia'])->name('ultima-existencia');
-    });
-    
-    // Productos
-    Route::prefix('productos')->name('productos.')->group(function () {
-        Route::get('/', [ProductoController::class, 'index'])->name('index');
-        Route::get('/create', [ProductoController::class, 'create'])->name('create');
-        Route::post('/', [ProductoController::class, 'store'])->name('store');
-        Route::get('/{id}', [ProductoController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [ProductoController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [ProductoController::class, 'update'])->name('update');
-        Route::delete('/{id}', [ProductoController::class, 'destroy'])->name('destroy');
-        Route::get('/tipo/{tipo}', [ProductoController::class, 'byTipo'])->name('by-tipo');
-    });
-    
-    // Medidores
-    Route::prefix('medidores')->name('medidores.')->group(function () {
-        Route::get('/', [MedidorController::class, 'index'])->name('index');
-        Route::get('/create', [MedidorController::class, 'create'])->name('create');
-        Route::post('/', [MedidorController::class, 'store'])->name('store');
-        Route::get('/{id}', [MedidorController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [MedidorController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [MedidorController::class, 'update'])->name('update');
-        Route::delete('/{id}', [MedidorController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/calibrar', [MedidorController::class, 'calibrar'])->name('calibrar');
-        Route::get('/tanques/{instalacionId}', [MedidorController::class, 'getTanquesByInstalacion'])->name('tanques-by-instalacion');
-    });
-    
-    // Registros Volumétricos
-    Route::prefix('registros-volumetricos')->name('registros-volumetricos.')->group(function () {
-        Route::get('/', [RegistroVolumetricoController::class, 'index'])->name('index');
-        Route::get('/create', [RegistroVolumetricoController::class, 'create'])->name('create');
-        Route::post('/', [RegistroVolumetricoController::class, 'store'])->name('store');
-        Route::get('/{id}', [RegistroVolumetricoController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [RegistroVolumetricoController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [RegistroVolumetricoController::class, 'update'])->name('update');
-        Route::delete('/{id}', [RegistroVolumetricoController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/validar', [RegistroVolumetricoController::class, 'validar'])->name('validar');
-        Route::post('/{id}/asociar-cfdi', [RegistroVolumetricoController::class, 'asociarCfdi'])->name('asociar-cfdi');
-        Route::post('/{id}/asociar-pedimento', [RegistroVolumetricoController::class, 'asociarPedimento'])->name('asociar-pedimento');
-        Route::post('/{id}/marcar-con-alarma', [RegistroVolumetricoController::class, 'marcarConAlarma'])->name('marcar-con-alarma');
-        Route::post('/{id}/cancelar', [RegistroVolumetricoController::class, 'cancelar'])->name('cancelar');
-        Route::get('/{id}/resumen-diario', [RegistroVolumetricoController::class, 'resumenDiario'])->name('resumen-diario');
-        Route::get('/{id}/estadisticas-mensuales', [RegistroVolumetricoController::class, 'estadisticasMensuales'])->name('estadisticas-mensuales');
-    });
-    
-    // Existencias
-    Route::prefix('existencias')->name('existencias.')->group(function () {
-        Route::get('/', [ExistenciaController::class, 'index'])->name('index');
-        Route::get('/create', [ExistenciaController::class, 'create'])->name('create');
-        Route::post('/', [ExistenciaController::class, 'store'])->name('store');
-        Route::get('/{id}', [ExistenciaController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [ExistenciaController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [ExistenciaController::class, 'update'])->name('update');
-        Route::delete('/{id}', [ExistenciaController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/validar', [ExistenciaController::class, 'validar'])->name('validar');
-        Route::post('/{id}/asociar-cfdi', [ExistenciaController::class, 'asociarCfdi'])->name('asociar-cfdi');
-        Route::post('/{id}/asociar-pedimento', [ExistenciaController::class, 'asociarPedimento'])->name('asociar-pedimento');
-        Route::get('/reporte/inventario-diario', [ExistenciaController::class, 'inventarioDiario'])->name('inventario-diario');
-    });
-    
-    // Alarmas
+    // ==================== ALARMAS ====================
     Route::prefix('alarmas')->name('alarmas.')->group(function () {
-        Route::get('/', [AlarmaController::class, 'index'])->name('index');
-        Route::get('/dashboard', [AlarmaController::class, 'dashboard'])->name('dashboard');
-        Route::get('/estadisticas', [AlarmaController::class, 'estadisticas'])->name('estadisticas');
-        Route::get('/{id}', [AlarmaController::class, 'show'])->name('show');
-        Route::put('/{id}', [AlarmaController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AlarmaController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AlarmasController::class, 'index'])->name('index');
+        Route::get('/create', [AlarmasController::class, 'create'])->name('create');
+        Route::post('/', [AlarmasController::class, 'store'])->name('store');
+        Route::get('/{id}', [AlarmasController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AlarmasController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AlarmasController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AlarmasController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas de alarmas
+        Route::get('/{id}/atender', [AlarmasController::class, 'atenderForm'])->name('atender.form');
+        Route::post('/{id}/atender', [AlarmasController::class, 'atender'])->name('atender');
+        Route::get('/{id}/actualizar-estado', [AlarmasController::class, 'actualizarEstadoForm'])->name('actualizar-estado.form');
+        Route::post('/{id}/actualizar-estado', [AlarmasController::class, 'actualizarEstado'])->name('actualizar-estado');
+        Route::get('/estadisticas', [AlarmasController::class, 'estadisticas'])->name('estadisticas');
+        Route::get('/activas/list', [AlarmasController::class, 'activas'])->name('activas');
     });
     
-    // Pedimentos
-    Route::prefix('pedimentos')->name('pedimentos.')->group(function () {
-        Route::get('/', [PedimentoController::class, 'index'])->name('index');
-        Route::get('/create', [PedimentoController::class, 'create'])->name('create');
-        Route::post('/', [PedimentoController::class, 'store'])->name('store');
-        Route::get('/{id}', [PedimentoController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [PedimentoController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [PedimentoController::class, 'update'])->name('update');
-        Route::delete('/{id}', [PedimentoController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/asociar-registro', [PedimentoController::class, 'asociarRegistro'])->name('asociar-registro');
+    // ==================== BITÁCORA ====================
+    Route::prefix('bitacora')->name('bitacora.')->group(function () {
+        Route::get('/', [BitacoraController::class, 'index'])->name('index');
+        Route::get('/{id}', [BitacoraController::class, 'show'])->name('show');
+        
+        // Rutas específicas de bitácora
+        Route::get('/resumen/actividad', [BitacoraController::class, 'resumenActividad'])->name('resumen');
+        Route::get('/usuario/{usuarioId}', [BitacoraController::class, 'actividadUsuario'])->name('usuario');
+        Route::get('/modulo/{modulo}', [BitacoraController::class, 'actividadModulo'])->name('modulo');
+        Route::get('/tabla/{tabla}/{registroId?}', [BitacoraController::class, 'actividadTabla'])->name('tabla');
+        Route::get('/exportar', [BitacoraController::class, 'exportar'])->name('exportar');
     });
     
-    // CFDI
-    Route::prefix('cfdi')->name('cfdi.')->group(function () {
-        Route::get('/', [CfdiController::class, 'index'])->name('index');
-        Route::get('/create', [CfdiController::class, 'create'])->name('create');
-        Route::post('/', [CfdiController::class, 'store'])->name('store');
-        Route::get('/{id}', [CfdiController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [CfdiController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [CfdiController::class, 'update'])->name('update');
-        Route::delete('/{id}', [CfdiController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/cancelar', [CfdiController::class, 'cancelar'])->name('cancelar');
-        Route::get('/{id}/xml', [CfdiController::class, 'getXml'])->name('xml');
-        Route::get('/{id}/pdf', [CfdiController::class, 'getPdf'])->name('pdf');
-        Route::get('/{id}/descargar-xml', [CfdiController::class, 'descargarXml'])->name('descargar-xml');
-        Route::get('/{id}/descargar-pdf', [CfdiController::class, 'descargarPdf'])->name('descargar-pdf');
-    });
-    
-    // Dictámenes
-    Route::prefix('dictamenes')->name('dictamenes.')->group(function () {
-        Route::get('/', [DictamenController::class, 'index'])->name('index');
-        Route::get('/create', [DictamenController::class, 'create'])->name('create');
-        Route::post('/', [DictamenController::class, 'store'])->name('store');
-        Route::get('/{id}', [DictamenController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [DictamenController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [DictamenController::class, 'update'])->name('update');
-        Route::delete('/{id}', [DictamenController::class, 'destroy'])->name('destroy');
-        Route::get('/{id}/pdf', [DictamenController::class, 'generarPdf'])->name('pdf');
-    });
-    
-    // Certificados de Verificación
+    // ==================== CERTIFICADOS DE VERIFICACIÓN ====================
     Route::prefix('certificados-verificacion')->name('certificados-verificacion.')->group(function () {
         Route::get('/', [CertificadoVerificacionController::class, 'index'])->name('index');
         Route::get('/create', [CertificadoVerificacionController::class, 'create'])->name('create');
@@ -245,10 +99,209 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/edit', [CertificadoVerificacionController::class, 'edit'])->name('edit');
         Route::put('/{id}', [CertificadoVerificacionController::class, 'update'])->name('update');
         Route::delete('/{id}', [CertificadoVerificacionController::class, 'destroy'])->name('destroy');
-        Route::get('/{id}/pdf', [CertificadoVerificacionController::class, 'generarPdf'])->name('pdf');
+        
+        // Rutas específicas
+        Route::get('/{id}/verificar-vigencia', [CertificadoVerificacionController::class, 'verificarVigencia'])->name('verificar-vigencia');
+        Route::get('/estadisticas', [CertificadoVerificacionController::class, 'estadisticas'])->name('estadisticas');
     });
     
-    // Reportes SAT
+    // ==================== CFDI ====================
+    Route::prefix('cfdi')->name('cfdi.')->group(function () {
+        Route::get('/', [CfdiController::class, 'index'])->name('index');
+        Route::get('/create', [CfdiController::class, 'create'])->name('create');
+        Route::post('/', [CfdiController::class, 'store'])->name('store');
+        Route::get('/{id}', [CfdiController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [CfdiController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [CfdiController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CfdiController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/cancelar', [CfdiController::class, 'cancelar'])->name('cancelar');
+        Route::get('/rfc/{rfc}', [CfdiController::class, 'porRfc'])->name('por-rfc');
+        Route::get('/resumen/fiscal', [CfdiController::class, 'resumenFiscal'])->name('resumen-fiscal');
+    });
+    
+    // ==================== CONTRIBUYENTES ====================
+    Route::prefix('contribuyentes')->name('contribuyentes.')->group(function () {
+        Route::get('/', [ContribuyenteController::class, 'index'])->name('index');
+        Route::get('/create', [ContribuyenteController::class, 'create'])->name('create');
+        Route::post('/', [ContribuyenteController::class, 'store'])->name('store');
+        Route::get('/{id}', [ContribuyenteController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [ContribuyenteController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [ContribuyenteController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ContribuyenteController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::get('/{id}/instalaciones', [ContribuyenteController::class, 'instalaciones'])->name('instalaciones');
+        Route::get('/{id}/cumplimiento', [ContribuyenteController::class, 'cumplimiento'])->name('cumplimiento');
+        Route::get('/catalogo/list', [ContribuyenteController::class, 'catalogo'])->name('catalogo');
+    });
+    
+    // ==================== DICTÁMENES ====================
+    Route::prefix('dictamenes')->name('dictamenes.')->group(function () {
+        Route::get('/', [DictamenController::class, 'index'])->name('index');
+        Route::get('/create', [DictamenController::class, 'create'])->name('create');
+        Route::post('/', [DictamenController::class, 'store'])->name('store');
+        Route::get('/{id}', [DictamenController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [DictamenController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [DictamenController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DictamenController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/cancelar', [DictamenController::class, 'cancelar'])->name('cancelar');
+        Route::get('/{id}/verificar-vigencia', [DictamenController::class, 'verificarVigencia'])->name('verificar-vigencia');
+        Route::get('/estadisticas', [DictamenController::class, 'estadisticas'])->name('estadisticas');
+        Route::get('/producto/{productoId}', [DictamenController::class, 'porProducto'])->name('por-producto');
+    });
+    
+    // ==================== DISPENSARIOS ====================
+    Route::prefix('dispensarios')->name('dispensarios.')->group(function () {
+        Route::get('/', [DispensarioController::class, 'index'])->name('index');
+        Route::get('/create', [DispensarioController::class, 'create'])->name('create');
+        Route::post('/', [DispensarioController::class, 'store'])->name('store');
+        Route::get('/{id}', [DispensarioController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [DispensarioController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [DispensarioController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DispensarioController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::get('/{id}/mangueras', [DispensarioController::class, 'mangueras'])->name('mangueras');
+        Route::get('/{id}/verificar-estado', [DispensarioController::class, 'verificarEstado'])->name('verificar-estado');
+    });
+    
+    // ==================== EXISTENCIAS ====================
+    Route::prefix('existencias')->name('existencias.')->group(function () {
+        Route::get('/', [ExistenciaController::class, 'index'])->name('index');
+        Route::get('/create', [ExistenciaController::class, 'create'])->name('create');
+        Route::post('/', [ExistenciaController::class, 'store'])->name('store');
+        Route::get('/{id}', [ExistenciaController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [ExistenciaController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [ExistenciaController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ExistenciaController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/validar', [ExistenciaController::class, 'validar'])->name('validar');
+        Route::get('/inventario-actual/{tanqueId}', [ExistenciaController::class, 'inventarioActual'])->name('inventario-actual');
+        Route::get('/historico/{tanqueId}', [ExistenciaController::class, 'historico'])->name('historico');
+        Route::get('/reporte/mermas', [ExistenciaController::class, 'reporteMermas'])->name('reporte-mermas');
+        Route::get('/por-fecha', [ExistenciaController::class, 'porFecha'])->name('por-fecha');
+    });
+    
+    // ==================== INSTALACIONES ====================
+    Route::prefix('instalaciones')->name('instalaciones.')->group(function () {
+        Route::get('/', [InstalacionController::class, 'index'])->name('index');
+        Route::get('/create', [InstalacionController::class, 'create'])->name('create');
+        Route::post('/', [InstalacionController::class, 'store'])->name('store');
+        Route::get('/{id}', [InstalacionController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [InstalacionController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [InstalacionController::class, 'update'])->name('update');
+        Route::delete('/{id}', [InstalacionController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::get('/{id}/tanques', [InstalacionController::class, 'tanques'])->name('tanques');
+        Route::get('/{id}/medidores', [InstalacionController::class, 'medidores'])->name('medidores');
+        Route::get('/{id}/dispensarios', [InstalacionController::class, 'dispensarios'])->name('dispensarios');
+        Route::get('/{id}/resumen-operativo', [InstalacionController::class, 'resumenOperativo'])->name('resumen-operativo');
+    });
+    
+    // ==================== MANGUERAS ====================
+    Route::prefix('mangueras')->name('mangueras.')->group(function () {
+        Route::get('/', [MangueraController::class, 'index'])->name('index');
+        Route::get('/create', [MangueraController::class, 'create'])->name('create');
+        Route::post('/', [MangueraController::class, 'store'])->name('store');
+        Route::get('/{id}', [MangueraController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [MangueraController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [MangueraController::class, 'update'])->name('update');
+        Route::delete('/{id}', [MangueraController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/asignar-medidor', [MangueraController::class, 'asignarMedidor'])->name('asignar-medidor');
+        Route::post('/{id}/quitar-medidor', [MangueraController::class, 'quitarMedidor'])->name('quitar-medidor');
+    });
+    
+    // ==================== MEDIDORES ====================
+    Route::prefix('medidores')->name('medidores.')->group(function () {
+        Route::get('/', [MedidorController::class, 'index'])->name('index');
+        Route::get('/create', [MedidorController::class, 'create'])->name('create');
+        Route::post('/', [MedidorController::class, 'store'])->name('store');
+        Route::get('/{id}', [MedidorController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [MedidorController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [MedidorController::class, 'update'])->name('update');
+        Route::delete('/{id}', [MedidorController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/calibrar', [MedidorController::class, 'registrarCalibracion'])->name('registrar-calibracion');
+        Route::get('/{id}/probar-comunicacion', [MedidorController::class, 'probarComunicacion'])->name('probar-comunicacion');
+        Route::get('/{id}/verificar-estado', [MedidorController::class, 'verificarEstado'])->name('verificar-estado');
+        Route::get('/{id}/historial-calibraciones', [MedidorController::class, 'historialCalibraciones'])->name('historial-calibraciones');
+    });
+    
+    // ==================== PEDIMENTOS ====================
+    Route::prefix('pedimentos')->name('pedimentos.')->group(function () {
+        Route::get('/', [PedimentoController::class, 'index'])->name('index');
+        Route::get('/create', [PedimentoController::class, 'create'])->name('create');
+        Route::post('/', [PedimentoController::class, 'store'])->name('store');
+        Route::get('/{id}', [PedimentoController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [PedimentoController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PedimentoController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PedimentoController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/cancelar', [PedimentoController::class, 'cancelar'])->name('cancelar');
+        Route::post('/{id}/utilizado', [PedimentoController::class, 'marcarUtilizado'])->name('utilizado');
+        Route::get('/resumen/comercio-exterior', [PedimentoController::class, 'resumenComercioExterior'])->name('resumen-comercio-exterior');
+    });
+    
+    // ==================== PERMISOS ====================
+    Route::prefix('permissions')->name('permissions.')->group(function () {
+        Route::get('/', [PermissionController::class, 'index'])->name('index');
+        Route::get('/create', [PermissionController::class, 'create'])->name('create');
+        Route::post('/', [PermissionController::class, 'store'])->name('store');
+        Route::get('/{id}', [PermissionController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [PermissionController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PermissionController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PermissionController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::get('/por-modulo/list', [PermissionController::class, 'porModulo'])->name('por-modulo');
+        Route::get('/verificar/permiso', [PermissionController::class, 'verificar'])->name('verificar');
+    });
+    
+    // ==================== PRODUCTOS ====================
+    Route::prefix('productos')->name('productos.')->group(function () {
+        Route::get('/', [ProductoController::class, 'index'])->name('index');
+        Route::get('/create', [ProductoController::class, 'create'])->name('create');
+        Route::post('/', [ProductoController::class, 'store'])->name('store');
+        Route::get('/{id}', [ProductoController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [ProductoController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [ProductoController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ProductoController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::get('/tipo/{tipo}', [ProductoController::class, 'porTipo'])->name('por-tipo');
+        Route::get('/catalogo/list', [ProductoController::class, 'catalogo'])->name('catalogo');
+        Route::get('/buscar/clave-sat/{claveSat}', [ProductoController::class, 'buscarPorClaveSat'])->name('buscar-clave-sat');
+    });
+    
+    // ==================== REGISTROS VOLUMÉTRICOS ====================
+    Route::prefix('registros-volumetricos')->name('registros-volumetricos.')->group(function () {
+        Route::get('/', [RegistroVolumetricoController::class, 'index'])->name('index');
+        Route::get('/create', [RegistroVolumetricoController::class, 'create'])->name('create');
+        Route::post('/', [RegistroVolumetricoController::class, 'store'])->name('store');
+        Route::get('/{id}', [RegistroVolumetricoController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [RegistroVolumetricoController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [RegistroVolumetricoController::class, 'update'])->name('update');
+        Route::delete('/{id}', [RegistroVolumetricoController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/validar', [RegistroVolumetricoController::class, 'validar'])->name('validar');
+        Route::post('/{id}/cancelar', [RegistroVolumetricoController::class, 'cancelar'])->name('cancelar');
+        Route::get('/resumen/diario', [RegistroVolumetricoController::class, 'resumenDiario'])->name('resumen-diario');
+        Route::get('/estadisticas/mensuales', [RegistroVolumetricoController::class, 'estadisticasMensuales'])->name('estadisticas-mensuales');
+        Route::post('/{id}/asociar-dictamen', [RegistroVolumetricoController::class, 'asociarDictamen'])->name('asociar-dictamen');
+    });
+    
+    // ==================== REPORTES SAT ====================
     Route::prefix('reportes-sat')->name('reportes-sat.')->group(function () {
         Route::get('/', [ReporteSatController::class, 'index'])->name('index');
         Route::get('/create', [ReporteSatController::class, 'create'])->name('create');
@@ -257,67 +310,84 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/edit', [ReporteSatController::class, 'edit'])->name('edit');
         Route::put('/{id}', [ReporteSatController::class, 'update'])->name('update');
         Route::delete('/{id}', [ReporteSatController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/firmar', [ReporteSatController::class, 'firmar'])->name('firmar');
+        
+        // Rutas específicas
         Route::post('/{id}/enviar', [ReporteSatController::class, 'enviar'])->name('enviar');
-        Route::get('/{id}/descargar-xml', [ReporteSatController::class, 'descargarXml'])->name('descargar-xml');
-        Route::get('/{id}/descargar-pdf', [ReporteSatController::class, 'descargarPdf'])->name('descargar-pdf');
-        Route::get('/{id}/acuse', [ReporteSatController::class, 'acuse'])->name('acuse');
+        Route::post('/{id}/firmar', [ReporteSatController::class, 'firmar'])->name('firmar');
+        Route::post('/{id}/cancelar', [ReporteSatController::class, 'cancelar'])->name('cancelar');
+        Route::get('/historial/envios/{instalacionId}', [ReporteSatController::class, 'historialEnvios'])->name('historial-envios');
     });
     
-    // Bitácora
-    Route::prefix('bitacora')->name('bitacora.')->group(function () {
-        Route::get('/', [BitacoraController::class, 'index'])->name('index');
-        Route::get('/dashboard', [BitacoraController::class, 'dashboard'])->name('dashboard');
-        Route::get('/filtrar', [BitacoraController::class, 'filtrar'])->name('filtrar');
-        Route::get('/exportar-csv', [BitacoraController::class, 'exportarCsv'])->name('exportar-csv');
-        Route::get('/{id}', [BitacoraController::class, 'show'])->name('show');
+    // ==================== ROLES ====================
+    Route::prefix('roles')->name('roles.')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::get('/create', [RoleController::class, 'create'])->name('create');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{id}', [RoleController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [RoleController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{id}', [RoleController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/asignar-permisos', [RoleController::class, 'asignarPermisos'])->name('asignar-permisos');
+        Route::post('/{id}/clonar', [RoleController::class, 'clonar'])->name('clonar');
+        Route::get('/matriz/permisos', [RoleController::class, 'matrizPermisos'])->name('matriz-permisos');
     });
     
-    // Configuración
-    Route::prefix('configuracion')->name('configuracion.')->group(function () {
-        Route::get('/', [ConfiguracionController::class, 'index'])->name('index');
-        Route::put('/', [ConfiguracionController::class, 'update'])->name('update');
-        Route::post('/backup-manual', [ConfiguracionController::class, 'backupManual'])->name('backup-manual');
-        Route::post('/limpiar-cache', [ConfiguracionController::class, 'limpiarCache'])->name('limpiar-cache');
-        Route::get('/logs', [ConfiguracionController::class, 'logs'])->name('logs');
-        Route::get('/logs/view', [ConfiguracionController::class, 'viewLog'])->name('logs.view');
-        Route::get('/logs/download', [ConfiguracionController::class, 'downloadLog'])->name('logs.download');
-        Route::post('/logs/clear', [ConfiguracionController::class, 'clearLog'])->name('logs.clear');
-        Route::get('/exportar', [ConfiguracionController::class, 'exportar'])->name('exportar');
-        Route::post('/importar', [ConfiguracionController::class, 'importar'])->name('importar');
+    // ==================== TANQUES ====================
+    Route::prefix('tanques')->name('tanques.')->group(function () {
+        Route::get('/', [TanqueController::class, 'index'])->name('index');
+        Route::get('/create', [TanqueController::class, 'create'])->name('create');
+        Route::post('/', [TanqueController::class, 'store'])->name('store');
+        Route::get('/{id}', [TanqueController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [TanqueController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [TanqueController::class, 'update'])->name('update');
+        Route::delete('/{id}', [TanqueController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/calibrar', [TanqueController::class, 'registrarCalibracion'])->name('registrar-calibracion');
+        Route::get('/{id}/verificar-estado', [TanqueController::class, 'verificarEstado'])->name('verificar-estado');
+        Route::post('/{id}/cambiar-producto', [TanqueController::class, 'cambiarProducto'])->name('cambiar-producto');
+        Route::get('/{id}/curva-calibracion', [TanqueController::class, 'curvaCalibracion'])->name('curva-calibracion');
+        Route::get('/{id}/historial-calibraciones', [TanqueController::class, 'historialCalibraciones'])->name('historial-calibraciones');
+    });
+    
+    // ==================== USUARIOS ====================
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{id}', [UserController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
+        
+        // Rutas específicas
+        Route::post('/{id}/bloquear', [UserController::class, 'bloquear'])->name('bloquear');
+        Route::post('/{id}/desbloquear', [UserController::class, 'desbloquear'])->name('desbloquear');
+        Route::post('/{id}/asignar-rol', [UserController::class, 'asignarRol'])->name('asignar-rol');
+        Route::post('/{id}/quitar-rol', [UserController::class, 'quitarRol'])->name('quitar-rol');
+        Route::get('/{id}/permisos', [UserController::class, 'permisos'])->name('permisos');
+        Route::get('/{id}/actividad', [UserController::class, 'actividad'])->name('actividad');
+    });
+    
+    // ==================== API INTERNAS (para AJAX) ====================
+    Route::prefix('api')->name('api.')->group(function () {
+        // Dashboard
+        Route::get('/dashboard/resumen', [DashboardController::class, 'resumen'])->name('dashboard.resumen');
+        
+        // Notificaciones
+        Route::get('/notificaciones', [DashboardController::class, 'notificaciones'])->name('notificaciones');
+        
+        // Catálogos para selects
+        Route::get('/catalogos', [App\Http\Controllers\Api\CatalogoController::class, 'index'])->name('catalogos');
     });
 });
 
-// Rutas de API internas (para consumo AJAX)
-Route::prefix('api')->name('api.')->middleware('auth')->group(function () {
-    // Tanques
-    Route::get('/tanques/por-instalacion/{instalacionId}', [TanqueController::class, 'getByInstalacion'])->name('tanques.por-instalacion');
-    Route::get('/tanques/{id}/capacidad-disponible', [TanqueController::class, 'getCapacidadDisponible'])->name('tanques.capacidad-disponible');
-    
-    // Medidores
-    Route::get('/medidores/por-instalacion/{instalacionId}', [MedidorController::class, 'getByInstalacion'])->name('medidores.por-instalacion');
-    Route::get('/medidores/por-tanque/{tanqueId}', [MedidorController::class, 'getByTanque'])->name('medidores.por-tanque');
-    
-    // Dispensarios
-    Route::get('/dispensarios/por-instalacion/{instalacionId}', [DispensarioController::class, 'getByInstalacion'])->name('dispensarios.por-instalacion');
-    
-    // Mangueras
-    Route::get('/mangueras/por-dispensario/{dispensarioId}', [MangueraController::class, 'getByDispensario'])->name('mangueras.por-dispensario');
-    
-    // Existencias
-    Route::get('/existencias/disponibles', [ExistenciaController::class, 'getDisponibles'])->name('existencias.disponibles');
-    
-    // CFDI
-    Route::get('/cfdi/disponibles', [CfdiController::class, 'getDisponibles'])->name('cfdi.disponibles');
-    
-    // Pedimentos
-    Route::get('/pedimentos/disponibles', [PedimentoController::class, 'getDisponibles'])->name('pedimentos.disponibles');
-    
-    // Registros Volumétricos
-    Route::get('/registros-volumetricos/disponibles', [RegistroVolumetricoController::class, 'getDisponibles'])->name('registros-volumetricos.disponibles');
-});
-
-// Fallback route
-Route::fallback(function () {
-    return redirect('/');
+// Ruta raíz redirige a dashboard o login según autenticación
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
 });

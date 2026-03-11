@@ -1,131 +1,153 @@
 @extends('layouts.app')
 
 @section('title', 'Permisos')
+@section('header', 'Administración de Permisos')
 
-@section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Permisos</h6>
-                <a href="{{ route('permissions.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Permiso
-                </a>
-            </div>
-            <div class="card-body">
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="permissionsTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Nombre para mostrar</th>
-                                <th>Descripción</th>
-                                <th>Roles</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($permisos['data'] ?? [] as $permiso)
-                            <tr>
-                                <td>{{ $permiso['id'] }}</td>
-                                <td><code>{{ $permiso['name'] }}</code></td>
-                                <td>{{ $permiso['display_name'] }}</td>
-                                <td>{{ $permiso['description'] ?? 'Sin descripción' }}</td>
-                                <td class="text-center">{{ count($permiso['roles'] ?? []) }}</td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('permissions.show', $permiso['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('permissions.edit', $permiso['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-delete" 
-                                                data-id="{{ $permiso['id'] }}"
-                                                data-name="{{ $permiso['display_name'] }}"
-                                                title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($permisos['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $permisos['meta']['from'] ?? 0 }} a {{ $permisos['meta']['to'] ?? 0 }} de {{ $permisos['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($permisos['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Formulario de eliminación -->
-<form id="deleteForm" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
+@section('actions')
+<a href="{{ route('permissions.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Permiso
+</a>
+<a href="{{ route('permissions.por-modulo') }}" class="btn btn-sm btn-info">
+    <i class="bi bi-grid-3x3-gap-fill"></i> Ver por Módulo
+</a>
 @endsection
 
-@push('scripts')
-<script>
-$(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#permissionsTable').DataTable({
-        pageLength: {{ $permisos['meta']['per_page'] ?? 10 }},
-        order: [[0, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
-    });
-
-    // Botones de eliminar
-    $('.btn-delete').click(function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
+@section('content')
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('permissions.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="name" class="form-label">Nombre</label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       value="{{ request('name') }}" placeholder="Buscar por nombre">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="slug" class="form-label">Slug</label>
+                <input type="text" class="form-control" id="slug" name="slug" 
+                       value="{{ request('slug') }}" placeholder="Buscar por slug">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="modulo" class="form-label">Módulo</label>
+                <input type="text" class="form-control" id="modulo" name="modulo" 
+                       value="{{ request('modulo') }}" placeholder="Buscar por módulo">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="activo" class="form-label">Activo</label>
+                <select class="form-select" id="activo" name="activo">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('activo') == '1' ? 'selected' : '' }}>Activos</option>
+                    <option value="0" {{ request('activo') == '0' ? 'selected' : '' }}>Inactivos</option>
+                </select>
+            </div>
+            
+            <div class="col-md-1">
+                <label for="per_page" class="form-label">Página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('permissions.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
+                </a>
+            </div>
+        </form>
         
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Deseas eliminar el permiso "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var form = $('#deleteForm');
-                form.attr('action', '{{ url("permissions") }}/' + id);
-                form.submit();
-            }
-        });
-    });
-});
-</script>
-@endpush
+        <!-- Tabla de permisos -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Slug</th>
+                        <th>Módulo</th>
+                        <th>Descripción</th>
+                        <th>Activo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($permisos as $permiso)
+                        <tr>
+                            <td>{{ $permiso['id'] }}</td>
+                            <td><strong>{{ $permiso['name'] }}</strong></td>
+                            <td><code>{{ $permiso['slug'] }}</code></td>
+                            <td>
+                                <span class="badge bg-info">{{ $permiso['modulo'] ?? 'General' }}</span>
+                            </td>
+                            <td>{{ $permiso['description'] ?? '-' }}</td>
+                            <td>
+                                @if($permiso['activo'])
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('permissions.show', $permiso['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('permissions.edit', $permiso['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center">No hay permisos registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
+    </div>
+</div>
+@endsection

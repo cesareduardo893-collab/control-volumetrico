@@ -2,38 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class CertificadoVerificacionController extends Controller
+class CertificadoVerificacionController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
      * Listar certificados de verificación
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'instalacion_id', 'tipo_certificado', 'estado', 'fecha_inicio', 'fecha_fin', 'per_page'
-        ]);
+            $params = $request->only([
+                'contribuyente_id', 'folio', 'proveedor_rfc', 'resultado',
+                'fecha_emision_inicio', 'fecha_emision_fin', 'vigente',
+                'requiere_verificacion_extraordinaria', 'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/certificados-verificacion', $params);
+            $response = $this->apiGet('/api/certificados-verificacion', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $certificados = $this->apiResponseData($response);
-            return view('certificados-verificacion.index', compact('certificados'));
+            return $this->renderView('certificados-verificacion.index', $response, ['key' => 'certificados'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar certificados de verificación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar certificados');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -41,15 +40,24 @@ class CertificadoVerificacionController extends Controller
      */
     public function create()
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener instalaciones para el select
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
+            // Obtener contribuyentes para el select
+            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
 
-        return view('certificados-verificacion.create', compact('instalaciones'));
+            return view('certificados-verificacion.create', [
+                'contribuyentes' => $contribuyentes
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('certificados-verificacion.index')
+                ->with('error', 'Error al cargar formulario');
+        }
     }
 
     /**
@@ -57,35 +65,61 @@ class CertificadoVerificacionController extends Controller
      */
     public function store(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'required|integer|exists:instalaciones,id',
-            'numero_certificado' => 'required|string|max:50|unique:certificados_verificacion,numero_certificado',
-            'tipo_certificado' => 'required|in:inicial,periodico,extraordinario',
+        $request->validate([
+            'folio' => 'required|string|max:255',
+            'contribuyente_id' => 'required|integer',
+            'proveedor_rfc' => 'required|string|size:13',
+            'proveedor_nombre' => 'required|string|max:255',
             'fecha_emision' => 'required|date',
-            'fecha_vigencia' => 'required|date|after:fecha_emision',
-            'estatus' => 'required|in:aprobado,rechazado,pendiente',
-            'observaciones' => 'nullable|string|max:500',
-            'resultado' => 'required|in:aprobado,rechazado,observaciones',
-            'puntos_atencion' => 'nullable|integer|min:0',
-            'puntos_criticos' => 'nullable|integer|min:0',
-            'puntos_leves' => 'nullable|integer|min:0',
-            'usuario_elaboracion' => 'required|integer|exists:users,id',
-            'usuario_autorizacion' => 'nullable|integer|exists:users,id',
-            'activo' => 'sometimes|boolean'
+            'fecha_inicio_verificacion' => 'required|date',
+            'fecha_fin_verificacion' => 'required|date',
+            'resultado' => 'required|in:acreditado,no_acreditado',
+            'tabla_cumplimiento' => 'required|array',
         ]);
 
-        $response = $this->apiPost('/api/certificados-verificacion', $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('certificados-verificacion.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost('/api/certificados-verificacion', $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $certificadoData = $this->apiResponseData($response, []);
+                $certificadoId = $certificadoData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'verificacion',
+                    'CERTIFICADO_VERIFICACION_CREADO',
+                    'Verificación',
+                    "Certificado de verificación creado: {$request->folio}",
+                    'certificados_verificacion',
+                    $certificadoId
+                );
+
+                return redirect()->route('certificados-verificacion.show', $certificadoId)
+                    ->with('success', 'Certificado de verificación creado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear certificado'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear certificado de verificación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear certificado');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -93,17 +127,31 @@ class CertificadoVerificacionController extends Controller
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/certificados-verificacion/{$id}");
+            $response = $this->apiGet("/api/certificados-verificacion/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $certificado = $this->apiResponseData($response);
-            return view('certificados-verificacion.show', compact('certificado'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('certificados-verificacion.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Certificado no encontrado'));
+            }
+
+            $certificado = $this->apiResponseData($response, []);
+
+            return view('certificados-verificacion.show', [
+                'certificado' => $certificado
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar certificado de verificación', [
+                'error' => $e->getMessage(),
+                'certificado_id' => $id
+            ]);
+
+            return redirect()->route('certificados-verificacion.index')
+                ->with('error', 'Error al cargar certificado');
         }
-
-        return redirect()->route('certificados-verificacion.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -111,23 +159,31 @@ class CertificadoVerificacionController extends Controller
      */
     public function edit($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener instalaciones para el select
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
+            $response = $this->apiGet("/api/certificados-verificacion/{$id}");
 
-        $response = $this->apiGet("/api/certificados-verificacion/{$id}");
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('certificados-verificacion.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Certificado no encontrado'));
+            }
 
-        if ($this->apiResponseSuccessful($response)) {
-            $certificado = $this->apiResponseData($response);
-            return view('certificados-verificacion.edit', compact('certificado', 'instalaciones'));
+            $certificado = $this->apiResponseData($response, []);
+
+            return view('certificados-verificacion.edit', [
+                'certificado' => $certificado
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de edición', [
+                'error' => $e->getMessage(),
+                'certificado_id' => $id
+            ]);
+
+            return redirect()->route('certificados-verificacion.index')
+                ->with('error', 'Error al cargar formulario');
         }
-
-        return redirect()->route('certificados-verificacion.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -135,52 +191,124 @@ class CertificadoVerificacionController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'sometimes|integer|exists:instalaciones,id',
-            'numero_certificado' => 'sometimes|string|max:50',
-            'tipo_certificado' => 'sometimes|in:inicial,periodico,extraordinario',
-            'fecha_emision' => 'sometimes|date',
-            'fecha_vigencia' => 'sometimes|date|after:fecha_emision',
-            'estatus' => 'sometimes|in:aprobado,rechazado,pendiente',
-            'observaciones' => 'nullable|string|max:500',
-            'resultado' => 'sometimes|in:aprobado,rechazado,observaciones',
-            'puntos_atencion' => 'nullable|integer|min:0',
-            'puntos_criticos' => 'nullable|integer|min:0',
-            'puntos_leves' => 'nullable|integer|min:0',
-            'usuario_elaboracion' => 'sometimes|integer|exists:users,id',
-            'usuario_autorizacion' => 'nullable|integer|exists:users,id',
-            'activo' => 'sometimes|boolean'
+        $request->validate([
+            'observaciones' => 'nullable|string',
+            'vigente' => 'sometimes|boolean',
+            'fecha_caducidad' => 'nullable|date',
+            'requiere_verificacion_extraordinaria' => 'sometimes|boolean',
         ]);
 
-        $response = $this->apiPut("/api/certificados-verificacion/{$id}", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('certificados-verificacion.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPut("/api/certificados-verificacion/{$id}", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'verificacion',
+                    'CERTIFICADO_VERIFICACION_ACTUALIZADO',
+                    'Verificación',
+                    "Certificado de verificación actualizado ID: {$id}",
+                    'certificados_verificacion',
+                    $id
+                );
+
+                return redirect()->route('certificados-verificacion.show', $id)
+                    ->with('success', 'Certificado actualizado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al actualizar certificado'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar certificado de verificación', [
+                'error' => $e->getMessage(),
+                'certificado_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar certificado');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Eliminar certificado de verificación
+     * Verificar vigencia del certificado
      */
-    public function destroy($id)
+    public function verificarVigencia($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiDelete("/api/certificados-verificacion/{$id}");
+            $response = $this->apiGet("/api/certificados-verificacion/{$id}/verificar-vigencia");
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('certificados-verificacion.index')
-                ->with('success', $this->apiResponseMessage($response));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('certificados-verificacion.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al verificar vigencia'));
+            }
+
+            $resultado = $this->apiResponseData($response, []);
+
+            if (request()->expectsJson()) {
+                return $this->jsonSuccess($resultado, 'Vigencia verificada');
+            }
+
+            return view('certificados-verificacion.vigencia', [
+                'resultado' => $resultado
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al verificar vigencia', [
+                'error' => $e->getMessage(),
+                'certificado_id' => $id
+            ]);
+
+            return redirect()->route('certificados-verificacion.show', $id)
+                ->with('error', 'Error al verificar vigencia');
         }
+    }
 
-        return redirect()->route('certificados-verificacion.index')
-            ->with('error', $this->apiResponseMessage($response));
+    /**
+     * Obtener estadísticas de certificados
+     */
+    public function estadisticas(Request $request)
+    {
+        $request->validate([
+            'contribuyente_id' => 'required|integer',
+            'anio' => 'required|integer|min:2020',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet('/api/certificados-verificacion/estadisticas', $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar estadísticas'));
+            }
+
+            $estadisticas = $this->apiResponseData($response, []);
+
+            return view('certificados-verificacion.estadisticas', [
+                'estadisticas' => $estadisticas,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener estadísticas de certificados', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar estadísticas');
+        }
     }
 }

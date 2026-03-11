@@ -2,39 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class RegistroVolumetricoController extends Controller
+class RegistroVolumetricoController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
      * Listar registros volumétricos
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'instalacion_id', 'tanque_id', 'producto_id', 'tipo_movimiento', 
-            'fecha_inicio', 'fecha_fin', 'estado', 'per_page'
-        ]);
+            $params = $request->only([
+                'instalacion_id', 'tanque_id', 'medidor_id', 'producto_id',
+                'numero_registro', 'fecha', 'fecha_inicio', 'fecha_fin',
+                'tipo_registro', 'operacion', 'estado', 'documento_fiscal_uuid',
+                'rfc_contraparte', 'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/registros-volumetricos', $params);
+            $response = $this->apiGet('/api/registros-volumetricos', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $registros = $this->apiResponseData($response);
-            return view('registros-volumetricos.index', compact('registros'));
+            return $this->renderView('registros-volumetricos.index', $response, ['key' => 'registros'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar registros volumétricos', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar registros');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -42,25 +41,30 @@ class RegistroVolumetricoController extends Controller
      */
     public function create()
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener instalaciones, tanques y productos para los selects
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
+            // Obtener catálogos para los selects
+            $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
+            $tanques = $this->getCatalog('/api/tanques', ['activo' => true]);
+            $medidores = $this->getCatalog('/api/medidores', ['activo' => true]);
+            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
 
-        $tanquesResponse = $this->apiGet('/api/tanques');
-        $tanques = $this->apiResponseSuccessful($tanquesResponse) 
-            ? $this->apiResponseData($tanquesResponse) 
-            : [];
+            return view('registros-volumetricos.create', [
+                'instalaciones' => $instalaciones,
+                'tanques' => $tanques,
+                'medidores' => $medidores,
+                'productos' => $productos
+            ]);
 
-        $productosResponse = $this->apiGet('/api/productos');
-        $productos = $this->apiResponseSuccessful($productosResponse) 
-            ? $this->apiResponseData($productosResponse) 
-            : [];
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
 
-        return view('registros-volumetricos.create', compact('instalaciones', 'tanques', 'productos'));
+            return redirect()->route('registros-volumetricos.index')
+                ->with('error', 'Error al cargar formulario');
+        }
     }
 
     /**
@@ -68,41 +72,69 @@ class RegistroVolumetricoController extends Controller
      */
     public function store(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'required|integer|exists:instalaciones,id',
-            'tanque_id' => 'required|integer|exists:tanques,id',
-            'producto_id' => 'required|integer|exists:productos,id',
-            'tipo_movimiento' => 'required|in:entrada,salida,trasiego,ajuste',
-            'volumen_bruto' => 'required|numeric|min:0',
-            'volumen_neto' => 'required|numeric|min:0',
-            'temperatura' => 'required|numeric',
+        $request->validate([
+            'numero_registro' => 'required|string|max:255',
+            'instalacion_id' => 'required|integer',
+            'tanque_id' => 'required|integer',
+            'producto_id' => 'required|integer',
+            'fecha' => 'required|date',
+            'hora_inicio' => 'required|date_format:H:i:s',
+            'hora_fin' => 'required|date_format:H:i:s|after:hora_inicio',
+            'volumen_inicial' => 'required|numeric|min:0',
+            'volumen_final' => 'required|numeric|min:0',
+            'volumen_operacion' => 'required|numeric|min:0',
+            'temperatura_inicial' => 'required|numeric',
+            'temperatura_final' => 'required|numeric',
             'densidad' => 'required|numeric|min:0',
-            'factor_correccion' => 'required|numeric|min:0',
-            'fecha_movimiento' => 'required|date',
-            'hora_movimiento' => 'required|date_format:H:i:s',
-            'observaciones' => 'nullable|string|max:500',
-            'usuario_id' => 'required|integer|exists:users,id',
-            'medidor_id' => 'nullable|integer|exists:medidores,id',
-            'dispensario_id' => 'nullable|integer|exists:dispensarios,id',
-            'manguera_id' => 'nullable|integer|exists:mangueras,id',
-            'estado' => 'required|in:registrado,validado,anulado',
-            'motivo_anulacion' => 'nullable|string|max:500',
-            'dictamen_id' => 'nullable|integer|exists:dictamenes,id',
-            'activo' => 'sometimes|boolean'
+            'volumen_corregido' => 'required|numeric|min:0',
+            'tipo_registro' => 'required|in:operacion,acumulado,existencias',
+            'operacion' => 'required|in:recepcion,entrega,inventario_inicial,inventario_final,venta',
+            'estado' => 'required|in:PENDIENTE,PROCESADO,VALIDADO,ERROR,CANCELADO,CON_ALARMA',
         ]);
 
-        $response = $this->apiPost('/api/registros-volumetricos', $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('registros-volumetricos.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost('/api/registros-volumetricos', $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $registroData = $this->apiResponseData($response, []);
+                $registroId = $registroData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'operaciones_cotidianas',
+                    'REGISTRO_VOLUMETRICO_CREADO',
+                    'Registros Volumétricos',
+                    "Registro volumétrico creado: {$request->numero_registro}",
+                    'registros_volumetricos',
+                    $registroId
+                );
+
+                return redirect()->route('registros-volumetricos.show', $registroId)
+                    ->with('success', 'Registro volumétrico creado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear registro'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear registro volumétrico', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear registro');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -110,199 +142,81 @@ class RegistroVolumetricoController extends Controller
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/registros-volumetricos/{$id}");
+            $response = $this->apiGet("/api/registros-volumetricos/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $registro = $this->apiResponseData($response);
-            return view('registros-volumetricos.show', compact('registro'));
-        }
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('registros-volumetricos.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Registro no encontrado'));
+            }
 
-        return redirect()->route('registros-volumetricos.index')
-            ->with('error', $this->apiResponseMessage($response));
-    }
+            $registro = $this->apiResponseData($response, []);
 
-    /**
-     * Mostrar formulario de edición
-     */
-    public function edit($id)
-    {
-        $this->setApiToken(session('api_token'));
+            return view('registros-volumetricos.show', [
+                'registro' => $registro
+            ]);
 
-        // Obtener instalaciones, tanques y productos para los selects
-        $instalacionesResponse = $this->apiGet('/api/instalaciones');
-        $instalaciones = $this->apiResponseSuccessful($instalacionesResponse) 
-            ? $this->apiResponseData($instalacionesResponse) 
-            : [];
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar registro volumétrico', [
+                'error' => $e->getMessage(),
+                'registro_id' => $id
+            ]);
 
-        $tanquesResponse = $this->apiGet('/api/tanques');
-        $tanques = $this->apiResponseSuccessful($tanquesResponse) 
-            ? $this->apiResponseData($tanquesResponse) 
-            : [];
-
-        $productosResponse = $this->apiGet('/api/productos');
-        $productos = $this->apiResponseSuccessful($productosResponse) 
-            ? $this->apiResponseData($productosResponse) 
-            : [];
-
-        $response = $this->apiGet("/api/registros-volumetricos/{$id}");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $registro = $this->apiResponseData($response);
-            return view('registros-volumetricos.edit', compact('registro', 'instalaciones', 'tanques', 'productos'));
-        }
-
-        return redirect()->route('registros-volumetricos.index')
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Actualizar registro volumétrico
-     */
-    public function update(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'instalacion_id' => 'sometimes|integer|exists:instalaciones,id',
-            'tanque_id' => 'sometimes|integer|exists:tanques,id',
-            'producto_id' => 'sometimes|integer|exists:productos,id',
-            'tipo_movimiento' => 'sometimes|in:entrada,salida,trasiego,ajuste',
-            'volumen_bruto' => 'sometimes|numeric|min:0',
-            'volumen_neto' => 'sometimes|numeric|min:0',
-            'temperatura' => 'sometimes|numeric',
-            'densidad' => 'sometimes|numeric|min:0',
-            'factor_correccion' => 'sometimes|numeric|min:0',
-            'fecha_movimiento' => 'sometimes|date',
-            'hora_movimiento' => 'sometimes|date_format:H:i:s',
-            'observaciones' => 'nullable|string|max:500',
-            'usuario_id' => 'sometimes|integer|exists:users,id',
-            'medidor_id' => 'nullable|integer|exists:medidores,id',
-            'dispensario_id' => 'nullable|integer|exists:dispensarios,id',
-            'manguera_id' => 'nullable|integer|exists:mangueras,id',
-            'estado' => 'sometimes|in:registrado,validado,anulado',
-            'motivo_anulacion' => 'nullable|string|max:500',
-            'dictamen_id' => 'nullable|integer|exists:dictamenes,id',
-            'activo' => 'sometimes|boolean'
-        ]);
-
-        $response = $this->apiPut("/api/registros-volumetricos/{$id}", $data);
-
-        if ($this->apiResponseSuccessful($response)) {
             return redirect()->route('registros-volumetricos.index')
-                ->with('success', $this->apiResponseMessage($response));
+                ->with('error', 'Error al cargar registro');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Eliminar registro volumétrico
-     */
-    public function destroy($id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiDelete("/api/registros-volumetricos/{$id}");
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('registros-volumetricos.index')
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->route('registros-volumetricos.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
      * Validar registro volumétrico
      */
-    public function validar($id)
+    public function validar(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiPost("/api/registros-volumetricos/{$id}/validar");
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('registros-volumetricos.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->route('registros-volumetricos.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Asociar CFDI a registro volumétrico
-     */
-    public function asociarCfdi(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'cfdi_id' => 'required|integer|exists:cfdi,id'
+        $request->validate([
+            'observaciones_validacion' => 'nullable|string',
         ]);
 
-        $response = $this->apiPost("/api/registros-volumetricos/{$id}/asociar-cfdi", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('registros-volumetricos.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost("/api/registros-volumetricos/{$id}/validar", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'operaciones_cotidianas',
+                    'REGISTRO_VOLUMETRICO_VALIDADO',
+                    'Registros Volumétricos',
+                    "Registro volumétrico validado ID: {$id}",
+                    'registros_volumetricos',
+                    $id
+                );
+
+                return redirect()->route('registros-volumetricos.show', $id)
+                    ->with('success', 'Registro validado exitosamente');
+            }
+
+            if ($response->status === 403) {
+                return redirect()->back()
+                    ->with('error', 'El registro ya está validado');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al validar registro'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al validar registro volumétrico', [
+                'error' => $e->getMessage(),
+                'registro_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al validar registro');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Asociar pedimento a registro volumétrico
-     */
-    public function asociarPedimento(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'pedimento_id' => 'required|integer|exists:pedimentos,id'
-        ]);
-
-        $response = $this->apiPost("/api/registros-volumetricos/{$id}/asociar-pedimento", $data);
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('registros-volumetricos.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Marcar registro con alarma
-     */
-    public function marcarConAlarma(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'alarma_id' => 'required|integer|exists:alarmas,id',
-            'observaciones' => 'nullable|string|max:500'
-        ]);
-
-        $response = $this->apiPost("/api/registros-volumetricos/{$id}/marcar-con-alarma", $data);
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('registros-volumetricos.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -310,60 +224,164 @@ class RegistroVolumetricoController extends Controller
      */
     public function cancelar(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'motivo_cancelacion' => 'required|string|max:500',
-            'usuario_cancelacion' => 'required|integer|exists:users,id'
+        $request->validate([
+            'motivo_cancelacion' => 'required|string',
         ]);
 
-        $response = $this->apiPost("/api/registros-volumetricos/{$id}/cancelar", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('registros-volumetricos.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost("/api/registros-volumetricos/{$id}/cancelar", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'operaciones_cotidianas',
+                    'REGISTRO_VOLUMETRICO_CANCELADO',
+                    'Registros Volumétricos',
+                    "Registro volumétrico cancelado ID: {$id}",
+                    'registros_volumetricos',
+                    $id
+                );
+
+                return redirect()->route('registros-volumetricos.show', $id)
+                    ->with('success', 'Registro cancelado exitosamente');
+            }
+
+            if ($response->status === 403) {
+                return redirect()->back()
+                    ->with('error', 'El registro ya está cancelado');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al cancelar registro'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al cancelar registro volumétrico', [
+                'error' => $e->getMessage(),
+                'registro_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al cancelar registro');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
      * Obtener resumen diario
      */
-    public function resumenDiario($id)
+    public function resumenDiario(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'instalacion_id' => 'required|integer',
+            'fecha' => 'required|date',
+        ]);
 
-        $response = $this->apiGet("/api/registros-volumetricos/{$id}/resumen-diario");
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            $resumen = $this->apiResponseData($response);
-            return view('registros-volumetricos.resumen-diario', compact('resumen', 'id'));
+            $response = $this->apiGet('/api/registros-volumetricos/resumen-diario', $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al generar resumen'));
+            }
+
+            $resumen = $this->apiResponseData($response, []);
+
+            return view('registros-volumetricos.resumen-diario', [
+                'resumen' => $resumen,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener resumen diario', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al generar resumen');
         }
-
-        return redirect()->route('registros-volumetricos.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
      * Obtener estadísticas mensuales
      */
-    public function estadisticasMensuales($id)
+    public function estadisticasMensuales(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'instalacion_id' => 'required|integer',
+            'anio' => 'required|integer|min:2020',
+            'mes' => 'required|integer|min:1|max:12',
+        ]);
 
-        $params = request()->only(['mes', 'anio']);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/registros-volumetricos/{$id}/estadisticas-mensuales", $params);
+            $response = $this->apiGet('/api/registros-volumetricos/estadisticas-mensuales', $request->all());
 
-        if ($this->apiResponseSuccessful($response)) {
-            $estadisticas = $this->apiResponseData($response);
-            return view('registros-volumetricos.estadisticas-mensuales', compact('estadisticas', 'id'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar estadísticas'));
+            }
+
+            $estadisticas = $this->apiResponseData($response, []);
+
+            return view('registros-volumetricos.estadisticas', [
+                'estadisticas' => $estadisticas,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener estadísticas mensuales', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar estadísticas');
         }
+    }
 
-        return redirect()->route('registros-volumetricos.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
+    /**
+     * Asociar dictamen a registro volumétrico
+     */
+    public function asociarDictamen(Request $request, $id)
+    {
+        $request->validate([
+            'dictamen_id' => 'required|integer',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiPost("/api/registros-volumetricos/{$id}/asociar-dictamen", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'operaciones_cotidianas',
+                    'DICTAMEN_ASOCIADO_REGISTRO',
+                    'Registros Volumétricos',
+                    "Dictamen asociado a registro ID: {$id}",
+                    'registros_volumetricos',
+                    $id
+                );
+
+                return redirect()->route('registros-volumetricos.show', $id)
+                    ->with('success', 'Dictamen asociado exitosamente');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al asociar dictamen'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al asociar dictamen a registro', [
+                'error' => $e->getMessage(),
+                'registro_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al asociar dictamen');
+        }
     }
 }

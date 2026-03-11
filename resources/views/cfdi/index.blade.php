@@ -1,232 +1,248 @@
 @extends('layouts.app')
 
 @section('title', 'CFDI')
+@section('header', 'Comprobantes Fiscales Digitales (CFDI)')
+
+@section('actions')
+<a href="{{ route('cfdi.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo CFDI
+</a>
+<a href="{{ route('cfdi.resumen-fiscal') }}?contribuyente_rfc={{ request('contribuyente_rfc') }}&anio={{ now()->year }}" class="btn btn-sm btn-info">
+    <i class="bi bi-calculator"></i> Resumen Fiscal
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de CFDI</h6>
-                <a href="{{ route('cfdi.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo CFDI
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('cfdi.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="uuid" class="form-label">UUID</label>
+                <input type="text" class="form-control" id="uuid" name="uuid" 
+                       value="{{ request('uuid') }}" placeholder="Buscar por UUID">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="rfc_emisor" class="form-label">RFC Emisor</label>
+                <input type="text" class="form-control" id="rfc_emisor" name="rfc_emisor" 
+                       value="{{ request('rfc_emisor') }}" placeholder="Ej: AAA010101AAA">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="rfc_receptor" class="form-label">RFC Receptor</label>
+                <input type="text" class="form-control" id="rfc_receptor" name="rfc_receptor" 
+                       value="{{ request('rfc_receptor') }}" placeholder="Ej: AAA010101AAA">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tipo_operacion" class="form-label">Tipo Operación</label>
+                <select class="form-select" id="tipo_operacion" name="tipo_operacion">
+                    <option value="">Todos</option>
+                    <option value="adquisicion" {{ request('tipo_operacion') == 'adquisicion' ? 'selected' : '' }}>Adquisición</option>
+                    <option value="enajenacion" {{ request('tipo_operacion') == 'enajenacion' ? 'selected' : '' }}>Enajenación</option>
+                    <option value="servicio" {{ request('tipo_operacion') == 'servicio' ? 'selected' : '' }}>Servicio</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="producto_id" class="form-label">Producto</label>
+                <select class="form-select select2" id="producto_id" name="producto_id">
+                    <option value="">Todos</option>
+                    @foreach($productos ?? [] as $producto)
+                        <option value="{{ $producto['id'] }}" {{ request('producto_id') == $producto['id'] ? 'selected' : '' }}>
+                            {{ $producto['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control datepicker" id="fecha_inicio" 
+                       name="fecha_inicio" value="{{ request('fecha_inicio', now()->startOfMonth()->toDateString()) }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control datepicker" id="fecha_fin" 
+                       name="fecha_fin" value="{{ request('fecha_fin', now()->toDateString()) }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="estado" class="form-label">Estado</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option value="VIGENTE" {{ request('estado') == 'VIGENTE' ? 'selected' : '' }}>Vigente</option>
+                    <option value="CANCELADO" {{ request('estado') == 'CANCELADO' ? 'selected' : '' }}>Cancelado</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('cfdi.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterUUID" placeholder="UUID">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm" id="filterRFCEmisor" placeholder="RFC Emisor">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm" id="filterRFCReceptor" placeholder="RFC Receptor">
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterTipo">
-                            <option value="">Todos los tipos</option>
-                            <option value="ingreso">Ingreso</option>
-                            <option value="egreso">Egreso</option>
-                            <option value="traslado">Traslado</option>
-                            <option value="pago">Pago</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterEstado">
-                            <option value="">Todos los estados</option>
-                            <option value="vigente">Vigente</option>
-                            <option value="cancelado">Cancelado</option>
-                        </select>
+        </form>
+        
+        <!-- Resumen -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Total CFDI</h6>
+                        <h3>{{ $resumen['total'] ?? 0 }}</h3>
                     </div>
                 </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaInicio" placeholder="Fecha Inicio">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaFin" placeholder="Fecha Fin">
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterContribuyente">
-                            <option value="">Todos los contribuyentes</option>
-                            @foreach($contribuyentes ?? [] as $contribuyente)
-                                <option value="{{ $contribuyente['id'] }}">{{ $contribuyente['razon_social'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <button class="btn btn-primary btn-sm" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="btnClear">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Vigentes</h6>
+                        <h3>{{ $resumen['vigentes'] ?? 0 }}</h3>
                     </div>
                 </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="cfdiTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>UUID</th>
-                                <th>Fecha Emisión</th>
-                                <th>RFC Emisor</th>
-                                <th>RFC Receptor</th>
-                                <th>Tipo</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($cfdi['data'] ?? [] as $item)
-                            <tr>
-                                <td>{{ $item['id'] }}</td>
-                                <td>
-                                    <small>{{ substr($item['uuid'], 0, 8) }}...{{ substr($item['uuid'], -4) }}</small>
-                                </td>
-                                <td>{{ $item['fecha_emision'] }}</td>
-                                <td>{{ $item['rfc_emisor'] }}</td>
-                                <td>{{ $item['rfc_receptor'] }}</td>
-                                <td>
-                                    @switch($item['tipo_cfdi'])
-                                        @case('ingreso')
-                                            <span class="badge bg-success">Ingreso</span>
-                                            @break
-                                        @case('egreso')
-                                            <span class="badge bg-danger">Egreso</span>
-                                            @break
-                                        @case('traslado')
-                                            <span class="badge bg-info">Traslado</span>
-                                            @break
-                                        @case('pago')
-                                            <span class="badge bg-warning">Pago</span>
-                                            @break
-                                    @endswitch
-                                </td>
-                                <td class="text-end">${{ number_format($item['total'], 2) }}</td>
-                                <td>
-                                    @if($item['estado'] == 'vigente')
-                                        <span class="badge bg-success">Vigente</span>
-                                    @else
-                                        <span class="badge bg-danger">Cancelado</span>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h6>Cancelados</h6>
+                        <h3>{{ $resumen['cancelados'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6>Total (MXN)</h6>
+                        <h3>${{ number_format($resumen['total_monto'] ?? 0, 2) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabla de CFDI -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>RFC Emisor</th>
+                        <th>RFC Receptor</th>
+                        <th>Tipo</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($cfdis as $cfdi)
+                        <tr>
+                            <td><small>{{ substr($cfdi['uuid'], 0, 8) }}...{{ substr($cfdi['uuid'], -4) }}</small></td>
+                            <td>{{ $cfdi['rfc_emisor'] }}</td>
+                            <td>{{ $cfdi['rfc_receptor'] }}</td>
+                            <td>{{ ucfirst($cfdi['tipo_operacion']) }}</td>
+                            <td>{{ $cfdi['fecha_emision'] }}</td>
+                            <td>${{ number_format($cfdi['total'], 2) }}</td>
+                            <td>
+                                @if($cfdi['estado'] == 'VIGENTE')
+                                    <span class="badge bg-success">Vigente</span>
+                                @else
+                                    <span class="badge bg-secondary">Cancelado</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('cfdi.show', $cfdi['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if($cfdi['estado'] == 'VIGENTE')
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="confirmarCancelacion({{ $cfdi['id'] }})" title="Cancelar">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
                                     @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('cfdi.show', $item['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('cfdi.edit', $item['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-xml" 
-                                                data-id="{{ $item['id'] }}"
-                                                title="Ver XML">
-                                            <i class="fas fa-file-code"></i>
-                                        </button>
-                                        @if($item['estado'] == 'vigente')
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-cancelar" 
-                                                data-id="{{ $item['id'] }}"
-                                                title="Cancelar">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($cfdi['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $cfdi['meta']['from'] ?? 0 }} a {{ $cfdi['meta']['to'] ?? 0 }} de {{ $cfdi['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($cfdi['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                @endif
-            </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center">No hay CFDI registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 
-<!-- Modal XML -->
-<div class="modal fade" id="xmlModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">XML del CFDI</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <pre id="xmlContent" style="max-height: 400px; overflow: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;"></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary" id="btnDownloadXml">
-                    <i class="fas fa-download"></i> Descargar XML
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal PDF -->
-<div class="modal fade" id="pdfModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">PDF del CFDI</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <iframe id="pdfFrame" style="width: 100%; height: 500px;" frameborder="0"></iframe>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal cancelar -->
+<!-- Modal de cancelación -->
 <div class="modal fade" id="cancelarModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cancelar CFDI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
             <form id="cancelarForm" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Cancelar CFDI</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
-                    <p>¿Está seguro de cancelar este CFDI?</p>
-                    <p class="text-muted">Una vez cancelado, no podrá ser revertido.</p>
+                    <div class="mb-3">
+                        <label for="motivo_cancelacion" class="form-label">Motivo de Cancelación</label>
+                        <textarea class="form-control" id="motivo_cancelacion" name="motivo_cancelacion" 
+                                  rows="3" required></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
                 </div>
             </form>
@@ -238,122 +254,21 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#cfdiTable').DataTable({
-        pageLength: {{ $cfdi['meta']['per_page'] ?? 10 }},
-        order: [[2, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterUUID').val()) params.set('uuid', $('#filterUUID').val());
-        if ($('#filterRFCEmisor').val()) params.set('rfc_emisor', $('#filterRFCEmisor').val());
-        if ($('#filterRFCReceptor').val()) params.set('rfc_receptor', $('#filterRFCReceptor').val());
-        if ($('#filterTipo').val()) params.set('tipo_cfdi', $('#filterTipo').val());
-        if ($('#filterEstado').val()) params.set('estado', $('#filterEstado').val());
-        if ($('#filterFechaInicio').val()) params.set('fecha_inicio', $('#filterFechaInicio').val());
-        if ($('#filterFechaFin').val()) params.set('fecha_fin', $('#filterFechaFin').val());
-        if ($('#filterContribuyente').val()) params.set('contribuyente_id', $('#filterContribuyente').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
+    
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
     });
-
-    // Limpiar filtros
-    $('#btnClear').click(function() {
-        window.location.href = window.location.pathname;
-    });
-
-    // Botón XML
-    $('.btn-xml').click(function() {
-        var id = $(this).data('id');
-        
-        $.get('/cfdi/' + id + '/xml', function(data) {
-            var xmlContent = data.xml_content;
-            // Formatear XML para mejor visualización
-            var formattedXml = formatXml(xmlContent);
-            $('#xmlContent').text(formattedXml);
-            
-            $('#btnDownloadXml').off('click').on('click', function() {
-                downloadXml(xmlContent, 'cfdi_' + id + '.xml');
-            });
-            
-            $('#xmlModal').modal('show');
-        });
-    });
-
-    // Botón PDF
-    $('.btn-pdf').click(function() {
-        var id = $(this).data('id');
-        $('#pdfFrame').attr('src', '/cfdi/' + id + '/pdf');
-        $('#pdfModal').modal('show');
-    });
-
-    // Botón cancelar
-    $('.btn-cancelar').click(function() {
-        var id = $(this).data('id');
-        var form = $('#cancelarForm');
-        form.attr('action', '{{ url("cfdi") }}/' + id + '/cancelar');
-        $('#cancelarModal').modal('show');
-    });
-
-    // Función para formatear XML
-    function formatXml(xml) {
-        var formatted = '';
-        var reg = /(>)(<)(\/*)/g;
-        xml = xml.replace(reg, '$1\r\n$2$3');
-        var pad = 0;
-        jQuery.each(xml.split('\r\n'), function(index, node) {
-            var indent = 0;
-            if (node.match(/.+<\/\w[^>]*>$/)) {
-                indent = 0;
-            } else if (node.match(/^<\/\w/)) {
-                if (pad != 0) {
-                    pad -= 1;
-                }
-            } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) {
-                indent = 1;
-            } else {
-                indent = 0;
-            }
-
-            var padding = '';
-            for (var i = 0; i < pad; i++) {
-                padding += '  ';
-            }
-
-            formatted += padding + node + '\r\n';
-            pad += indent;
-        });
-
-        return formatted;
-    }
-
-    // Función para descargar XML
-    function downloadXml(content, filename) {
-        var element = document.createElement('a');
-        element.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(content));
-        element.setAttribute('download', filename);
-        element.style.display = 'none';
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-    }
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterUUID').val(urlParams.get('uuid') || '');
-    $('#filterRFCEmisor').val(urlParams.get('rfc_emisor') || '');
-    $('#filterRFCReceptor').val(urlParams.get('rfc_receptor') || '');
-    $('#filterTipo').val(urlParams.get('tipo_cfdi') || '');
-    $('#filterEstado').val(urlParams.get('estado') || '');
-    $('#filterFechaInicio').val(urlParams.get('fecha_inicio') || '');
-    $('#filterFechaFin').val(urlParams.get('fecha_fin') || '');
-    $('#filterContribuyente').val(urlParams.get('contribuyente_id') || '');
 });
+
+function confirmarCancelacion(id) {
+    $('#cancelarForm').attr('action', `{{ url('cfdi') }}/${id}/cancelar`);
+    new bootstrap.Modal(document.getElementById('cancelarModal')).show();
+}
 </script>
 @endpush

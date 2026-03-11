@@ -2,38 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class InstalacionController extends Controller
+class InstalacionController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
      * Listar instalaciones
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'contribuyente_id', 'clave_instalacion', 'nombre', 'tipo_instalacion', 'activo', 'per_page'
-        ]);
+            $params = $request->only([
+                'contribuyente_id', 'clave_instalacion', 'nombre', 'tipo_instalacion',
+                'estatus', 'municipio', 'estado', 'activo', 'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/instalaciones', $params);
+            $response = $this->apiGet('/api/instalaciones', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $instalaciones = $this->apiResponseData($response);
-            return view('instalaciones.index', compact('instalaciones'));
+            return $this->renderView('instalaciones.index', $response, ['key' => 'instalaciones'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar instalaciones', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar instalaciones');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -41,15 +39,24 @@ class InstalacionController extends Controller
      */
     public function create()
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener contribuyentes para el select
-        $contribuyentesResponse = $this->apiGet('/api/contribuyentes');
-        $contribuyentes = $this->apiResponseSuccessful($contribuyentesResponse) 
-            ? $this->apiResponseData($contribuyentesResponse) 
-            : [];
+            // Obtener contribuyentes para el select
+            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
 
-        return view('instalaciones.create', compact('contribuyentes'));
+            return view('instalaciones.create', [
+                'contribuyentes' => $contribuyentes
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('instalaciones.index')
+                ->with('error', 'Error al cargar formulario');
+        }
     }
 
     /**
@@ -57,48 +64,61 @@ class InstalacionController extends Controller
      */
     public function store(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'contribuyente_id' => 'required|integer|exists:contribuyentes,id',
-            'clave_instalacion' => 'required|string|max:50|unique:instalaciones,clave_instalacion',
+        $request->validate([
+            'contribuyente_id' => 'required|integer',
+            'clave_instalacion' => 'required|string|max:255',
             'nombre' => 'required|string|max:255',
-            'tipo_instalacion' => 'required|in:estacion_servicio,almacenamiento,transporte',
+            'tipo_instalacion' => 'required|string|max:255',
             'domicilio' => 'required|string|max:255',
             'codigo_postal' => 'required|string|size:5',
-            'latitud' => 'nullable|numeric',
-            'longitud' => 'nullable|numeric',
-            'telefono' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'horario_atencion' => 'nullable|string|max:255',
-            'activo' => 'sometimes|boolean',
-            // Configuración de red
-            'ip_servidor' => 'nullable|ip',
-            'puerto_servidor' => 'nullable|integer|min:1|max:65535',
-            'protocolo_comunicacion' => 'nullable|in:TCP,UDP,HTTP,HTTPS',
-            'intervalo_comunicacion' => 'nullable|integer|min:1',
-            'timeout_comunicacion' => 'nullable|integer|min:1',
-            // Configuración de alarmas
-            'umbral_temperatura_min' => 'nullable|numeric',
-            'umbral_temperatura_max' => 'nullable|numeric',
-            'umbral_presion_min' => 'nullable|numeric',
-            'umbral_presion_max' => 'nullable|numeric',
-            'umbral_nivel_min' => 'nullable|numeric',
-            'umbral_nivel_max' => 'nullable|numeric',
-            'umbral_flujo_min' => 'nullable|numeric',
-            'umbral_flujo_max' => 'nullable|numeric'
+            'municipio' => 'required|string|max:255',
+            'estado' => 'required|string|max:255',
+            'estatus' => 'required|in:OPERACION,SUSPENDIDA,CANCELADA',
         ]);
 
-        $response = $this->apiPost('/api/instalaciones', $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('instalaciones.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost('/api/instalaciones', $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $instalacionData = $this->apiResponseData($response, []);
+                $instalacionId = $instalacionData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'configuracion',
+                    'INSTALACION_CREADA',
+                    'Instalaciones',
+                    "Instalación creada: {$request->clave_instalacion}",
+                    'instalaciones',
+                    $instalacionId
+                );
+
+                return redirect()->route('instalaciones.show', $instalacionId)
+                    ->with('success', 'Instalación creada exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear instalación'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear instalación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear instalación');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -106,17 +126,31 @@ class InstalacionController extends Controller
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/instalaciones/{$id}");
+            $response = $this->apiGet("/api/instalaciones/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $instalacion = $this->apiResponseData($response);
-            return view('instalaciones.show', compact('instalacion'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('instalaciones.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Instalación no encontrada'));
+            }
+
+            $instalacion = $this->apiResponseData($response, []);
+
+            return view('instalaciones.show', [
+                'instalacion' => $instalacion
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar instalación', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
+
+            return redirect()->route('instalaciones.index')
+                ->with('error', 'Error al cargar instalación');
         }
-
-        return redirect()->route('instalaciones.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -124,23 +158,31 @@ class InstalacionController extends Controller
      */
     public function edit($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener contribuyentes para el select
-        $contribuyentesResponse = $this->apiGet('/api/contribuyentes');
-        $contribuyentes = $this->apiResponseSuccessful($contribuyentesResponse) 
-            ? $this->apiResponseData($contribuyentesResponse) 
-            : [];
+            $response = $this->apiGet("/api/instalaciones/{$id}");
 
-        $response = $this->apiGet("/api/instalaciones/{$id}");
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('instalaciones.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Instalación no encontrada'));
+            }
 
-        if ($this->apiResponseSuccessful($response)) {
-            $instalacion = $this->apiResponseData($response);
-            return view('instalaciones.edit', compact('instalacion', 'contribuyentes'));
+            $instalacion = $this->apiResponseData($response, []);
+
+            return view('instalaciones.edit', [
+                'instalacion' => $instalacion
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de edición', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
+
+            return redirect()->route('instalaciones.index')
+                ->with('error', 'Error al cargar formulario');
         }
-
-        return redirect()->route('instalaciones.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -148,48 +190,59 @@ class InstalacionController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'contribuyente_id' => 'sometimes|integer|exists:contribuyentes,id',
-            'clave_instalacion' => 'sometimes|string|max:50|unique:instalaciones,clave_instalacion,' . $id,
+        $request->validate([
+            'clave_instalacion' => "sometimes|string|max:255",
             'nombre' => 'sometimes|string|max:255',
-            'tipo_instalacion' => 'sometimes|in:estacion_servicio,almacenamiento,transporte',
+            'tipo_instalacion' => 'sometimes|string|max:255',
             'domicilio' => 'sometimes|string|max:255',
             'codigo_postal' => 'sometimes|string|size:5',
-            'latitud' => 'nullable|numeric',
-            'longitud' => 'nullable|numeric',
-            'telefono' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'horario_atencion' => 'nullable|string|max:255',
+            'municipio' => 'sometimes|string|max:255',
+            'estado' => 'sometimes|string|max:255',
+            'estatus' => 'sometimes|in:OPERACION,SUSPENDIDA,CANCELADA',
             'activo' => 'sometimes|boolean',
-            // Configuración de red
-            'ip_servidor' => 'nullable|ip',
-            'puerto_servidor' => 'nullable|integer|min:1|max:65535',
-            'protocolo_comunicacion' => 'nullable|in:TCP,UDP,HTTP,HTTPS',
-            'intervalo_comunicacion' => 'nullable|integer|min:1',
-            'timeout_comunicacion' => 'nullable|integer|min:1',
-            // Configuración de alarmas
-            'umbral_temperatura_min' => 'nullable|numeric',
-            'umbral_temperatura_max' => 'nullable|numeric',
-            'umbral_presion_min' => 'nullable|numeric',
-            'umbral_presion_max' => 'nullable|numeric',
-            'umbral_nivel_min' => 'nullable|numeric',
-            'umbral_nivel_max' => 'nullable|numeric',
-            'umbral_flujo_min' => 'nullable|numeric',
-            'umbral_flujo_max' => 'nullable|numeric'
         ]);
 
-        $response = $this->apiPut("/api/instalaciones/{$id}", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('instalaciones.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPut("/api/instalaciones/{$id}", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'configuracion',
+                    'INSTALACION_ACTUALIZADA',
+                    'Instalaciones',
+                    "Instalación actualizada ID: {$id}",
+                    'instalaciones',
+                    $id
+                );
+
+                return redirect()->route('instalaciones.show', $id)
+                    ->with('success', 'Instalación actualizada exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al actualizar instalación'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar instalación', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar instalación');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -197,187 +250,180 @@ class InstalacionController extends Controller
      */
     public function destroy($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiDelete("/api/instalaciones/{$id}");
+            $response = $this->apiDelete("/api/instalaciones/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('instalaciones.index')
-                ->with('success', $this->apiResponseMessage($response));
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'configuracion',
+                    'INSTALACION_ELIMINADA',
+                    'Instalaciones',
+                    "Instalación eliminada ID: {$id}",
+                    'instalaciones',
+                    $id
+                );
+
+                return redirect()->route('instalaciones.index')
+                    ->with('success', 'Instalación eliminada exitosamente');
+            }
+
+            if ($response->status === 409) {
+                $error = $this->apiResponseData($response, 'No se puede eliminar la instalación');
+                return redirect()->back()
+                    ->with('error', $error);
+            }
+
+            return redirect()->back()
+                ->with('error', $this->apiResponseMessage($response, 'Error al eliminar instalación'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar instalación', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Error al eliminar instalación');
         }
-
-        return redirect()->route('instalaciones.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
      * Obtener tanques de la instalación
      */
-    public function tanques($id)
+    public function tanques(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = request()->only(['per_page']);
+            $params = $request->only(['estado', 'producto_id', 'activos', 'per_page']);
 
-        $response = $this->apiGet("/api/instalaciones/{$id}/tanques", $params);
+            $response = $this->apiGet("/api/instalaciones/{$id}/tanques", $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $tanques = $this->apiResponseData($response);
-            return view('instalaciones.tanques', compact('tanques', 'id'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('instalaciones.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al cargar tanques'));
+            }
+
+            $tanques = $this->apiResponseData($response, []);
+
+            return view('instalaciones.tanques', [
+                'tanques' => $tanques['data'] ?? $tanques,
+                'instalacion_id' => $id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar tanques de la instalación', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
+
+            return redirect()->route('instalaciones.show', $id)
+                ->with('error', 'Error al cargar tanques');
         }
-
-        return redirect()->route('instalaciones.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
      * Obtener medidores de la instalación
      */
-    public function medidores($id)
+    public function medidores(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = request()->only(['per_page']);
+            $params = $request->only(['tipo_medicion', 'estado', 'activos', 'calibracion_proxima', 'per_page']);
 
-        $response = $this->apiGet("/api/instalaciones/{$id}/medidores", $params);
+            $response = $this->apiGet("/api/instalaciones/{$id}/medidores", $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $medidores = $this->apiResponseData($response);
-            return view('instalaciones.medidores', compact('medidores', 'id'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('instalaciones.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al cargar medidores'));
+            }
+
+            $medidores = $this->apiResponseData($response, []);
+
+            return view('instalaciones.medidores', [
+                'medidores' => $medidores['data'] ?? $medidores,
+                'instalacion_id' => $id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar medidores de la instalación', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
+
+            return redirect()->route('instalaciones.show', $id)
+                ->with('error', 'Error al cargar medidores');
         }
-
-        return redirect()->route('instalaciones.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
      * Obtener dispensarios de la instalación
      */
-    public function dispensarios($id)
+    public function dispensarios(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = request()->only(['per_page']);
+            $params = $request->only(['estado', 'activos', 'per_page']);
 
-        $response = $this->apiGet("/api/instalaciones/{$id}/dispensarios", $params);
+            $response = $this->apiGet("/api/instalaciones/{$id}/dispensarios", $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $dispensarios = $this->apiResponseData($response);
-            return view('instalaciones.dispensarios', compact('dispensarios', 'id'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('instalaciones.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al cargar dispensarios'));
+            }
+
+            $dispensarios = $this->apiResponseData($response, []);
+
+            return view('instalaciones.dispensarios', [
+                'dispensarios' => $dispensarios['data'] ?? $dispensarios,
+                'instalacion_id' => $id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar dispensarios de la instalación', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
+
+            return redirect()->route('instalaciones.show', $id)
+                ->with('error', 'Error al cargar dispensarios');
         }
-
-        return redirect()->route('instalaciones.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Verificar comunicación de la instalación
-     */
-    public function verificarComunicacion($id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiGet("/api/instalaciones/{$id}/verificar-comunicacion");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $comunicacion = $this->apiResponseData($response);
-            return view('instalaciones.comunicacion', compact('comunicacion', 'id'));
-        }
-
-        return redirect()->route('instalaciones.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Obtener resumen operativo de la instalación
+     * Obtener resumen operativo
      */
     public function resumenOperativo($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/instalaciones/{$id}/resumen-operativo");
+            $response = $this->apiGet("/api/instalaciones/{$id}/resumen-operativo");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $resumen = $this->apiResponseData($response);
-            return view('instalaciones.resumen', compact('resumen', 'id'));
-        }
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('instalaciones.show', $id)
+                    ->with('error', $this->apiResponseMessage($response, 'Error al cargar resumen'));
+            }
 
-        return redirect()->route('instalaciones.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
-    }
+            $resumen = $this->apiResponseData($response, []);
 
-    /**
-     * Actualizar configuración de red
-     */
-    public function actualizarConfiguracionRed(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
+            return view('instalaciones.resumen-operativo', [
+                'resumen' => $resumen
+            ]);
 
-        $data = $request->validate([
-            'ip_servidor' => 'required|ip',
-            'puerto_servidor' => 'required|integer|min:1|max:65535',
-            'protocolo_comunicacion' => 'required|in:TCP,UDP,HTTP,HTTPS',
-            'intervalo_comunicacion' => 'required|integer|min:1',
-            'timeout_comunicacion' => 'required|integer|min:1'
-        ]);
+        } catch (\Exception $e) {
+            Log::error('Error al cargar resumen operativo', [
+                'error' => $e->getMessage(),
+                'instalacion_id' => $id
+            ]);
 
-        $response = $this->apiPut("/api/instalaciones/{$id}/configuracion-red", $data);
-
-        if ($this->apiResponseSuccessful($response)) {
             return redirect()->route('instalaciones.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
+                ->with('error', 'Error al cargar resumen');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Actualizar umbrales de alarma
-     */
-    public function actualizarUmbralesAlarma(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'umbral_temperatura_min' => 'required|numeric',
-            'umbral_temperatura_max' => 'required|numeric',
-            'umbral_presion_min' => 'required|numeric',
-            'umbral_presion_max' => 'required|numeric',
-            'umbral_nivel_min' => 'required|numeric',
-            'umbral_nivel_max' => 'required|numeric',
-            'umbral_flujo_min' => 'required|numeric',
-            'umbral_flujo_max' => 'required|numeric'
-        ]);
-
-        $response = $this->apiPut("/api/instalaciones/{$id}/umbrales-alarma", $data);
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('instalaciones.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Obtener reporte de cumplimiento normativo
-     */
-    public function reporteCumplimientoNormativo($id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiGet("/api/instalaciones/{$id}/reporte-cumplimiento");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $reporte = $this->apiResponseData($response);
-            return view('instalaciones.reporte-cumplimiento', compact('reporte', 'id'));
-        }
-
-        return redirect()->route('instalaciones.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
     }
 }

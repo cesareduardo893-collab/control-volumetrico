@@ -1,142 +1,221 @@
 @extends('layouts.app')
 
 @section('title', 'Bitácora de Eventos')
+@section('header', 'Bitácora de Eventos')
+
+@section('actions')
+<a href="{{ route('bitacora.exportar') }}" class="btn btn-sm btn-success">
+    <i class="bi bi-download"></i> Exportar
+</a>
+<a href="{{ route('bitacora.resumen') }}?fecha_inicio={{ now()->startOfMonth()->toDateString() }}&fecha_fin={{ now()->toDateString() }}" class="btn btn-sm btn-info">
+    <i class="bi bi-file-text"></i> Resumen
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Bitácora de Eventos</h6>
-                <div>
-                    <a href="{{ route('bitacora.dashboard') }}" class="btn btn-info btn-sm">
-                        <i class="fas fa-chart-pie"></i> Dashboard
-                    </a>
-                    <a href="{{ route('bitacora.exportar-csv') }}" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-csv"></i> Exportar CSV
-                    </a>
-                </div>
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('bitacora.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="usuario_id" class="form-label">Usuario</label>
+                <select class="form-select select2" id="usuario_id" name="usuario_id">
+                    <option value="">Todos</option>
+                    @foreach($usuarios ?? [] as $usuario)
+                        <option value="{{ $usuario['id'] }}" {{ request('usuario_id') == $usuario['id'] ? 'selected' : '' }}>
+                            {{ $usuario['nombres'] }} {{ $usuario['apellidos'] }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterUsuario">
-                            <option value="">Todos los usuarios</option>
-                            @foreach($usuarios ?? [] as $usuario)
-                                <option value="{{ $usuario['id'] }}">{{ $usuario['name'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterTipo">
-                            <option value="">Todos los tipos</option>
-                            <option value="login">Login</option>
-                            <option value="logout">Logout</option>
-                            <option value="create">Creación</option>
-                            <option value="update">Actualización</option>
-                            <option value="delete">Eliminación</option>
-                            <option value="view">Visualización</option>
-                            <option value="export">Exportación</option>
-                            <option value="import">Importación</option>
-                            <option value="sync">Sincronización</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaInicio" placeholder="Fecha Inicio">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaFin" placeholder="Fecha Fin">
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary btn-sm w-100" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="bitacoraTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha/Hora</th>
-                                <th>Usuario</th>
-                                <th>Tipo</th>
-                                <th>Módulo</th>
-                                <th>Acción</th>
-                                <th>Descripción</th>
-                                <th>IP</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($eventos['data'] ?? [] as $evento)
-                            <tr>
-                                <td>{{ $evento['id'] }}</td>
-                                <td>{{ $evento['fecha'] }} {{ $evento['hora'] }}</td>
-                                <td>{{ $evento['usuario']['name'] ?? 'Sistema' }}</td>
-                                <td>
-                                    @switch($evento['tipo_evento'])
-                                        @case('login')
-                                            <span class="badge bg-success">Login</span>
-                                            @break
-                                        @case('logout')
-                                            <span class="badge bg-secondary">Logout</span>
-                                            @break
-                                        @case('create')
-                                            <span class="badge bg-primary">Creación</span>
-                                            @break
-                                        @case('update')
-                                            <span class="badge bg-warning">Actualización</span>
-                                            @break
-                                        @case('delete')
-                                            <span class="badge bg-danger">Eliminación</span>
-                                            @break
-                                        @default
-                                            <span class="badge bg-info">{{ $evento['tipo_evento'] }}</span>
-                                    @endswitch
-                                </td>
-                                <td>{{ $evento['modulo'] }}</td>
-                                <td>{{ $evento['accion'] }}</td>
-                                <td>{{ Str::limit($evento['descripcion'], 50) }}</td>
-                                <td>{{ $evento['ip_address'] }}</td>
-                                <td class="text-center">
-                                    <a href="{{ route('bitacora.show', $evento['id']) }}" 
-                                       class="btn btn-info btn-sm" title="Ver detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($eventos['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $eventos['meta']['from'] ?? 0 }} a {{ $eventos['meta']['to'] ?? 0 }} de {{ $eventos['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($eventos['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                @endif
+            
+            <div class="col-md-2">
+                <label for="tipo_evento" class="form-label">Tipo Evento</label>
+                <select class="form-select" id="tipo_evento" name="tipo_evento">
+                    <option value="">Todos</option>
+                    <option value="LOGIN" {{ request('tipo_evento') == 'LOGIN' ? 'selected' : '' }}>Login</option>
+                    <option value="LOGOUT" {{ request('tipo_evento') == 'LOGOUT' ? 'selected' : '' }}>Logout</option>
+                    <option value="CREATE" {{ request('tipo_evento') == 'CREATE' ? 'selected' : '' }}>Creación</option>
+                    <option value="UPDATE" {{ request('tipo_evento') == 'UPDATE' ? 'selected' : '' }}>Actualización</option>
+                    <option value="DELETE" {{ request('tipo_evento') == 'DELETE' ? 'selected' : '' }}>Eliminación</option>
+                    <option value="VIEW" {{ request('tipo_evento') == 'VIEW' ? 'selected' : '' }}>Vista</option>
+                    <option value="EXPORT" {{ request('tipo_evento') == 'EXPORT' ? 'selected' : '' }}>Exportación</option>
+                </select>
             </div>
+            
+            <div class="col-md-2">
+                <label for="modulo" class="form-label">Módulo</label>
+                <select class="form-select" id="modulo" name="modulo">
+                    <option value="">Todos</option>
+                    <option value="seguridad" {{ request('modulo') == 'seguridad' ? 'selected' : '' }}>Seguridad</option>
+                    <option value="usuarios" {{ request('modulo') == 'usuarios' ? 'selected' : '' }}>Usuarios</option>
+                    <option value="roles" {{ request('modulo') == 'roles' ? 'selected' : '' }}>Roles</option>
+                    <option value="permisos" {{ request('modulo') == 'permisos' ? 'selected' : '' }}>Permisos</option>
+                    <option value="instalaciones" {{ request('modulo') == 'instalaciones' ? 'selected' : '' }}>Instalaciones</option>
+                    <option value="tanques" {{ request('modulo') == 'tanques' ? 'selected' : '' }}>Tanques</option>
+                    <option value="medidores" {{ request('modulo') == 'medidores' ? 'selected' : '' }}>Medidores</option>
+                    <option value="dispensarios" {{ request('modulo') == 'dispensarios' ? 'selected' : '' }}>Dispensarios</option>
+                    <option value="registros_volumetricos" {{ request('modulo') == 'registros_volumetricos' ? 'selected' : '' }}>Registros Volumétricos</option>
+                    <option value="existencias" {{ request('modulo') == 'existencias' ? 'selected' : '' }}>Existencias</option>
+                    <option value="alarmas" {{ request('modulo') == 'alarmas' ? 'selected' : '' }}>Alarmas</option>
+                    <option value="cfdi" {{ request('modulo') == 'cfdi' ? 'selected' : '' }}>CFDI</option>
+                    <option value="reportes_sat" {{ request('modulo') == 'reportes_sat' ? 'selected' : '' }}>Reportes SAT</option>
+                    <option value="dictamenes" {{ request('modulo') == 'dictamenes' ? 'selected' : '' }}>Dictámenes</option>
+                    <option value="pedimentos" {{ request('modulo') == 'pedimentos' ? 'selected' : '' }}>Pedimentos</option>
+                    <option value="contribuyentes" {{ request('modulo') == 'contribuyentes' ? 'selected' : '' }}>Contribuyentes</option>
+                    <option value="productos" {{ request('modulo') == 'productos' ? 'selected' : '' }}>Productos</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tabla" class="form-label">Tabla</label>
+                <input type="text" class="form-control" id="tabla" name="tabla" 
+                       value="{{ request('tabla') }}" placeholder="Ej: users">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="registro_id" class="form-label">ID del Registro</label>
+                <input type="text" class="form-control" id="registro_id" name="registro_id" 
+                       value="{{ request('registro_id') }}" placeholder="ID del registro">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control datepicker" id="fecha_inicio" 
+                       name="fecha_inicio" value="{{ request('fecha_inicio', now()->subDays(30)->toDateString()) }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control datepicker" id="fecha_fin" 
+                       name="fecha_fin" value="{{ request('fecha_fin', now()->toDateString()) }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="ip_address" class="form-label">Dirección IP</label>
+                <input type="text" class="form-control" id="ip_address" name="ip_address" 
+                       value="{{ request('ip_address') }}" placeholder="Ej: 192.168.1.1">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('bitacora.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
+                </a>
+            </div>
+        </form>
+        
+        <!-- Tabla de eventos -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="bitacoraTable">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Usuario</th>
+                        <th>Tipo Evento</th>
+                        <th>Módulo</th>
+                        <th>Descripción</th>
+                        <th>Tabla/Registro</th>
+                        <th>IP</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($eventos as $evento)
+                        <tr>
+                            <td>{{ $evento['fecha_hora'] }}</td>
+                            <td>
+                                @if($evento['usuario'])
+                                    {{ $evento['usuario']['nombres'] }} {{ $evento['usuario']['apellidos'] }}
+                                @else
+                                    <span class="text-muted">Sistema</span>
+                                @endif
+                            </td>
+                            <td>
+                                @php
+                                    $badgeClass = [
+                                        'LOGIN' => 'success',
+                                        'LOGOUT' => 'secondary',
+                                        'CREATE' => 'primary',
+                                        'UPDATE' => 'warning',
+                                        'DELETE' => 'danger',
+                                        'VIEW' => 'info',
+                                        'EXPORT' => 'dark'
+                                    ][$evento['tipo_evento']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $badgeClass }}">{{ $evento['tipo_evento'] }}</span>
+                            </td>
+                            <td>{{ $evento['modulo'] ?? '-' }}</td>
+                            <td>{{ Str::limit($evento['descripcion'], 50) }}</td>
+                            <td>
+                                @if($evento['tabla'])
+                                    {{ $evento['tabla'] }}<br>
+                                    <small>ID: {{ $evento['registro_id'] ?? '-' }}</small>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>{{ $evento['ip_address'] ?? '-' }}</td>
+                            <td>
+                                <a href="{{ route('bitacora.show', $evento['id']) }}" class="btn btn-sm btn-info" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center">No hay eventos registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 @endsection
@@ -144,33 +223,16 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#bitacoraTable').DataTable({
-        pageLength: {{ $eventos['meta']['per_page'] ?? 10 }},
-        order: [[1, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterUsuario').val()) params.set('usuario_id', $('#filterUsuario').val());
-        if ($('#filterTipo').val()) params.set('tipo_evento', $('#filterTipo').val());
-        if ($('#filterFechaInicio').val()) params.set('fecha_inicio', $('#filterFechaInicio').val());
-        if ($('#filterFechaFin').val()) params.set('fecha_fin', $('#filterFechaFin').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
+    
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
     });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterUsuario').val(urlParams.get('usuario_id') || '');
-    $('#filterTipo').val(urlParams.get('tipo_evento') || '');
-    $('#filterFechaInicio').val(urlParams.get('fecha_inicio') || '');
-    $('#filterFechaFin').val(urlParams.get('fecha_fin') || '');
 });
 </script>
 @endpush

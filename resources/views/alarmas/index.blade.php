@@ -1,231 +1,219 @@
 @extends('layouts.app')
 
 @section('title', 'Alarmas')
+@section('header', 'Alarmas')
+
+@section('actions')
+<a href="{{ route('alarmas.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nueva Alarma
+</a>
+<a href="{{ route('alarmas.estadisticas') }}?instalacion_id={{ request('instalacion_id') }}&fecha_inicio={{ request('fecha_inicio', now()->startOfMonth()->toDateString()) }}&fecha_fin={{ request('fecha_fin', now()->toDateString()) }}" class="btn btn-sm btn-info">
+    <i class="bi bi-graph-up"></i> Estadísticas
+</a>
+<a href="{{ route('alarmas.activas') }}" class="btn btn-sm btn-warning">
+    <i class="bi bi-exclamation-triangle"></i> Activas
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Alarmas</h6>
-                <div>
-                    <a href="{{ route('alarmas.dashboard') }}" class="btn btn-info btn-sm">
-                        <i class="fas fa-chart-pie"></i> Dashboard
-                    </a>
-                </div>
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('alarmas.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="componente_tipo" class="form-label">Tipo de Componente</label>
+                <select class="form-select" id="componente_tipo" name="componente_tipo">
+                    <option value="">Todos</option>
+                    <option value="tanque" {{ request('componente_tipo') == 'tanque' ? 'selected' : '' }}>Tanque</option>
+                    <option value="medidor" {{ request('componente_tipo') == 'medidor' ? 'selected' : '' }}>Medidor</option>
+                    <option value="dispensario" {{ request('componente_tipo') == 'dispensario' ? 'selected' : '' }}>Dispensario</option>
+                    <option value="manguera" {{ request('componente_tipo') == 'manguera' ? 'selected' : '' }}>Manguera</option>
+                </select>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterInstalacion">
-                            <option value="">Todas las instalaciones</option>
-                            @foreach($instalaciones ?? [] as $instalacion)
-                                <option value="{{ $instalacion['id'] }}">{{ $instalacion['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterTipo">
-                            <option value="">Todos los tipos</option>
-                            <option value="nivel">Nivel</option>
-                            <option value="temperatura">Temperatura</option>
-                            <option value="presion">Presión</option>
-                            <option value="flujo">Flujo</option>
-                            <option value="equipo">Equipo</option>
-                            <option value="comunicacion">Comunicación</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterEstado">
-                            <option value="">Todos los estados</option>
-                            <option value="activa">Activa</option>
-                            <option value="atendida">Atendida</option>
-                            <option value="descartada">Descartada</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaInicio" placeholder="Fecha Inicio">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaFin" placeholder="Fecha Fin">
-                    </div>
-                    <div class="col-md-1">
-                        <button class="btn btn-primary btn-sm w-100" id="btnFilter">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="alarmasTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha/Hora</th>
-                                <th>Instalación</th>
-                                <th>Tipo</th>
-                                <th>Mensaje</th>
-                                <th>Valor</th>
-                                <th>Umbral</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($alarmas['data'] ?? [] as $alarma)
-                            <tr class="{{ $alarma['estado'] == 'activa' ? 'table-danger' : '' }}">
-                                <td>{{ $alarma['id'] }}</td>
-                                <td>{{ $alarma['fecha_alarma'] }} {{ $alarma['hora_alarma'] }}</td>
-                                <td>{{ $alarma['instalacion']['nombre'] ?? 'N/A' }}</td>
-                                <td>
-                                    @switch($alarma['tipo_alarma'])
-                                        @case('nivel')
-                                            <span class="badge bg-warning">Nivel</span>
-                                            @break
-                                        @case('temperatura')
-                                            <span class="badge bg-danger">Temperatura</span>
-                                            @break
-                                        @case('presion')
-                                            <span class="badge bg-info">Presión</span>
-                                            @break
-                                        @case('flujo')
-                                            <span class="badge bg-primary">Flujo</span>
-                                            @break
-                                        @case('equipo')
-                                            <span class="badge bg-secondary">Equipo</span>
-                                            @break
-                                        @case('comunicacion')
-                                            <span class="badge bg-dark">Comunicación</span>
-                                            @break
-                                    @endswitch
-                                </td>
-                                <td>{{ $alarma['mensaje'] }}</td>
-                                <td class="text-end">{{ $alarma['valor'] ?? '-' }} {{ $alarma['unidad'] ?? '' }}</td>
-                                <td class="text-end">{{ $alarma['umbral'] ?? '-' }} {{ $alarma['unidad'] ?? '' }}</td>
-                                <td>
-                                    @if($alarma['estado'] == 'activa')
-                                        <span class="badge bg-danger">Activa</span>
-                                    @elseif($alarma['estado'] == 'atendida')
-                                        <span class="badge bg-success">Atendida</span>
-                                    @else
-                                        <span class="badge bg-secondary">Descartada</span>
+            
+            <div class="col-md-2">
+                <label for="gravedad" class="form-label">Gravedad</label>
+                <select class="form-select" id="gravedad" name="gravedad">
+                    <option value="">Todas</option>
+                    <option value="BAJA" {{ request('gravedad') == 'BAJA' ? 'selected' : '' }}>Baja</option>
+                    <option value="MEDIA" {{ request('gravedad') == 'MEDIA' ? 'selected' : '' }}>Media</option>
+                    <option value="ALTA" {{ request('gravedad') == 'ALTA' ? 'selected' : '' }}>Alta</option>
+                    <option value="CRITICA" {{ request('gravedad') == 'CRITICA' ? 'selected' : '' }}>Crítica</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="atendida" class="form-label">Atendida</label>
+                <select class="form-select" id="atendida" name="atendida">
+                    <option value="">Todas</option>
+                    <option value="1" {{ request('atendida') == '1' ? 'selected' : '' }}>Atendidas</option>
+                    <option value="0" {{ request('atendida') == '0' ? 'selected' : '' }}>Pendientes</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="estado_atencion" class="form-label">Estado</label>
+                <select class="form-select" id="estado_atencion" name="estado_atencion">
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE" {{ request('estado_atencion') == 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                    <option value="EN_PROCESO" {{ request('estado_atencion') == 'EN_PROCESO' ? 'selected' : '' }}>En Proceso</option>
+                    <option value="RESUELTA" {{ request('estado_atencion') == 'RESUELTA' ? 'selected' : '' }}>Resuelta</option>
+                    <option value="IGNORADA" {{ request('estado_atencion') == 'IGNORADA' ? 'selected' : '' }}>Ignorada</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control datepicker" id="fecha_inicio" 
+                       name="fecha_inicio" value="{{ request('fecha_inicio') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control datepicker" id="fecha_fin" 
+                       name="fecha_fin" value="{{ request('fecha_fin') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="numero_registro" class="form-label">Número de Registro</label>
+                <input type="text" class="form-control" id="numero_registro" 
+                       name="numero_registro" value="{{ request('numero_registro') }}">
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('alarmas.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
+                </a>
+            </div>
+        </form>
+        
+        <!-- Tabla de alarmas -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>N° Registro</th>
+                        <th>Fecha/Hora</th>
+                        <th>Componente</th>
+                        <th>Tipo Alarma</th>
+                        <th>Gravedad</th>
+                        <th>Estado</th>
+                        <th>Requiere Atención</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($alarmas as $alarma)
+                        <tr>
+                            <td>{{ $alarma['numero_registro'] }}</td>
+                            <td>{{ $alarma['fecha_hora'] }}</td>
+                            <td>
+                                {{ $alarma['componente_tipo'] }}<br>
+                                <small>{{ $alarma['componente_identificador'] }}</small>
+                            </td>
+                            <td>{{ $alarma['tipo_alarma']['nombre'] ?? $alarma['tipo_alarma_id'] }}</td>
+                            <td>
+                                @php
+                                    $badgeClass = [
+                                        'BAJA' => 'info',
+                                        'MEDIA' => 'warning',
+                                        'ALTA' => 'danger',
+                                        'CRITICA' => 'dark'
+                                    ][$alarma['gravedad']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $badgeClass }}">{{ $alarma['gravedad'] }}</span>
+                            </td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'PENDIENTE' => 'danger',
+                                        'EN_PROCESO' => 'warning',
+                                        'RESUELTA' => 'success',
+                                        'IGNORADA' => 'secondary'
+                                    ][$alarma['estado_atencion']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $alarma['estado_atencion'] }}</span>
+                            </td>
+                            <td>
+                                @if($alarma['requiere_atencion_inmediata'])
+                                    <span class="badge bg-danger">Sí</span>
+                                @else
+                                    <span class="badge bg-success">No</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('alarmas.show', $alarma['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if($alarma['estado_atencion'] == 'PENDIENTE')
+                                        <a href="{{ route('alarmas.atender.form', $alarma['id']) }}" class="btn btn-sm btn-warning" title="Atender">
+                                            <i class="bi bi-check-circle"></i>
+                                        </a>
                                     @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('alarmas.show', $alarma['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
+                                    @if(in_array($alarma['estado_atencion'], ['PENDIENTE', 'EN_PROCESO']))
+                                        <a href="{{ route('alarmas.actualizar-estado.form', $alarma['id']) }}" class="btn btn-sm btn-secondary" title="Actualizar Estado">
+                                            <i class="bi bi-arrow-repeat"></i>
                                         </a>
-                                        @if($alarma['estado'] == 'activa')
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-atender" 
-                                                data-id="{{ $alarma['id'] }}"
-                                                title="Atender">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button type="button" 
-                                                class="btn btn-warning btn-sm btn-descartar" 
-                                                data-id="{{ $alarma['id'] }}"
-                                                title="Descartar">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($alarmas['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $alarmas['meta']['from'] ?? 0 }} a {{ $alarmas['meta']['to'] ?? 0 }} de {{ $alarmas['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($alarmas['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                @endif
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center">No hay alarmas registradas</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal atender alarma -->
-<div class="modal fade" id="atenderModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="atenderForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Atender Alarma</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="estado" value="atendida">
-                    <input type="hidden" name="usuario_atencion" value="{{ session('user.id') }}">
-                    <input type="hidden" name="fecha_atencion" value="{{ date('Y-m-d') }}">
-                    <input type="hidden" name="hora_atencion" value="{{ date('H:i:s') }}">
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
                     
-                    <div class="mb-3">
-                        <label for="observaciones" class="form-label">Observaciones</label>
-                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Atender</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal descartar alarma -->
-<div class="modal fade" id="descartarModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="descartarForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Descartar Alarma</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="estado" value="descartada">
-                    <input type="hidden" name="usuario_atencion" value="{{ session('user.id') }}">
-                    <input type="hidden" name="fecha_atencion" value="{{ date('Y-m-d') }}">
-                    <input type="hidden" name="hora_atencion" value="{{ date('H:i:s') }}">
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
                     
-                    <div class="mb-3">
-                        <label for="observaciones_descartar" class="form-label">Motivo del descarte</label>
-                        <textarea class="form-control" id="observaciones_descartar" name="observaciones" rows="3" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning">Descartar</button>
-                </div>
-            </form>
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
         </div>
+        @endif
     </div>
 </div>
 @endsection
@@ -233,58 +221,11 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#alarmasTable').DataTable({
-        pageLength: {{ $alarmas['meta']['per_page'] ?? 10 }},
-        order: [[1, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterInstalacion').val()) params.set('instalacion_id', $('#filterInstalacion').val());
-        if ($('#filterTipo').val()) params.set('tipo_alarma', $('#filterTipo').val());
-        if ($('#filterEstado').val()) params.set('estado', $('#filterEstado').val());
-        if ($('#filterFechaInicio').val()) params.set('fecha_inicio', $('#filterFechaInicio').val());
-        if ($('#filterFechaFin').val()) params.set('fecha_fin', $('#filterFechaFin').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
-    });
-
-    // Botón atender
-    $('.btn-atender').click(function() {
-        var id = $(this).data('id');
-        var form = $('#atenderForm');
-        form.attr('action', '{{ url("alarmas") }}/' + id);
-        $('#atenderModal').modal('show');
-    });
-
-    // Botón descartar
-    $('.btn-descartar').click(function() {
-        var id = $(this).data('id');
-        var form = $('#descartarForm');
-        form.attr('action', '{{ url("alarmas") }}/' + id);
-        $('#descartarModal').modal('show');
-    });
-
-    // Actualización automática cada 30 segundos
-    setInterval(function() {
-        if (document.visibilityState === 'visible') {
-            location.reload();
-        }
-    }, 30000);
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterInstalacion').val(urlParams.get('instalacion_id') || '');
-    $('#filterTipo').val(urlParams.get('tipo_alarma') || '');
-    $('#filterEstado').val(urlParams.get('estado') || '');
-    $('#filterFechaInicio').val(urlParams.get('fecha_inicio') || '');
-    $('#filterFechaFin').val(urlParams.get('fecha_fin') || '');
 });
 </script>
 @endpush

@@ -1,204 +1,210 @@
 @extends('layouts.app')
 
 @section('title', 'Contribuyentes')
+@section('header', 'Administración de Contribuyentes')
+
+@section('actions')
+<a href="{{ route('contribuyentes.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Contribuyente
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Contribuyentes</h6>
-                <a href="{{ route('contribuyentes.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Contribuyente
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('contribuyentes.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="rfc" class="form-label">RFC</label>
+                <input type="text" class="form-control" id="rfc" name="rfc" 
+                       value="{{ request('rfc') }}" placeholder="Ej: ABC123456789">
+            </div>
+            
+            <div class="col-md-4">
+                <label for="razon_social" class="form-label">Razón Social</label>
+                <input type="text" class="form-control" id="razon_social" name="razon_social" 
+                       value="{{ request('razon_social') }}" placeholder="Buscar por razón social">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="regimen_fiscal" class="form-label">Régimen Fiscal</label>
+                <input type="text" class="form-control" id="regimen_fiscal" name="regimen_fiscal" 
+                       value="{{ request('regimen_fiscal') }}" placeholder="Régimen">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="numero_permiso" class="form-label">N° Permiso</label>
+                <input type="text" class="form-control" id="numero_permiso" name="numero_permiso" 
+                       value="{{ request('numero_permiso') }}" placeholder="Permiso">
+            </div>
+            
+            <div class="col-md-1">
+                <label for="activo" class="form-label">Activo</label>
+                <select class="form-select" id="activo" name="activo">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('activo') == '1' ? 'selected' : '' }}>Sí</option>
+                    <option value="0" {{ request('activo') == '0' ? 'selected' : '' }}>No</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="proxima_verificacion" class="form-label">Próx. Verificación</label>
+                <select class="form-select" id="proxima_verificacion" name="proxima_verificacion">
+                    <option value="">Todos</option>
+                    <option value="proximos" {{ request('proxima_verificacion') == 'proximos' ? 'selected' : '' }}>Próximos 30 días</option>
+                    <option value="vencidos" {{ request('proxima_verificacion') == 'vencidos' ? 'selected' : '' }}>Vencidos</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('contribuyentes.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterRfc" placeholder="RFC">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterRazonSocial" placeholder="Razón Social">
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterActivo">
-                            <option value="">Todos</option>
-                            <option value="1">Activos</option>
-                            <option value="0">Inactivos</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterCaracter">
-                            <option value="">Carácter</option>
-                            <option value="contratista">Contratista</option>
-                            <option value="asignatario">Asignatario</option>
-                            <option value="permisionario">Permisionario</option>
-                            <option value="usuario">Usuario</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary btn-sm w-100" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="contribuyentesTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>RFC</th>
-                                <th>Razón Social</th>
-                                <th>Carácter</th>
-                                <th>Permiso</th>
-                                <th>Teléfono</th>
-                                <th>Email</th>
-                                <th>Activo</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($contribuyentes['data'] ?? [] as $contribuyente)
-                            <tr>
-                                <td>{{ $contribuyente['id'] }}</td>
-                                <td>{{ $contribuyente['rfc'] }}</td>
-                                <td>{{ $contribuyente['razon_social'] }}</td>
-                                <td>{{ ucfirst($contribuyente['caracter_actua']) }}</td>
-                                <td>{{ $contribuyente['numero_permiso'] ?? 'N/A' }}</td>
-                                <td>{{ $contribuyente['telefono'] ?? 'N/A' }}</td>
-                                <td>{{ $contribuyente['email'] ?? 'N/A' }}</td>
-                                <td class="text-center">
-                                    @if($contribuyente['activo'])
-                                        <span class="badge bg-success">Activo</span>
-                                    @else
-                                        <span class="badge bg-danger">Inactivo</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('contribuyentes.show', $contribuyente['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('contribuyentes.edit', $contribuyente['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{{ route('contribuyentes.instalaciones', $contribuyente['id']) }}" 
-                                           class="btn btn-secondary btn-sm" title="Instalaciones">
-                                            <i class="fas fa-gas-pump"></i>
-                                        </a>
-                                        <a href="{{ route('contribuyentes.cumplimiento', $contribuyente['id']) }}" 
-                                           class="btn btn-success btn-sm" title="Cumplimiento">
-                                            <i class="fas fa-check-circle"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-delete" 
-                                                data-id="{{ $contribuyente['id'] }}"
-                                                data-name="{{ $contribuyente['razon_social'] }}"
-                                                title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($contribuyentes['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $contribuyentes['meta']['from'] ?? 0 }} a {{ $contribuyentes['meta']['to'] ?? 0 }} de {{ $contribuyentes['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($contribuyentes['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                @endif
-            </div>
+        </form>
+        
+        <!-- Tabla de contribuyentes -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>RFC</th>
+                        <th>Razón Social</th>
+                        <th>Régimen Fiscal</th>
+                        <th>Permiso</th>
+                        <th>Instalaciones</th>
+                        <th>Estatus Verificación</th>
+                        <th>Activo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($contribuyentes as $contribuyente)
+                        <tr>
+                            <td><strong>{{ $contribuyente['rfc'] }}</strong></td>
+                            <td>
+                                {{ $contribuyente['razon_social'] }}
+                                @if(!empty($contribuyente['nombre_comercial']))
+                                    <br><small class="text-muted">{{ $contribuyente['nombre_comercial'] }}</small>
+                                @endif
+                            </td>
+                            <td>{{ $contribuyente['regimen_fiscal'] }}</td>
+                            <td>
+                                @if($contribuyente['numero_permiso'])
+                                    {{ $contribuyente['numero_permiso'] }}
+                                    <br><small>{{ $contribuyente['tipo_permiso'] ?? '' }}</small>
+                                @else
+                                    <span class="text-muted">No asignado</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary">{{ $contribuyente['instalaciones_count'] ?? 0 }}</span>
+                            </td>
+                            <td>
+                                @if(isset($contribuyente['estatus_verificacion']))
+                                    @php
+                                        $verifClass = [
+                                            'ACREDITADO' => 'success',
+                                            'NO_ACREDITADO' => 'danger',
+                                            'PENDIENTE' => 'warning',
+                                            'EN_PROCESO' => 'info'
+                                        ][$contribuyente['estatus_verificacion']] ?? 'secondary';
+                                    @endphp
+                                    <span class="badge bg-{{ $verifClass }}">{{ $contribuyente['estatus_verificacion'] }}</span>
+                                @else
+                                    <span class="badge bg-secondary">No definido</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($contribuyente['activo'])
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('contribuyentes.show', $contribuyente['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('contribuyentes.edit', $contribuyente['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ route('contribuyentes.instalaciones', $contribuyente['id']) }}" class="btn btn-sm btn-secondary" title="Instalaciones">
+                                        <i class="bi bi-building"></i>
+                                    </a>
+                                    <a href="{{ route('contribuyentes.cumplimiento', $contribuyente['id']) }}" class="btn btn-sm btn-success" title="Cumplimiento">
+                                        <i class="bi bi-check-circle"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center">No hay contribuyentes registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
-
-<!-- Formulario de eliminación -->
-<form id="deleteForm" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#contribuyentesTable').DataTable({
-        pageLength: {{ $contribuyentes['meta']['per_page'] ?? 10 }},
-        order: [[0, 'desc']],
-        searching: false,
-        paging: false,
-        info: false,
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-        }
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams(window.location.search);
-        
-        if ($('#filterRfc').val()) params.set('rfc', $('#filterRfc').val());
-        if ($('#filterRazonSocial').val()) params.set('razon_social', $('#filterRazonSocial').val());
-        if ($('#filterActivo').val()) params.set('activo', $('#filterActivo').val());
-        if ($('#filterCaracter').val()) params.set('caracter', $('#filterCaracter').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
-    });
-
-    // Botones de eliminar
-    $('.btn-delete').click(function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Deseas eliminar el contribuyente "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var form = $('#deleteForm');
-                form.attr('action', '{{ url("contribuyentes") }}/' + id);
-                form.submit();
-            }
-        });
-    });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterRfc').val(urlParams.get('rfc') || '');
-    $('#filterRazonSocial').val(urlParams.get('razon_social') || '');
-    $('#filterActivo').val(urlParams.get('activo') || '');
-    $('#filterCaracter').val(urlParams.get('caracter') || '');
 });
 </script>
 @endpush

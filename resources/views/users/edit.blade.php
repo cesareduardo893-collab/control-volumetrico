@@ -1,176 +1,121 @@
 @extends('layouts.app')
 
 @section('title', 'Editar Usuario')
+@section('header', 'Editar Usuario')
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Editar Usuario: {{ $user['name'] }}</h6>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="card-title mb-0">Editar Usuario</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('usuarios.update', $user['id']) }}" id="userForm">
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                
+                <form method="POST" action="{{ route('users.update', $user['id']) }}">
                     @csrf
                     @method('PUT')
                     
-                    <!-- Información Personal -->
-                    <h5 class="mb-3">Información Personal</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name" class="form-label">Nombre Completo <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control @error('name') is-invalid @enderror" 
-                                       id="name" 
-                                       name="name" 
-                                       value="{{ old('name', $user['name']) }}" 
-                                       required>
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="identificacion" class="form-label">Identificación</label>
+                            <input type="text" class="form-control" id="identificacion" name="identificacion" 
+                                   value="{{ old('identificacion', $user['identificacion'] ?? '') }}" maxlength="18" required>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" 
-                                       class="form-control @error('email') is-invalid @enderror" 
-                                       id="email" 
-                                       name="email" 
-                                       value="{{ old('email', $user['email']) }}" 
-                                       required>
-                                @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ old('email', $user['email']) }}" required>
                         </div>
                     </div>
                     
-                    <!-- Cambio de Contraseña (Opcional) -->
-                    <h5 class="mb-3 mt-4">Cambiar Contraseña <small class="text-muted">(Opcional)</small></h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="password" class="form-label">Nueva Contraseña</label>
-                                <div class="input-group">
-                                    <input type="password" 
-                                           class="form-control @error('password') is-invalid @enderror" 
-                                           id="password" 
-                                           name="password">
-                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                @error('password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <small class="text-muted">Dejar en blanco para mantener la actual</small>
-                            </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombres" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="nombres" name="nombres" 
+                                   value="{{ old('nombres', $user['nombres']) }}" required>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="password_confirmation" class="form-label">Confirmar Nueva Contraseña</label>
-                                <div class="input-group">
-                                    <input type="password" 
-                                           class="form-control @error('password_confirmation') is-invalid @enderror" 
-                                           id="password_confirmation" 
-                                           name="password_confirmation">
-                                    <button class="btn btn-outline-secondary" type="button" id="togglePasswordConfirm">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                @error('password_confirmation')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="apellidos" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="apellidos" name="apellidos" 
+                                   value="{{ old('apellidos', $user['apellidos']) }}" required>
                         </div>
                     </div>
                     
-                    <!-- Roles y Permisos -->
-                    <h5 class="mb-3 mt-4">Roles y Permisos</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="roles" class="form-label">Roles</label>
-                                <select class="form-select select2 @error('roles') is-invalid @enderror" 
-                                        id="roles" 
-                                        name="roles[]" 
-                                        multiple>
-                                    @foreach($roles as $role)
-                                        <option value="{{ $role['id'] }}" 
-                                            {{ in_array($role['id'], old('roles', collect($user['roles'] ?? [])->pluck('id')->toArray())) ? 'selected' : '' }}>
-                                            {{ $role['display_name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('roles')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" 
+                                   value="{{ old('telefono', $user['telefono'] ?? '') }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" 
+                                   value="{{ old('direccion', $user['direccion'] ?? '') }}">
                         </div>
                     </div>
                     
-                    <!-- Información de Contacto -->
-                    <h5 class="mb-3 mt-4">Información de Contacto</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="telefono" class="form-label">Teléfono</label>
-                                <input type="text" 
-                                       class="form-control @error('telefono') is-invalid @enderror" 
-                                       id="telefono" 
-                                       name="telefono" 
-                                       value="{{ old('telefono', $user['telefono']) }}">
-                                @error('telefono')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="direccion" class="form-label">Dirección</label>
-                                <input type="text" 
-                                       class="form-control @error('direccion') is-invalid @enderror" 
-                                       id="direccion" 
-                                       name="direccion" 
-                                       value="{{ old('direccion', $user['direccion']) }}">
-                                @error('direccion')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label for="roles" class="form-label">Roles</label>
+                        <select class="form-select select2" id="roles" name="roles[]" multiple>
+                            @foreach($roles as $rol)
+                                @php
+                                    $selected = in_array($rol['id'], old('roles', collect($user['roles'] ?? [])->pluck('id')->toArray()));
+                                @endphp
+                                <option value="{{ $rol['id'] }}" {{ $selected ? 'selected' : '' }}>
+                                    {{ $rol['nombre'] }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                     
-                    <!-- Estado -->
-                    <div class="row mb-3">
-                        <div class="col-md-12">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                <input type="checkbox" 
-                                       class="form-check-input" 
-                                       id="is_active" 
-                                       name="is_active" 
-                                       value="1" 
-                                       {{ old('is_active', $user['is_active']) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="is_active">Usuario Activo</label>
+                                <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1"
+                                       {{ old('activo', $user['activo']) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="activo">Usuario Activo</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="force_password_change" 
+                                       name="force_password_change" value="1"
+                                       {{ old('force_password_change', $user['force_password_change'] ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="force_password_change">
+                                    Forzar cambio de contraseña en el próximo inicio
+                                </label>
                             </div>
                         </div>
                     </div>
                     
                     <hr>
                     
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Actualizar
-                            </button>
-                            <a href="{{ route('usuarios.show', $user['id']) }}" class="btn btn-info">
-                                <i class="fas fa-eye"></i> Ver
-                            </a>
-                            <a href="{{ route('usuarios.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
-                        </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Si desea cambiar la contraseña del usuario, utilice la opción de "Cambiar Contraseña" en el perfil del usuario.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ route('users.show', $user['id']) }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-save"></i> Actualizar Usuario
+                        </button>
                     </div>
                 </form>
             </div>
@@ -182,38 +127,9 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar Select2
     $('.select2').select2({
         theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: 'Seleccione roles...'
-    });
-    
-    // Toggle password visibility
-    $('#togglePassword').click(function() {
-        var passwordInput = $('#password');
-        var icon = $(this).find('i');
-        
-        if (passwordInput.attr('type') === 'password') {
-            passwordInput.attr('type', 'text');
-            icon.removeClass('fa-eye').addClass('fa-eye-slash');
-        } else {
-            passwordInput.attr('type', 'password');
-            icon.removeClass('fa-eye-slash').addClass('fa-eye');
-        }
-    });
-    
-    $('#togglePasswordConfirm').click(function() {
-        var passwordInput = $('#password_confirmation');
-        var icon = $(this).find('i');
-        
-        if (passwordInput.attr('type') === 'password') {
-            passwordInput.attr('type', 'text');
-            icon.removeClass('fa-eye').addClass('fa-eye-slash');
-        } else {
-            passwordInput.attr('type', 'password');
-            icon.removeClass('fa-eye-slash').addClass('fa-eye');
-        }
+        width: '100%'
     });
 });
 </script>

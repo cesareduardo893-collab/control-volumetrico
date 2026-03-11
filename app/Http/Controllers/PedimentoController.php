@@ -2,38 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class PedimentoController extends Controller
+class PedimentoController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
      * Listar pedimentos
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'contribuyente_id', 'aduana', 'patente', 'estado', 'fecha_inicio', 'fecha_fin', 'per_page'
-        ]);
+            $params = $request->only([
+                'contribuyente_id', 'numero_pedimento', 'producto_id',
+                'pais_origen', 'pais_destino', 'fecha_inicio', 'fecha_fin',
+                'estado', 'registro_volumetrico_id', 'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/pedimentos', $params);
+            $response = $this->apiGet('/api/pedimentos', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $pedimentos = $this->apiResponseData($response);
-            return view('pedimentos.index', compact('pedimentos'));
+            return $this->renderView('pedimentos.index', $response, ['key' => 'pedimentos'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar pedimentos', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar pedimentos');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -41,15 +40,26 @@ class PedimentoController extends Controller
      */
     public function create()
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener contribuyentes para el select
-        $contribuyentesResponse = $this->apiGet('/api/contribuyentes');
-        $contribuyentes = $this->apiResponseSuccessful($contribuyentesResponse) 
-            ? $this->apiResponseData($contribuyentesResponse) 
-            : [];
+            // Obtener contribuyentes y productos para los selects
+            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
+            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
 
-        return view('pedimentos.create', compact('contribuyentes'));
+            return view('pedimentos.create', [
+                'contribuyentes' => $contribuyentes,
+                'productos' => $productos
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('pedimentos.index')
+                ->with('error', 'Error al cargar formulario');
+        }
     }
 
     /**
@@ -57,38 +67,66 @@ class PedimentoController extends Controller
      */
     public function store(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'contribuyente_id' => 'required|integer|exists:contribuyentes,id',
-            'numero_pedimento' => 'required|string|max:21|unique:pedimentos,numero_pedimento',
-            'aduana' => 'required|string|max:3',
-            'patente' => 'required|string|max:4',
-            'ejercicio' => 'required|integer|min:2020|max:2030',
-            'fecha_importacion' => 'required|date',
-            'tipo_cambio' => 'required|numeric|min:0',
-            'peso_bruto' => 'required|numeric|min:0',
-            'peso_neto' => 'required|numeric|min:0',
+        $request->validate([
+            'numero_pedimento' => 'required|string|max:255',
+            'contribuyente_id' => 'required|integer',
+            'producto_id' => 'required|integer',
+            'pais_destino' => 'required|string|size:3',
+            'pais_origen' => 'required|string|size:3',
+            'medio_transporte_entrada' => 'required|string|max:255',
+            'incoterms' => 'required|string|max:10',
             'volumen' => 'required|numeric|min:0',
-            'producto_id' => 'required|integer|exists:productos,id',
-            'cantidad_importada' => 'required|numeric|min:0',
-            'cantidad_despachada' => 'required|numeric|min:0',
-            'cantidad_pendiente' => 'required|numeric|min:0',
-            'estado' => 'required|in:activo,liquidado,cancelado',
-            'observaciones' => 'nullable|string|max:500',
-            'activo' => 'sometimes|boolean'
+            'unidad_medida' => 'required|string|max:10',
+            'valor_comercial' => 'required|numeric|min:0',
+            'moneda' => 'required|string|size:3',
+            'fecha_pedimento' => 'required|date',
+            'estado' => 'required|in:ACTIVO,UTILIZADO,CANCELADO',
         ]);
 
-        $response = $this->apiPost('/api/pedimentos', $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('pedimentos.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost('/api/pedimentos', $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $pedimentoData = $this->apiResponseData($response, []);
+                $pedimentoId = $pedimentoData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'comercio_exterior',
+                    'PEDIMENTO_CREADO',
+                    'Pedimentos',
+                    "Pedimento creado: {$request->numero_pedimento}",
+                    'pedimentos',
+                    $pedimentoId
+                );
+
+                return redirect()->route('pedimentos.index')
+                    ->with('success', 'Pedimento creado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear pedimento'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear pedimento', [
+                'error' => $e->getMessage(),
+                'data' => $request->except('_token')
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear pedimento');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -96,17 +134,31 @@ class PedimentoController extends Controller
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/pedimentos/{$id}");
+            $response = $this->apiGet("/api/pedimentos/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $pedimento = $this->apiResponseData($response);
-            return view('pedimentos.show', compact('pedimento'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('pedimentos.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Pedimento no encontrado'));
+            }
+
+            $pedimento = $this->apiResponseData($response, []);
+
+            return view('pedimentos.show', [
+                'pedimento' => $pedimento
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar pedimento', [
+                'error' => $e->getMessage(),
+                'pedimento_id' => $id
+            ]);
+
+            return redirect()->route('pedimentos.index')
+                ->with('error', 'Error al cargar pedimento');
         }
-
-        return redirect()->route('pedimentos.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -114,23 +166,38 @@ class PedimentoController extends Controller
      */
     public function edit($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener contribuyentes para el select
-        $contribuyentesResponse = $this->apiGet('/api/contribuyentes');
-        $contribuyentes = $this->apiResponseSuccessful($contribuyentesResponse) 
-            ? $this->apiResponseData($contribuyentesResponse) 
-            : [];
+            // Obtener contribuyentes y productos para los selects
+            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
+            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
 
-        $response = $this->apiGet("/api/pedimentos/{$id}");
+            // Obtener datos del pedimento
+            $response = $this->apiGet("/api/pedimentos/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $pedimento = $this->apiResponseData($response);
-            return view('pedimentos.edit', compact('pedimento', 'contribuyentes'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('pedimentos.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Pedimento no encontrado'));
+            }
+
+            $pedimento = $this->apiResponseData($response, []);
+
+            return view('pedimentos.edit', [
+                'pedimento' => $pedimento,
+                'contribuyentes' => $contribuyentes,
+                'productos' => $productos
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de edición', [
+                'error' => $e->getMessage(),
+                'pedimento_id' => $id
+            ]);
+
+            return redirect()->route('pedimentos.index')
+                ->with('error', 'Error al cargar formulario');
         }
-
-        return redirect()->route('pedimentos.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -138,38 +205,192 @@ class PedimentoController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'contribuyente_id' => 'sometimes|integer|exists:contribuyentes,id',
-            'numero_pedimento' => 'sometimes|string|max:21|unique:pedimentos,numero_pedimento,' . $id,
-            'aduana' => 'sometimes|string|max:3',
-            'patente' => 'sometimes|string|max:4',
-            'ejercicio' => 'sometimes|integer|min:2020|max:2030',
-            'fecha_importacion' => 'sometimes|date',
-            'tipo_cambio' => 'sometimes|numeric|min:0',
-            'peso_bruto' => 'sometimes|numeric|min:0',
-            'peso_neto' => 'sometimes|numeric|min:0',
-            'volumen' => 'sometimes|numeric|min:0',
-            'producto_id' => 'sometimes|integer|exists:productos,id',
-            'cantidad_importada' => 'sometimes|numeric|min:0',
-            'cantidad_despachada' => 'sometimes|numeric|min:0',
-            'cantidad_pendiente' => 'sometimes|numeric|min:0',
-            'estado' => 'sometimes|in:activo,liquidado,cancelado',
-            'observaciones' => 'nullable|string|max:500',
-            'activo' => 'sometimes|boolean'
+        $request->validate([
+            'fecha_arribo' => 'nullable|date',
+            'fecha_pago' => 'nullable|date',
+            'registro_volumetrico_id' => 'nullable|integer',
+            'estado' => 'sometimes|in:ACTIVO,UTILIZADO,CANCELADO',
         ]);
 
-        $response = $this->apiPut("/api/pedimentos/{$id}", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('pedimentos.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPut("/api/pedimentos/{$id}", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'comercio_exterior',
+                    'PEDIMENTO_ACTUALIZADO',
+                    'Pedimentos',
+                    "Pedimento actualizado ID: {$id}",
+                    'pedimentos',
+                    $id
+                );
+
+                return redirect()->route('pedimentos.show', $id)
+                    ->with('success', 'Pedimento actualizado exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al actualizar pedimento'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar pedimento', [
+                'error' => $e->getMessage(),
+                'pedimento_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar pedimento');
         }
+    }
 
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
+    /**
+     * Cancelar pedimento
+     */
+    public function cancelar(Request $request, $id)
+    {
+        $request->validate([
+            'motivo_cancelacion' => 'required|string',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiPost("/api/pedimentos/{$id}/cancelar", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'comercio_exterior',
+                    'PEDIMENTO_CANCELADO',
+                    'Pedimentos',
+                    "Pedimento cancelado ID: {$id}",
+                    'pedimentos',
+                    $id
+                );
+
+                return redirect()->route('pedimentos.show', $id)
+                    ->with('success', $this->apiResponseMessage($response, 'Pedimento cancelado exitosamente'));
+            }
+
+            if ($response->status === 403) {
+                return redirect()->back()
+                    ->with('error', 'El pedimento ya está cancelado');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al cancelar pedimento'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al cancelar pedimento', [
+                'error' => $e->getMessage(),
+                'pedimento_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al cancelar pedimento');
+        }
+    }
+
+    /**
+     * Marcar como utilizado
+     */
+    public function marcarUtilizado(Request $request, $id)
+    {
+        $request->validate([
+            'registro_volumetrico_id' => 'required|integer',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiPost("/api/pedimentos/{$id}/utilizado", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'comercio_exterior',
+                    'PEDIMENTO_UTILIZADO',
+                    'Pedimentos',
+                    "Pedimento marcado como utilizado ID: {$id}",
+                    'pedimentos',
+                    $id
+                );
+
+                return redirect()->route('pedimentos.show', $id)
+                    ->with('success', $this->apiResponseMessage($response, 'Pedimento marcado como utilizado exitosamente'));
+            }
+
+            if ($response->status === 403) {
+                return redirect()->back()
+                    ->with('error', 'El pedimento no está en estado ACTIVO');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al marcar pedimento'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al marcar pedimento como utilizado', [
+                'error' => $e->getMessage(),
+                'pedimento_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al marcar pedimento');
+        }
+    }
+
+    /**
+     * Obtener resumen de comercio exterior
+     */
+    public function resumenComercioExterior(Request $request)
+    {
+        $request->validate([
+            'contribuyente_id' => 'required|integer',
+            'anio' => 'required|integer|min:2020',
+            'mes' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $params = $request->only(['contribuyente_id', 'anio', 'mes']);
+
+            $response = $this->apiGet('/api/pedimentos/resumen-comercio-exterior', $params);
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al generar resumen'));
+            }
+
+            $resumen = $this->apiResponseData($response, []);
+
+            return view('pedimentos.resumen', [
+                'resumen' => $resumen,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al generar resumen de comercio exterior', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al generar resumen');
+        }
     }
 
     /**
@@ -177,39 +398,42 @@ class PedimentoController extends Controller
      */
     public function destroy($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiDelete("/api/pedimentos/{$id}");
+            $response = $this->apiDelete("/api/pedimentos/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'comercio_exterior',
+                    'PEDIMENTO_ELIMINADO',
+                    'Pedimentos',
+                    "Pedimento eliminado ID: {$id}",
+                    'pedimentos',
+                    $id
+                );
+
+                return redirect()->route('pedimentos.index')
+                    ->with('success', 'Pedimento eliminado exitosamente');
+            }
+
+            if ($response->status === 403) {
+                return redirect()->back()
+                    ->with('error', 'No se puede eliminar el pedimento');
+            }
+
             return redirect()->route('pedimentos.index')
-                ->with('success', $this->apiResponseMessage($response));
+                ->with('error', $this->apiResponseMessage($response, 'Error al eliminar pedimento'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar pedimento', [
+                'error' => $e->getMessage(),
+                'pedimento_id' => $id
+            ]);
+
+            return redirect()->route('pedimentos.index')
+                ->with('error', 'Error al eliminar pedimento');
         }
-
-        return redirect()->route('pedimentos.index')
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Asociar registro volumétrico al pedimento
-     */
-    public function asociarRegistro(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'registro_volumetrico_id' => 'required|integer|exists:registros_volumetricos,id'
-        ]);
-
-        $response = $this->apiPost("/api/pedimentos/{$id}/asociar-registro", $data);
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('pedimentos.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 }

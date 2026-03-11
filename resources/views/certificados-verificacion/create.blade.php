@@ -1,280 +1,217 @@
 @extends('layouts.app')
 
 @section('title', 'Nuevo Certificado de Verificación')
+@section('header', 'Nuevo Certificado de Verificación')
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Nuevo Certificado de Verificación</h6>
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Registrar Nuevo Certificado</h5>
             </div>
             <div class="card-body">
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                
                 <form method="POST" action="{{ route('certificados-verificacion.store') }}" id="certificadoForm">
                     @csrf
                     
-                    <!-- Información Básica -->
-                    <h5 class="mb-3">Información del Certificado</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="instalacion_id" class="form-label">Instalación <span class="text-danger">*</span></label>
-                                <select class="form-select select2 @error('instalacion_id') is-invalid @enderror" 
-                                        id="instalacion_id" 
-                                        name="instalacion_id" 
-                                        required>
-                                    <option value="">Seleccione una instalación...</option>
-                                    @foreach($instalaciones['data'] ?? [] as $instalacion)
-                                        <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id', request('instalacion_id')) == $instalacion['id'] ? 'selected' : '' }}>
-                                            {{ $instalacion['clave_instalacion'] }} - {{ $instalacion['nombre'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('instalacion_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="folio" class="form-label">Folio *</label>
+                            <input type="text" class="form-control" id="folio" name="folio" 
+                                   value="{{ old('folio') }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="numero_certificado" class="form-label">Número de Certificado <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control @error('numero_certificado') is-invalid @enderror" 
-                                       id="numero_certificado" 
-                                       name="numero_certificado" 
-                                       value="{{ old('numero_certificado') }}" 
-                                       maxlength="50"
-                                       required>
-                                @error('numero_certificado')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="contribuyente_id" class="form-label">Contribuyente *</label>
+                            <select class="form-select select2" id="contribuyente_id" name="contribuyente_id" required>
+                                <option value="">Seleccione...</option>
+                                @foreach($contribuyentes as $contribuyente)
+                                    <option value="{{ $contribuyente['id'] }}" {{ old('contribuyente_id') == $contribuyente['id'] ? 'selected' : '' }}>
+                                        {{ $contribuyente['razon_social'] }} ({{ $contribuyente['rfc'] }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="tipo_certificado" class="form-label">Tipo de Certificado <span class="text-danger">*</span></label>
-                                <select class="form-select @error('tipo_certificado') is-invalid @enderror" 
-                                        id="tipo_certificado" 
-                                        name="tipo_certificado" 
-                                        required>
-                                    <option value="">Seleccione...</option>
-                                    <option value="inicial" {{ old('tipo_certificado') == 'inicial' ? 'selected' : '' }}>Inicial</option>
-                                    <option value="periodico" {{ old('tipo_certificado') == 'periodico' ? 'selected' : '' }}>Periódico</option>
-                                    <option value="extraordinario" {{ old('tipo_certificado') == 'extraordinario' ? 'selected' : '' }}>Extraordinario</option>
-                                </select>
-                                @error('tipo_certificado')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="fecha_emision" class="form-label">Fecha de Emisión *</label>
+                            <input type="date" class="form-control datepicker" id="fecha_emision" 
+                                   name="fecha_emision" value="{{ old('fecha_emision', now()->toDateString()) }}" required>
                         </div>
                     </div>
                     
-                    <!-- Fechas -->
-                    <h5 class="mb-3 mt-4">Fechas</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="fecha_emision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control datepicker @error('fecha_emision') is-invalid @enderror" 
-                                       id="fecha_emision" 
-                                       name="fecha_emision" 
-                                       value="{{ old('fecha_emision') }}" 
-                                       required>
-                                @error('fecha_emision')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="proveedor_rfc" class="form-label">RFC del Proveedor *</label>
+                            <input type="text" class="form-control" id="proveedor_rfc" name="proveedor_rfc" 
+                                   value="{{ old('proveedor_rfc') }}" maxlength="13" required>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="fecha_vigencia" class="form-label">Fecha de Vigencia <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control datepicker @error('fecha_vigencia') is-invalid @enderror" 
-                                       id="fecha_vigencia" 
-                                       name="fecha_vigencia" 
-                                       value="{{ old('fecha_vigencia') }}" 
-                                       required>
-                                @error('fecha_vigencia')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="proveedor_nombre" class="form-label">Nombre del Proveedor *</label>
+                            <input type="text" class="form-control" id="proveedor_nombre" name="proveedor_nombre" 
+                                   value="{{ old('proveedor_nombre') }}" required>
                         </div>
                     </div>
                     
-                    <!-- Resultados -->
-                    <h5 class="mb-3 mt-4">Resultados</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="estatus" class="form-label">Estatus <span class="text-danger">*</span></label>
-                                <select class="form-select @error('estatus') is-invalid @enderror" 
-                                        id="estatus" 
-                                        name="estatus" 
-                                        required>
-                                    <option value="">Seleccione...</option>
-                                    <option value="aprobado" {{ old('estatus') == 'aprobado' ? 'selected' : '' }}>Aprobado</option>
-                                    <option value="rechazado" {{ old('estatus') == 'rechazado' ? 'selected' : '' }}>Rechazado</option>
-                                    <option value="pendiente" {{ old('estatus') == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                                </select>
-                                @error('estatus')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="fecha_inicio_verificacion" class="form-label">Fecha Inicio Verificación *</label>
+                            <input type="date" class="form-control datepicker" id="fecha_inicio_verificacion" 
+                                   name="fecha_inicio_verificacion" value="{{ old('fecha_inicio_verificacion') }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="resultado" class="form-label">Resultado <span class="text-danger">*</span></label>
-                                <select class="form-select @error('resultado') is-invalid @enderror" 
-                                        id="resultado" 
-                                        name="resultado" 
-                                        required>
-                                    <option value="">Seleccione...</option>
-                                    <option value="aprobado" {{ old('resultado') == 'aprobado' ? 'selected' : '' }}>Aprobado</option>
-                                    <option value="rechazado" {{ old('resultado') == 'rechazado' ? 'selected' : '' }}>Rechazado</option>
-                                    <option value="observaciones" {{ old('resultado') == 'observaciones' ? 'selected' : '' }}>Con Observaciones</option>
-                                </select>
-                                @error('resultado')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="fecha_fin_verificacion" class="form-label">Fecha Fin Verificación *</label>
+                            <input type="date" class="form-control datepicker" id="fecha_fin_verificacion" 
+                                   name="fecha_fin_verificacion" value="{{ old('fecha_fin_verificacion') }}" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="resultado" class="form-label">Resultado *</label>
+                            <select class="form-select" id="resultado" name="resultado" required>
+                                <option value="">Seleccione...</option>
+                                <option value="acreditado" {{ old('resultado') == 'acreditado' ? 'selected' : '' }}>Acreditado</option>
+                                <option value="no_acreditado" {{ old('resultado') == 'no_acreditado' ? 'selected' : '' }}>No Acreditado</option>
+                            </select>
                         </div>
                     </div>
                     
-                    <!-- Puntos de Verificación -->
-                    <h5 class="mb-3 mt-4">Puntos de Verificación</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="puntos_criticos" class="form-label">Puntos Críticos</label>
-                                <input type="number" 
-                                       class="form-control @error('puntos_criticos') is-invalid @enderror" 
-                                       id="puntos_criticos" 
-                                       name="puntos_criticos" 
-                                       value="{{ old('puntos_criticos', 0) }}" 
-                                       min="0" 
-                                       step="1">
-                                @error('puntos_criticos')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_caducidad" class="form-label">Fecha de Caducidad</label>
+                            <input type="date" class="form-control datepicker" id="fecha_caducidad" 
+                                   name="fecha_caducidad" value="{{ old('fecha_caducidad') }}">
+                            <small class="text-muted">Dejar en blanco si no aplica</small>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="puntos_atencion" class="form-label">Puntos de Atención</label>
-                                <input type="number" 
-                                       class="form-control @error('puntos_atencion') is-invalid @enderror" 
-                                       id="puntos_atencion" 
-                                       name="puntos_atencion" 
-                                       value="{{ old('puntos_atencion', 0) }}" 
-                                       min="0" 
-                                       step="1">
-                                @error('puntos_atencion')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="puntos_leves" class="form-label">Puntos Leves</label>
-                                <input type="number" 
-                                       class="form-control @error('puntos_leves') is-invalid @enderror" 
-                                       id="puntos_leves" 
-                                       name="puntos_leves" 
-                                       value="{{ old('puntos_leves', 0) }}" 
-                                       min="0" 
-                                       step="1">
-                                @error('puntos_leves')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="numero_permiso" class="form-label">Número de Permiso</label>
+                            <input type="text" class="form-control" id="numero_permiso" name="numero_permiso" 
+                                   value="{{ old('numero_permiso') }}">
                         </div>
                     </div>
                     
-                    <!-- Usuarios -->
-                    <h5 class="mb-3 mt-4">Usuarios</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="usuario_elaboracion" class="form-label">Usuario Elaboración <span class="text-danger">*</span></label>
-                                <select class="form-select select2 @error('usuario_elaboracion') is-invalid @enderror" 
-                                        id="usuario_elaboracion" 
-                                        name="usuario_elaboracion" 
-                                        required>
-                                    <option value="">Seleccione un usuario...</option>
-                                    @foreach($usuarios ?? [] as $usuario)
-                                        <option value="{{ $usuario['id'] }}" {{ old('usuario_elaboracion') == $usuario['id'] ? 'selected' : '' }}>
-                                            {{ $usuario['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('usuario_elaboracion')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="usuario_autorizacion" class="form-label">Usuario Autorización</label>
-                                <select class="form-select select2 @error('usuario_autorizacion') is-invalid @enderror" 
-                                        id="usuario_autorizacion" 
-                                        name="usuario_autorizacion">
-                                    <option value="">Seleccione un usuario...</option>
-                                    @foreach($usuarios ?? [] as $usuario)
-                                        <option value="{{ $usuario['id'] }}" {{ old('usuario_autorizacion') == $usuario['id'] ? 'selected' : '' }}>
-                                            {{ $usuario['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('usuario_autorizacion')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tabla de Cumplimiento *</label>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="cumplimientoTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th>Cumple</th>
+                                        <th>Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Documentación completa</td>
+                                        <td>
+                                            <select class="form-select" name="tabla_cumplimiento[documentacion]">
+                                                <option value="SI">Sí</option>
+                                                <option value="NO">No</option>
+                                                <option value="N/A">No Aplica</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="tabla_cumplimiento[documentacion_obs]">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Equipo de medición calibrado</td>
+                                        <td>
+                                            <select class="form-select" name="tabla_cumplimiento[equipo_calibrado]">
+                                                <option value="SI">Sí</option>
+                                                <option value="NO">No</option>
+                                                <option value="N/A">No Aplica</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="tabla_cumplimiento[equipo_calibrado_obs]">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Registros volumétricos actualizados</td>
+                                        <td>
+                                            <select class="form-select" name="tabla_cumplimiento[registros_actualizados]">
+                                                <option value="SI">Sí</option>
+                                                <option value="NO">No</option>
+                                                <option value="N/A">No Aplica</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="tabla_cumplimiento[registros_actualizados_obs]">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sistema de medición funciona correctamente</td>
+                                        <td>
+                                            <select class="form-select" name="tabla_cumplimiento[sistema_funciona]">
+                                                <option value="SI">Sí</option>
+                                                <option value="NO">No</option>
+                                                <option value="N/A">No Aplica</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="tabla_cumplimiento[sistema_funciona_obs]">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Precintos de seguridad intactos</td>
+                                        <td>
+                                            <select class="form-select" name="tabla_cumplimiento[precintos]">
+                                                <option value="SI">Sí</option>
+                                                <option value="NO">No</option>
+                                                <option value="N/A">No Aplica</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="tabla_cumplimiento[precintos_obs]">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Producto coincide con lo declarado</td>
+                                        <td>
+                                            <select class="form-select" name="tabla_cumplimiento[producto_declarado]">
+                                                <option value="SI">Sí</option>
+                                                <option value="NO">No</option>
+                                                <option value="N/A">No Aplica</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="tabla_cumplimiento[producto_declarado_obs]">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     
-                    <!-- Observaciones -->
-                    <h5 class="mb-3 mt-4">Observaciones</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <textarea class="form-control @error('observaciones') is-invalid @enderror" 
-                                          id="observaciones" 
-                                          name="observaciones" 
-                                          rows="4">{{ old('observaciones') }}</textarea>
-                                @error('observaciones')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Estado -->
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input type="checkbox" 
-                                       class="form-check-input" 
-                                       id="activo" 
-                                       name="activo" 
-                                       value="1" 
-                                       {{ old('activo', true) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="activo">Registro Activo</label>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label for="observaciones" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observaciones" name="observaciones" 
+                                  rows="3">{{ old('observaciones') }}</textarea>
                     </div>
                     
                     <hr>
                     
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar
-                            </button>
-                            <a href="{{ route('certificados-verificacion.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
-                        </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ route('certificados-verificacion.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar Certificado
+                        </button>
                     </div>
                 </form>
             </div>
@@ -286,22 +223,25 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar Select2
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
+    });
+    
     $('.select2').select2({
         theme: 'bootstrap-5',
         width: '100%'
     });
     
-    // Validar que fecha_vigencia sea posterior a fecha_emision
-    $('#fecha_emision, #fecha_vigencia').on('change', function() {
-        var emision = new Date($('#fecha_emision').val());
-        var vigencia = new Date($('#fecha_vigencia').val());
+    // Validación de fechas
+    $('#fecha_inicio_verificacion, #fecha_fin_verificacion').change(function() {
+        let inicio = $('#fecha_inicio_verificacion').val();
+        let fin = $('#fecha_fin_verificacion').val();
         
-        if (vigencia <= emision) {
-            $('#fecha_vigencia').addClass('is-invalid');
-            $('#fecha_vigencia').next('.invalid-feedback').text('La fecha de vigencia debe ser posterior a la fecha de emisión');
-        } else {
-            $('#fecha_vigencia').removeClass('is-invalid');
+        if (inicio && fin && inicio > fin) {
+            alert('La fecha de fin debe ser posterior a la fecha de inicio');
+            $('#fecha_fin_verificacion').val('');
         }
     });
 });

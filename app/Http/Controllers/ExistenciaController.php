@@ -2,38 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ConsumesApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
-class ExistenciaController extends Controller
+class ExistenciaController extends BaseController
 {
-    use ConsumesApi;
-
-    public function __construct()
-    {
-        $this->initApiClient();
-    }
-
     /**
      * Listar existencias
      */
     public function index(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $params = $request->only([
-            'tanque_id', 'producto_id', 'fecha_medicion', 'activo', 'per_page'
-        ]);
+            $params = $request->only([
+                'tanque_id', 'producto_id', 'fecha', 'fecha_inicio', 'fecha_fin',
+                'tipo_registro', 'tipo_movimiento', 'estado', 'numero_registro',
+                'per_page', 'page'
+            ]);
 
-        $response = $this->apiGet('/api/existencias', $params);
+            $response = $this->apiGet('/api/existencias', $params);
 
-        if ($this->apiResponseSuccessful($response)) {
-            $existencias = $this->apiResponseData($response);
-            return view('existencias.index', compact('existencias'));
+            return $this->renderView('existencias.index', $response, ['key' => 'existencias'], $request->all());
+
+        } catch (\Exception $e) {
+            Log::error('Error al listar existencias', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar existencias');
         }
-
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -41,20 +40,26 @@ class ExistenciaController extends Controller
      */
     public function create()
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        // Obtener tanques y productos para los selects
-        $tanquesResponse = $this->apiGet('/api/tanques');
-        $tanques = $this->apiResponseSuccessful($tanquesResponse) 
-            ? $this->apiResponseData($tanquesResponse) 
-            : [];
+            // Obtener catálogos para los selects
+            $tanques = $this->getCatalog('/api/tanques', ['activo' => true]);
+            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
 
-        $productosResponse = $this->apiGet('/api/productos');
-        $productos = $this->apiResponseSuccessful($productosResponse) 
-            ? $this->apiResponseData($productosResponse) 
-            : [];
+            return view('existencias.create', [
+                'tanques' => $tanques,
+                'productos' => $productos
+            ]);
 
-        return view('existencias.create', compact('tanques', 'productos'));
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('existencias.index')
+                ->with('error', 'Error al cargar formulario');
+        }
     }
 
     /**
@@ -62,37 +67,67 @@ class ExistenciaController extends Controller
      */
     public function store(Request $request)
     {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'tanque_id' => 'required|integer|exists:tanques,id',
-            'producto_id' => 'required|integer|exists:productos,id',
-            'fecha_medicion' => 'required|date',
-            'hora_medicion' => 'required|date_format:H:i:s',
-            'volumen_bruto' => 'required|numeric|min:0',
-            'volumen_neto' => 'required|numeric|min:0',
+        $request->validate([
+            'numero_registro' => 'required|string|max:255',
+            'tanque_id' => 'required|integer',
+            'producto_id' => 'required|integer',
+            'fecha' => 'required|date',
+            'hora' => 'required|date_format:H:i:s',
+            'volumen_medido' => 'required|numeric|min:0',
             'temperatura' => 'required|numeric',
-            'densidad' => 'required|numeric|min:0',
-            'factor_correccion' => 'required|numeric|min:0',
-            'nivel_agua' => 'nullable|numeric|min:0',
-            'observaciones' => 'nullable|string|max:500',
-            'metodo_medicion' => 'required|in:manual,automatica',
-            'estado' => 'required|in:valida,invalida,pendiente',
-            'usuario_id' => 'required|integer|exists:users,id',
-            'medidor_id' => 'nullable|integer|exists:medidores,id',
-            'activo' => 'sometimes|boolean'
+            'densidad' => 'nullable|numeric|min:0',
+            'volumen_corregido' => 'required|numeric|min:0',
+            'volumen_disponible' => 'required|numeric|min:0',
+            'volumen_agua' => 'required|numeric|min:0',
+            'volumen_sedimentos' => 'required|numeric|min:0',
+            'tipo_registro' => 'required|in:inicial,operacion,final',
+            'tipo_movimiento' => 'required|in:INICIAL,RECEPCION,ENTREGA,VENTA,TRASPASO,AJUSTE,INVENTARIO',
+            'estado' => 'required|in:PENDIENTE,VALIDADO,EN_REVISION,CON_ALARMA',
         ]);
 
-        $response = $this->apiPost('/api/existencias', $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('existencias.index')
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost('/api/existencias', $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $existenciaData = $this->apiResponseData($response, []);
+                $existenciaId = $existenciaData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'operaciones_cotidianas',
+                    'EXISTENCIA_CREADA',
+                    'Existencias',
+                    "Existencia creada: {$request->numero_registro}",
+                    'existencias',
+                    $existenciaId
+                );
+
+                return redirect()->route('existencias.show', $existenciaId)
+                    ->with('success', 'Existencia creada exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear existencia'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear existencia', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear existencia');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
@@ -100,184 +135,217 @@ class ExistenciaController extends Controller
      */
     public function show($id)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet("/api/existencias/{$id}");
+            $response = $this->apiGet("/api/existencias/{$id}");
 
-        if ($this->apiResponseSuccessful($response)) {
-            $existencia = $this->apiResponseData($response);
-            return view('existencias.show', compact('existencia'));
-        }
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('existencias.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Existencia no encontrada'));
+            }
 
-        return redirect()->route('existencias.index')
-            ->with('error', $this->apiResponseMessage($response));
-    }
+            $existencia = $this->apiResponseData($response, []);
 
-    /**
-     * Mostrar formulario de edición
-     */
-    public function edit($id)
-    {
-        $this->setApiToken(session('api_token'));
+            return view('existencias.show', [
+                'existencia' => $existencia
+            ]);
 
-        // Obtener tanques y productos para los selects
-        $tanquesResponse = $this->apiGet('/api/tanques');
-        $tanques = $this->apiResponseSuccessful($tanquesResponse) 
-            ? $this->apiResponseData($tanquesResponse) 
-            : [];
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar existencia', [
+                'error' => $e->getMessage(),
+                'existencia_id' => $id
+            ]);
 
-        $productosResponse = $this->apiGet('/api/productos');
-        $productos = $this->apiResponseSuccessful($productosResponse) 
-            ? $this->apiResponseData($productosResponse) 
-            : [];
-
-        $response = $this->apiGet("/api/existencias/{$id}");
-
-        if ($this->apiResponseSuccessful($response)) {
-            $existencia = $this->apiResponseData($response);
-            return view('existencias.edit', compact('existencia', 'tanques', 'productos'));
-        }
-
-        return redirect()->route('existencias.index')
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Actualizar existencia
-     */
-    public function update(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'tanque_id' => 'sometimes|integer|exists:tanques,id',
-            'producto_id' => 'sometimes|integer|exists:productos,id',
-            'fecha_medicion' => 'sometimes|date',
-            'hora_medicion' => 'sometimes|date_format:H:i:s',
-            'volumen_bruto' => 'sometimes|numeric|min:0',
-            'volumen_neto' => 'sometimes|numeric|min:0',
-            'temperatura' => 'sometimes|numeric',
-            'densidad' => 'sometimes|numeric|min:0',
-            'factor_correccion' => 'sometimes|numeric|min:0',
-            'nivel_agua' => 'nullable|numeric|min:0',
-            'observaciones' => 'nullable|string|max:500',
-            'metodo_medicion' => 'sometimes|in:manual,automatica',
-            'estado' => 'sometimes|in:valida,invalida,pendiente',
-            'usuario_id' => 'sometimes|integer|exists:users,id',
-            'medidor_id' => 'nullable|integer|exists:medidores,id',
-            'activo' => 'sometimes|boolean'
-        ]);
-
-        $response = $this->apiPut("/api/existencias/{$id}", $data);
-
-        if ($this->apiResponseSuccessful($response)) {
             return redirect()->route('existencias.index')
-                ->with('success', $this->apiResponseMessage($response));
+                ->with('error', 'Error al cargar existencia');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Eliminar existencia
-     */
-    public function destroy($id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiDelete("/api/existencias/{$id}");
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('existencias.index')
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->route('existencias.index')
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
      * Validar existencia
      */
-    public function validar($id)
+    public function validar(Request $request, $id)
     {
-        $this->setApiToken(session('api_token'));
-
-        $response = $this->apiPost("/api/existencias/{$id}/validar");
-
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('existencias.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
-        }
-
-        return redirect()->route('existencias.show', $id)
-            ->with('error', $this->apiResponseMessage($response));
-    }
-
-    /**
-     * Asociar CFDI a existencia
-     */
-    public function asociarCfdi(Request $request, $id)
-    {
-        $this->setApiToken(session('api_token'));
-
-        $data = $request->validate([
-            'cfdi_id' => 'required|integer|exists:cfdi,id'
+        $request->validate([
+            'observaciones_validacion' => 'nullable|string',
         ]);
 
-        $response = $this->apiPost("/api/existencias/{$id}/asociar-cfdi", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('existencias.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiPost("/api/existencias/{$id}/validar", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'operaciones_cotidianas',
+                    'EXISTENCIA_VALIDADA',
+                    'Existencias',
+                    "Existencia validada ID: {$id}",
+                    'existencias',
+                    $id
+                );
+
+                return redirect()->route('existencias.show', $id)
+                    ->with('success', 'Existencia validada exitosamente');
+            }
+
+            if ($response->status === 403) {
+                return redirect()->back()
+                    ->with('error', 'La existencia ya está validada');
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al validar existencia'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al validar existencia', [
+                'error' => $e->getMessage(),
+                'existencia_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al validar existencia');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Asociar pedimento a existencia
+     * Obtener inventario actual por tanque
      */
-    public function asociarPedimento(Request $request, $id)
+    public function inventarioActual($tanqueId)
     {
-        $this->setApiToken(session('api_token'));
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $data = $request->validate([
-            'pedimento_id' => 'required|integer|exists:pedimentos,id'
+            $response = $this->apiGet("/api/existencias/inventario-actual/{$tanqueId}");
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar inventario'));
+            }
+
+            $inventario = $this->apiResponseData($response, []);
+
+            return view('existencias.inventario-actual', [
+                'inventario' => $inventario
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener inventario actual', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $tanqueId
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar inventario');
+        }
+    }
+
+    /**
+     * Obtener histórico de existencias
+     */
+    public function historico(Request $request, $tanqueId)
+    {
+        $request->validate([
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
         ]);
 
-        $response = $this->apiPost("/api/existencias/{$id}/asociar-pedimento", $data);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        if ($this->apiResponseSuccessful($response)) {
-            return redirect()->route('existencias.show', $id)
-                ->with('success', $this->apiResponseMessage($response));
+            $response = $this->apiGet("/api/existencias/historico/{$tanqueId}", $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar histórico'));
+            }
+
+            $historico = $this->apiResponseData($response, []);
+
+            return view('existencias.historico', [
+                'historico' => $historico,
+                'tanqueId' => $tanqueId,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener histórico de existencias', [
+                'error' => $e->getMessage(),
+                'tanque_id' => $tanqueId
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar histórico');
         }
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', $this->apiResponseMessage($response));
     }
 
     /**
-     * Obtener inventario diario
+     * Obtener reporte de mermas
      */
-    public function inventarioDiario(Request $request)
+    public function reporteMermas(Request $request)
     {
-        $this->setApiToken(session('api_token'));
+        $request->validate([
+            'instalacion_id' => 'required|integer',
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+        ]);
 
-        $params = $request->only(['fecha', 'instalacion_id', 'producto_id']);
+        try {
+            $this->setApiToken(Session::get('api_token'));
 
-        $response = $this->apiGet('/api/existencias/reporte/inventario-diario', $params);
+            $response = $this->apiGet('/api/existencias/reporte-mermas', $request->all());
 
-        if ($this->apiResponseSuccessful($response)) {
-            $inventario = $this->apiResponseData($response);
-            return view('existencias.inventario-diario', compact('inventario'));
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al generar reporte'));
+            }
+
+            $mermas = $this->apiResponseData($response, []);
+
+            return view('existencias.reporte-mermas', [
+                'mermas' => $mermas,
+                'filters' => $request->all()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al generar reporte de mermas', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al generar reporte');
         }
+    }
 
-        return redirect()->back()->with('error', $this->apiResponseMessage($response));
+    /**
+     * Obtener existencias por fecha
+     */
+    public function porFecha(Request $request)
+    {
+        $request->validate([
+            'fecha' => 'required|date',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet('/api/existencias/por-fecha', $request->all());
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar existencias'));
+            }
+
+            $existencias = $this->apiResponseData($response, []);
+
+            return view('existencias.por-fecha', [
+                'existencias' => $existencias,
+                'fecha' => $request->fecha
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener existencias por fecha', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al cargar existencias');
+        }
     }
 }

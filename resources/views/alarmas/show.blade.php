@@ -1,330 +1,161 @@
 @extends('layouts.app')
 
 @section('title', 'Detalle de Alarma')
+@section('header', 'Detalle de Alarma')
+
+@section('actions')
+@if($alarma['estado_atencion'] == 'PENDIENTE')
+    <a href="{{ route('alarmas.atender.form', $alarma['id']) }}" class="btn btn-sm btn-warning">
+        <i class="bi bi-check-circle"></i> Atender Alarma
+    </a>
+@endif
+@if(in_array($alarma['estado_atencion'], ['PENDIENTE', 'EN_PROCESO']))
+    <a href="{{ route('alarmas.actualizar-estado.form', $alarma['id']) }}" class="btn btn-sm btn-secondary">
+        <i class="bi bi-arrow-repeat"></i> Actualizar Estado
+    </a>
+@endif
+<a href="{{ route('alarmas.index') }}" class="btn btn-sm btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver
+</a>
+@endsection
 
 @section('content')
 <div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Detalle de Alarma #{{ $alarma['id'] }}</h6>
-                <div>
-                    @if($alarma['estado'] == 'activa')
-                    <button type="button" class="btn btn-success btn-sm btn-atender" data-id="{{ $alarma['id'] }}">
-                        <i class="fas fa-check"></i> Atender
-                    </button>
-                    <button type="button" class="btn btn-warning btn-sm btn-descartar" data-id="{{ $alarma['id'] }}">
-                        <i class="fas fa-times"></i> Descartar
-                    </button>
-                    @endif
-                    <a href="{{ route('alarmas.index') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </a>
-                </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Información General</h5>
             </div>
             <div class="card-body">
-                <!-- Estado -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <div class="alert {{ $alarma['estado'] == 'activa' ? 'alert-danger' : ($alarma['estado'] == 'atendida' ? 'alert-success' : 'alert-secondary') }}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas {{ $alarma['estado'] == 'activa' ? 'fa-exclamation-triangle' : ($alarma['estado'] == 'atendida' ? 'fa-check-circle' : 'fa-ban') }}"></i>
-                                    <strong>Estado:</strong> 
-                                    @if($alarma['estado'] == 'activa')
-                                        Activa
-                                    @elseif($alarma['estado'] == 'atendida')
-                                        Atendida
-                                    @else
-                                        Descartada
-                                    @endif
-                                </div>
-                                @if($alarma['estado'] != 'activa')
-                                <div>
-                                    <small>Atendida por: {{ $alarma['usuario_atencion']['name'] ?? 'N/A' }} el {{ $alarma['fecha_atencion'] }} {{ $alarma['hora_atencion'] }}</small>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Información General -->
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Información General
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Fecha/Hora</small>
-                            <h6 class="mb-0">{{ $alarma['fecha_alarma'] }} {{ $alarma['hora_alarma'] }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Tipo</small>
-                            <h6 class="mb-0">
-                                @switch($alarma['tipo_alarma'])
-                                    @case('nivel')
-                                        Nivel
-                                        @break
-                                    @case('temperatura')
-                                        Temperatura
-                                        @break
-                                    @case('presion')
-                                        Presión
-                                        @break
-                                    @case('flujo')
-                                        Flujo
-                                        @break
-                                    @case('equipo')
-                                        Equipo
-                                        @break
-                                    @case('comunicacion')
-                                        Comunicación
-                                        @break
-                                @endswitch
-                            </h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Severidad</small>
-                            <h6 class="mb-0">
-                                @if($alarma['severidad'] == 'alta')
-                                    <span class="badge bg-danger">Alta</span>
-                                @elseif($alarma['severidad'] == 'media')
-                                    <span class="badge bg-warning">Media</span>
-                                @else
-                                    <span class="badge bg-info">Baja</span>
-                                @endif
-                            </h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Instalación</small>
-                            <h6 class="mb-0">{{ $alarma['instalacion']['nombre'] ?? 'N/A' }}</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mensaje -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Mensaje</small>
-                            <h5 class="mb-0">{{ $alarma['mensaje'] }}</h5>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Datos de la Alarma -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-chart-line"></i> Datos de la Alarma
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    @if($alarma['valor'])
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Valor</small>
-                            <h6 class="mb-0">{{ $alarma['valor'] }} {{ $alarma['unidad'] ?? '' }}</h6>
-                        </div>
-                    </div>
-                    @endif
-                    
-                    @if($alarma['umbral'])
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Umbral</small>
-                            <h6 class="mb-0">{{ $alarma['umbral'] }} {{ $alarma['unidad'] ?? '' }}</h6>
-                        </div>
-                    </div>
-                    @endif
-                    
-                    @if($alarma['condicion'])
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Condición</small>
-                            <h6 class="mb-0">
-                                @if($alarma['condicion'] == 'mayor')
-                                    > 
-                                @elseif($alarma['condicion'] == 'menor')
-                                    < 
-                                @elseif($alarma['condicion'] == 'igual')
-                                    =
-                                @elseif($alarma['condicion'] == 'entre')
-                                    Entre
-                                @endif
-                            </h6>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-                
-                <!-- Origen -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-map-marker-alt"></i> Origen
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    @if($alarma['tanque_id'])
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Tanque</small>
-                            <h6 class="mb-0">{{ $alarma['tanque']['nombre'] ?? 'N/A' }}</h6>
-                        </div>
-                    </div>
-                    @endif
-                    
-                    @if($alarma['medidor_id'])
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Medidor</small>
-                            <h6 class="mb-0">{{ $alarma['medidor']['nombre'] ?? 'N/A' }}</h6>
-                        </div>
-                    </div>
-                    @endif
-                    
-                    @if($alarma['dispensario_id'])
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Dispensario</small>
-                            <h6 class="mb-0">{{ $alarma['dispensario']['nombre'] ?? 'N/A' }}</h6>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-                
-                <!-- Observaciones de atención -->
-                @if($alarma['observaciones'])
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-comment"></i> Observaciones
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="border p-3 rounded">
-                            <p class="mb-0">{{ $alarma['observaciones'] }}</p>
-                        </div>
-                    </div>
-                </div>
-                @endif
-                
-                <!-- Fechas de registro -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <hr>
-                        <small class="text-muted">
-                            <i class="fas fa-clock"></i> Creado: {{ $alarma['created_at'] ?? 'N/A' }} | 
-                            Última actualización: {{ $alarma['updated_at'] ?? 'N/A' }}
-                        </small>
-                    </div>
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Número de Registro:</th>
+                        <td>{{ $alarma['numero_registro'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha y Hora:</th>
+                        <td>{{ $alarma['fecha_hora'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Tipo de Alarma:</th>
+                        <td>{{ $alarma['tipo_alarma']['nombre'] ?? $alarma['tipo_alarma_id'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Gravedad:</th>
+                        <td>
+                            @php
+                                $badgeClass = [
+                                    'BAJA' => 'info',
+                                    'MEDIA' => 'warning',
+                                    'ALTA' => 'danger',
+                                    'CRITICA' => 'dark'
+                                ][$alarma['gravedad']] ?? 'secondary';
+                            @endphp
+                            <span class="badge bg-{{ $badgeClass }}">{{ $alarma['gravedad'] }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            @php
+                                $estadoClass = [
+                                    'PENDIENTE' => 'danger',
+                                    'EN_PROCESO' => 'warning',
+                                    'RESUELTA' => 'success',
+                                    'IGNORADA' => 'secondary'
+                                ][$alarma['estado_atencion']] ?? 'secondary';
+                            @endphp
+                            <span class="badge bg-{{ $estadoClass }}">{{ $alarma['estado_atencion'] }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Requiere Atención Inmediata:</th>
+                        <td>
+                            @if($alarma['requiere_atencion_inmediata'])
+                                <span class="badge bg-danger">Sí</span>
+                            @else
+                                <span class="badge bg-success">No</span>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Componente Asociado</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Tipo:</th>
+                        <td>{{ $alarma['componente_tipo'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>ID:</th>
+                        <td>{{ $alarma['componente_id'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Identificador:</th>
+                        <td>{{ $alarma['componente_identificador'] }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">Descripción</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ $alarma['descripcion'] }}</p>
+            </div>
+        </div>
+    </div>
+    
+    @if(!empty($alarma['atenciones']))
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">Historial de Atenciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Acciones Tomadas</th>
+                                <th>Estado</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($alarma['atenciones'] as $atencion)
+                                <tr>
+                                    <td>{{ $atencion['fecha_atencion'] }}</td>
+                                    <td>{{ $atencion['usuario']['nombres'] ?? '' }} {{ $atencion['usuario']['apellidos'] ?? '' }}</td>
+                                    <td>{{ $atencion['acciones_tomadas'] }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $estadoClass[$atencion['estado_atencion']] ?? 'secondary' }}">
+                                            {{ $atencion['estado_atencion'] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $atencion['observaciones'] ?? '-' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Modal atender alarma -->
-<div class="modal fade" id="atenderModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="atenderForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Atender Alarma</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="estado" value="atendida">
-                    <input type="hidden" name="usuario_atencion" value="{{ session('user.id') }}">
-                    <input type="hidden" name="fecha_atencion" value="{{ date('Y-m-d') }}">
-                    <input type="hidden" name="hora_atencion" value="{{ date('H:i:s') }}">
-                    
-                    <div class="mb-3">
-                        <label for="observaciones" class="form-label">Observaciones</label>
-                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Atender</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal descartar alarma -->
-<div class="modal fade" id="descartarModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="descartarForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Descartar Alarma</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="estado" value="descartada">
-                    <input type="hidden" name="usuario_atencion" value="{{ session('user.id') }}">
-                    <input type="hidden" name="fecha_atencion" value="{{ date('Y-m-d') }}">
-                    <input type="hidden" name="hora_atencion" value="{{ date('H:i:s') }}">
-                    
-                    <div class="mb-3">
-                        <label for="observaciones_descartar" class="form-label">Motivo del descarte</label>
-                        <textarea class="form-control" id="observaciones_descartar" name="observaciones" rows="3" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning">Descartar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    @endif
 </div>
 @endsection
-
-@push('scripts')
-<script>
-$(document).ready(function() {
-    // Botón atender
-    $('.btn-atender').click(function() {
-        var id = $(this).data('id');
-        var form = $('#atenderForm');
-        form.attr('action', '{{ url("alarmas") }}/' + id);
-        $('#atenderModal').modal('show');
-    });
-
-    // Botón descartar
-    $('.btn-descartar').click(function() {
-        var id = $(this).data('id');
-        var form = $('#descartarForm');
-        form.attr('action', '{{ url("alarmas") }}/' + id);
-        $('#descartarModal').modal('show');
-    });
-});
-</script>
-@endpush

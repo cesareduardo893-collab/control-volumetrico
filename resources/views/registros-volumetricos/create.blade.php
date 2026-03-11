@@ -1,287 +1,218 @@
 @extends('layouts.app')
 
 @section('title', 'Nuevo Registro Volumétrico')
+@section('header', 'Registrar Nuevo Registro Volumétrico')
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Nuevo Registro Volumétrico</h6>
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Información del Registro Volumétrico</h5>
             </div>
             <div class="card-body">
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                
                 <form method="POST" action="{{ route('registros-volumetricos.store') }}" id="registroForm">
                     @csrf
                     
-                    <!-- Información Básica -->
-                    <h5 class="mb-3">Información del Movimiento</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="instalacion_id" class="form-label">Instalación <span class="text-danger">*</span></label>
-                                <select class="form-select select2 @error('instalacion_id') is-invalid @enderror" 
-                                        id="instalacion_id" 
-                                        name="instalacion_id" 
-                                        required>
-                                    <option value="">Seleccione una instalación...</option>
-                                    @foreach($instalaciones['data'] ?? [] as $instalacion)
-                                        <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
-                                            {{ $instalacion['clave_instalacion'] }} - {{ $instalacion['nombre'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('instalacion_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="numero_registro" class="form-label">Número de Registro *</label>
+                            <input type="text" class="form-control" id="numero_registro" name="numero_registro" 
+                                   value="{{ old('numero_registro') }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="tanque_id" class="form-label">Tanque <span class="text-danger">*</span></label>
-                                <select class="form-select select2 @error('tanque_id') is-invalid @enderror" 
-                                        id="tanque_id" 
-                                        name="tanque_id" 
-                                        required>
-                                    <option value="">Primero seleccione una instalación</option>
-                                </select>
-                                @error('tanque_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="producto_id" class="form-label">Producto <span class="text-danger">*</span></label>
-                                <select class="form-select select2 @error('producto_id') is-invalid @enderror" 
-                                        id="producto_id" 
-                                        name="producto_id" 
-                                        required>
-                                    <option value="">Seleccione un producto...</option>
-                                    @foreach($productos['data'] ?? [] as $producto)
-                                        <option value="{{ $producto['id'] }}" {{ old('producto_id') == $producto['id'] ? 'selected' : '' }}>
-                                            {{ $producto['clave_producto'] }} - {{ $producto['nombre'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('producto_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="fecha" class="form-label">Fecha *</label>
+                            <input type="date" class="form-control datepicker" id="fecha" name="fecha" 
+                                   value="{{ old('fecha', now()->toDateString()) }}" required>
                         </div>
                     </div>
                     
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="tipo_movimiento" class="form-label">Tipo de Movimiento <span class="text-danger">*</span></label>
-                                <select class="form-select @error('tipo_movimiento') is-invalid @enderror" 
-                                        id="tipo_movimiento" 
-                                        name="tipo_movimiento" 
-                                        required>
-                                    <option value="">Seleccione...</option>
-                                    <option value="entrada" {{ old('tipo_movimiento') == 'entrada' ? 'selected' : '' }}>Entrada</option>
-                                    <option value="salida" {{ old('tipo_movimiento') == 'salida' ? 'selected' : '' }}>Salida</option>
-                                    <option value="trasiego" {{ old('tipo_movimiento') == 'trasiego' ? 'selected' : '' }}>Trasiego</option>
-                                    <option value="ajuste" {{ old('tipo_movimiento') == 'ajuste' ? 'selected' : '' }}>Ajuste</option>
-                                </select>
-                                @error('tipo_movimiento')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="instalacion_id" class="form-label">Instalación *</label>
+                            <select class="form-select select2" id="instalacion_id" name="instalacion_id" required>
+                                <option value="">Seleccione...</option>
+                                @foreach($instalaciones as $instalacion)
+                                    <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
+                                        {{ $instalacion['nombre'] }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="fecha_movimiento" class="form-label">Fecha <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control datepicker @error('fecha_movimiento') is-invalid @enderror" 
-                                       id="fecha_movimiento" 
-                                       name="fecha_movimiento" 
-                                       value="{{ old('fecha_movimiento', date('Y-m-d')) }}" 
-                                       required>
-                                @error('fecha_movimiento')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="tanque_id" class="form-label">Tanque *</label>
+                            <select class="form-select select2" id="tanque_id" name="tanque_id" required>
+                                <option value="">Seleccione...</option>
+                                @foreach($tanques as $tanque)
+                                    <option value="{{ $tanque['id'] }}" {{ old('tanque_id') == $tanque['id'] ? 'selected' : '' }}>
+                                        {{ $tanque['identificador'] }} - {{ $tanque['instalacion']['nombre'] ?? '' }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="hora_movimiento" class="form-label">Hora <span class="text-danger">*</span></label>
-                                <input type="time" 
-                                       class="form-control @error('hora_movimiento') is-invalid @enderror" 
-                                       id="hora_movimiento" 
-                                       name="hora_movimiento" 
-                                       value="{{ old('hora_movimiento', date('H:i:s')) }}" 
-                                       step="1"
-                                       required>
-                                @error('hora_movimiento')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="producto_id" class="form-label">Producto *</label>
+                            <select class="form-select select2" id="producto_id" name="producto_id" required>
+                                <option value="">Seleccione...</option>
+                                @foreach($productos as $producto)
+                                    <option value="{{ $producto['id'] }}" {{ old('producto_id') == $producto['id'] ? 'selected' : '' }}>
+                                        {{ $producto['nombre'] }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     
-                    <!-- Datos Volumétricos -->
-                    <h5 class="mb-3 mt-4">Datos Volumétricos</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="volumen_bruto" class="form-label">Volumen Bruto (L) <span class="text-danger">*</span></label>
-                                <input type="number" 
-                                       class="form-control @error('volumen_bruto') is-invalid @enderror" 
-                                       id="volumen_bruto" 
-                                       name="volumen_bruto" 
-                                       value="{{ old('volumen_bruto') }}" 
-                                       min="0" 
-                                       step="0.001"
-                                       required>
-                                @error('volumen_bruto')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="hora_inicio" class="form-label">Hora Inicio *</label>
+                            <input type="time" class="form-control" id="hora_inicio" name="hora_inicio" 
+                                   value="{{ old('hora_inicio', '00:00:00') }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="temperatura" class="form-label">Temperatura (°C) <span class="text-danger">*</span></label>
-                                <input type="number" 
-                                       class="form-control @error('temperatura') is-invalid @enderror" 
-                                       id="temperatura" 
-                                       name="temperatura" 
-                                       value="{{ old('temperatura', 15) }}" 
-                                       step="0.1"
-                                       required>
-                                @error('temperatura')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="hora_fin" class="form-label">Hora Fin *</label>
+                            <input type="time" class="form-control" id="hora_fin" name="hora_fin" 
+                                   value="{{ old('hora_fin', '23:59:59') }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="densidad" class="form-label">Densidad (kg/m³) <span class="text-danger">*</span></label>
-                                <input type="number" 
-                                       class="form-control @error('densidad') is-invalid @enderror" 
-                                       id="densidad" 
-                                       name="densidad" 
-                                       value="{{ old('densidad') }}" 
-                                       min="0" 
-                                       step="0.0001"
-                                       required>
-                                @error('densidad')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="medidor_id" class="form-label">Medidor</label>
+                            <select class="form-select select2" id="medidor_id" name="medidor_id">
+                                <option value="">Seleccione (opcional)</option>
+                                @foreach($medidores as $medidor)
+                                    <option value="{{ $medidor['id'] }}" {{ old('medidor_id') == $medidor['id'] ? 'selected' : '' }}>
+                                        {{ $medidor['clave'] }} - {{ $medidor['numero_serie'] }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="factor_correccion" class="form-label">Factor de Corrección</label>
-                                <input type="number" 
-                                       class="form-control @error('factor_correccion') is-invalid @enderror" 
-                                       id="factor_correccion" 
-                                       name="factor_correccion" 
-                                       value="{{ old('factor_correccion', 1) }}" 
-                                       min="0" 
-                                       step="0.0001"
-                                       readonly>
-                                @error('factor_correccion')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="volumen_inicial" class="form-label">Volumen Inicial (L) *</label>
+                            <input type="number" step="0.001" min="0" class="form-control" 
+                                   id="volumen_inicial" name="volumen_inicial" value="{{ old('volumen_inicial') }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="volumen_neto" class="form-label">Volumen Neto (L) <span class="text-danger">*</span></label>
-                                <input type="number" 
-                                       class="form-control @error('volumen_neto') is-invalid @enderror" 
-                                       id="volumen_neto" 
-                                       name="volumen_neto" 
-                                       value="{{ old('volumen_neto') }}" 
-                                       min="0" 
-                                       step="0.001"
-                                       required>
-                                @error('volumen_neto')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="volumen_final" class="form-label">Volumen Final (L) *</label>
+                            <input type="number" step="0.001" min="0" class="form-control" 
+                                   id="volumen_final" name="volumen_final" value="{{ old('volumen_final') }}" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="volumen_operacion" class="form-label">Volumen Operación (L) *</label>
+                            <input type="number" step="0.001" min="0" class="form-control" 
+                                   id="volumen_operacion" name="volumen_operacion" value="{{ old('volumen_operacion') }}" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="volumen_corregido" class="form-label">Volumen Corregido (L) *</label>
+                            <input type="number" step="0.001" min="0" class="form-control" 
+                                   id="volumen_corregido" name="volumen_corregido" value="{{ old('volumen_corregido') }}" required>
                         </div>
                     </div>
                     
-                    <!-- Equipos Asociados -->
-                    <h5 class="mb-3 mt-4">Equipos Asociados</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="medidor_id" class="form-label">Medidor</label>
-                                <select class="form-select select2 @error('medidor_id') is-invalid @enderror" 
-                                        id="medidor_id" 
-                                        name="medidor_id">
-                                    <option value="">Seleccione un medidor...</option>
-                                </select>
-                                @error('medidor_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="temperatura_inicial" class="form-label">Temperatura Inicial (°C) *</label>
+                            <input type="number" step="0.1" class="form-control" 
+                                   id="temperatura_inicial" name="temperatura_inicial" value="{{ old('temperatura_inicial', 15) }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="dispensario_id" class="form-label">Dispensario</label>
-                                <select class="form-select select2 @error('dispensario_id') is-invalid @enderror" 
-                                        id="dispensario_id" 
-                                        name="dispensario_id">
-                                    <option value="">Seleccione un dispensario...</option>
-                                </select>
-                                @error('dispensario_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="temperatura_final" class="form-label">Temperatura Final (°C) *</label>
+                            <input type="number" step="0.1" class="form-control" 
+                                   id="temperatura_final" name="temperatura_final" value="{{ old('temperatura_final', 15) }}" required>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="manguera_id" class="form-label">Manguera</label>
-                                <select class="form-select select2 @error('manguera_id') is-invalid @enderror" 
-                                        id="manguera_id" 
-                                        name="manguera_id">
-                                    <option value="">Seleccione una manguera...</option>
-                                </select>
-                                @error('manguera_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="densidad" class="form-label">Densidad (kg/L) *</label>
+                            <input type="number" step="0.0001" min="0" class="form-control" 
+                                   id="densidad" name="densidad" value="{{ old('densidad', 0.85) }}" required>
                         </div>
                     </div>
                     
-                    <!-- Observaciones -->
-                    <h5 class="mb-3 mt-4">Observaciones</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <textarea class="form-control @error('observaciones') is-invalid @enderror" 
-                                          id="observaciones" 
-                                          name="observaciones" 
-                                          rows="3">{{ old('observaciones') }}</textarea>
-                                @error('observaciones')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="tipo_registro" class="form-label">Tipo de Registro *</label>
+                            <select class="form-select" id="tipo_registro" name="tipo_registro" required>
+                                <option value="">Seleccione...</option>
+                                <option value="operacion" {{ old('tipo_registro', 'operacion') == 'operacion' ? 'selected' : '' }}>Operación</option>
+                                <option value="acumulado" {{ old('tipo_registro') == 'acumulado' ? 'selected' : '' }}>Acumulado</option>
+                                <option value="existencias" {{ old('tipo_registro') == 'existencias' ? 'selected' : '' }}>Existencias</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="operacion" class="form-label">Operación *</label>
+                            <select class="form-select" id="operacion" name="operacion" required>
+                                <option value="">Seleccione...</option>
+                                <option value="recepcion" {{ old('operacion') == 'recepcion' ? 'selected' : '' }}>Recepción</option>
+                                <option value="entrega" {{ old('operacion') == 'entrega' ? 'selected' : '' }}>Entrega</option>
+                                <option value="inventario_inicial" {{ old('operacion') == 'inventario_inicial' ? 'selected' : '' }}>Inventario Inicial</option>
+                                <option value="inventario_final" {{ old('operacion') == 'inventario_final' ? 'selected' : '' }}>Inventario Final</option>
+                                <option value="venta" {{ old('operacion') == 'venta' ? 'selected' : '' }}>Venta</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="estado" class="form-label">Estado *</label>
+                            <select class="form-select" id="estado" name="estado" required>
+                                <option value="">Seleccione...</option>
+                                <option value="PENDIENTE" {{ old('estado', 'PENDIENTE') == 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                                <option value="PROCESADO" {{ old('estado') == 'PROCESADO' ? 'selected' : '' }}>Procesado</option>
+                                <option value="VALIDADO" {{ old('estado') == 'VALIDADO' ? 'selected' : '' }}>Validado</option>
+                                <option value="ERROR" {{ old('estado') == 'ERROR' ? 'selected' : '' }}>Error</option>
+                                <option value="CON_ALARMA" {{ old('estado') == 'CON_ALARMA' ? 'selected' : '' }}>Con Alarma</option>
+                            </select>
                         </div>
                     </div>
                     
-                    <!-- Estado -->
-                    <input type="hidden" name="estado" value="registrado">
-                    <input type="hidden" name="usuario_id" value="{{ session('user.id') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="documento_fiscal_uuid" class="form-label">UUID Documento Fiscal</label>
+                            <input type="text" class="form-control" id="documento_fiscal_uuid" name="documento_fiscal_uuid" 
+                                   value="{{ old('documento_fiscal_uuid') }}" placeholder="Opcional">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="rfc_contraparte" class="form-label">RFC Contraparte</label>
+                            <input type="text" class="form-control" id="rfc_contraparte" name="rfc_contraparte" 
+                                   value="{{ old('rfc_contraparte') }}" placeholder="Opcional">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="observaciones" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observaciones" name="observaciones" 
+                                  rows="3">{{ old('observaciones') }}</textarea>
+                    </div>
                     
                     <hr>
                     
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar
-                            </button>
-                            <a href="{{ route('registros-volumetricos.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
-                        </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ route('registros-volumetricos.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar Registro
+                        </button>
                     </div>
                 </form>
             </div>
@@ -293,106 +224,35 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar Select2
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
+    });
+    
     $('.select2').select2({
         theme: 'bootstrap-5',
         width: '100%'
     });
     
-    // Cargar tanques por instalación
-    $('#instalacion_id').change(function() {
-        var instalacionId = $(this).val();
-        var tanqueSelect = $('#tanque_id');
-        
-        tanqueSelect.empty().append('<option value="">Cargando tanques...</option>');
-        
-        if (instalacionId) {
-            $.get('/api/tanques/por-instalacion/' + instalacionId, function(data) {
-                tanqueSelect.empty().append('<option value="">Seleccione un tanque...</option>');
-                
-                $.each(data, function(key, tanque) {
-                    tanqueSelect.append('<option value="' + tanque.id + '">' + tanque.clave_tanque + ' - ' + tanque.nombre + ' (' + tanque.producto.nombre + ')</option>');
-                });
-            });
-            
-            // Cargar medidores
-            $.get('/api/medidores/por-instalacion/' + instalacionId, function(data) {
-                var medidorSelect = $('#medidor_id');
-                medidorSelect.empty().append('<option value="">Seleccione un medidor...</option>');
-                
-                $.each(data, function(key, medidor) {
-                    medidorSelect.append('<option value="' + medidor.id + '">' + medidor.clave_medidor + ' - ' + medidor.nombre + '</option>');
-                });
-            });
-            
-            // Cargar dispensarios
-            $.get('/api/dispensarios/por-instalacion/' + instalacionId, function(data) {
-                var dispensarioSelect = $('#dispensario_id');
-                dispensarioSelect.empty().append('<option value="">Seleccione un dispensario...</option>');
-                
-                $.each(data, function(key, dispensario) {
-                    dispensarioSelect.append('<option value="' + dispensario.id + '">' + dispensario.clave_dispensario + ' - ' + dispensario.nombre + '</option>');
-                });
-            });
-        } else {
-            tanqueSelect.empty().append('<option value="">Primero seleccione una instalación</option>');
-        }
-    });
-    
-    // Cargar mangueras por dispensario
-    $('#dispensario_id').change(function() {
-        var dispensarioId = $(this).val();
-        var mangueraSelect = $('#manguera_id');
-        
-        mangueraSelect.empty().append('<option value="">Cargando mangueras...</option>');
-        
-        if (dispensarioId) {
-            $.get('/api/mangueras/por-dispensario/' + dispensarioId, function(data) {
-                mangueraSelect.empty().append('<option value="">Seleccione una manguera...</option>');
-                
-                $.each(data, function(key, manguera) {
-                    mangueraSelect.append('<option value="' + manguera.id + '">' + manguera.clave_manguera + ' - ' + manguera.producto.nombre + '</option>');
-                });
-            });
-        } else {
-            mangueraSelect.empty().append('<option value="">Primero seleccione un dispensario</option>');
-        }
-    });
-    
-    // Calcular volumen neto
-    function calcularVolumenNeto() {
-        var bruto = parseFloat($('#volumen_bruto').val()) || 0;
-        var temperatura = parseFloat($('#temperatura').val()) || 15;
-        var densidad = parseFloat($('#densidad').val()) || 0;
-        
-        // Aquí iría la lógica real de cálculo del factor de corrección
-        // basado en tablas API o fórmulas específicas
-        var factor = 1 - (0.0005 * (temperatura - 15));
-        $('#factor_correccion').val(factor.toFixed(4));
-        
-        var neto = bruto * factor;
-        $('#volumen_neto').val(neto.toFixed(3));
+    // Calcular volumen de operación
+    function calcularVolumenOperacion() {
+        let inicial = parseFloat($('#volumen_inicial').val()) || 0;
+        let final = parseFloat($('#volumen_final').val()) || 0;
+        let operacion = final - inicial;
+        $('#volumen_operacion').val(operacion.toFixed(3));
     }
     
-    $('#volumen_bruto, #temperatura, #densidad').on('input', calcularVolumenNeto);
+    $('#volumen_inicial, #volumen_final').on('input', calcularVolumenOperacion);
     
-    // Validar que no exceda capacidad del tanque
-    $('#tanque_id').change(function() {
-        var tanqueId = $(this).val();
+    // Validar horas
+    $('#hora_inicio, #hora_fin').change(function() {
+        let inicio = $('#hora_inicio').val();
+        let fin = $('#hora_fin').val();
         
-        if (tanqueId) {
-            $.get('/api/tanques/' + tanqueId + '/capacidad-disponible', function(data) {
-                var disponible = data.capacidad_disponible;
-                $('#volumen_bruto').attr('max', disponible);
-                
-                if (parseFloat($('#volumen_bruto').val()) > disponible) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Advertencia',
-                        text: 'El volumen ingresado supera la capacidad disponible del tanque (' + disponible.toFixed(2) + ' L)'
-                    });
-                }
-            });
+        if (inicio && fin && inicio >= fin) {
+            alert('La hora de fin debe ser posterior a la hora de inicio');
+            $('#hora_fin').val('');
         }
     });
 });

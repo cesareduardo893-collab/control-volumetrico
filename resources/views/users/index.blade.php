@@ -1,220 +1,253 @@
 @extends('layouts.app')
 
 @section('title', 'Usuarios')
+@section('header', 'Administración de Usuarios')
+
+@section('actions')
+<a href="{{ route('users.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Usuario
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Usuarios</h6>
-                <a href="{{ route('usuarios.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-user-plus"></i> Nuevo Usuario
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('users.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="identificacion" class="form-label">Identificación</label>
+                <input type="text" class="form-control" id="identificacion" name="identificacion" 
+                       value="{{ request('identificacion') }}" placeholder="Buscar por identificación">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="nombres" class="form-label">Nombres</label>
+                <input type="text" class="form-control" id="nombres" name="nombres" 
+                       value="{{ request('nombres') }}" placeholder="Buscar por nombres">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="apellidos" class="form-label">Apellidos</label>
+                <input type="text" class="form-control" id="apellidos" name="apellidos" 
+                       value="{{ request('apellidos') }}" placeholder="Buscar por apellidos">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="text" class="form-control" id="email" name="email" 
+                       value="{{ request('email') }}" placeholder="Buscar por email">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="role_id" class="form-label">Rol</label>
+                <select class="form-select select2" id="role_id" name="role_id">
+                    <option value="">Todos</option>
+                    @foreach($roles ?? [] as $rol)
+                        <option value="{{ $rol['id'] }}" {{ request('role_id') == $rol['id'] ? 'selected' : '' }}>
+                            {{ $rol['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="activo" class="form-label">Activo</label>
+                <select class="form-select" id="activo" name="activo">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('activo') == '1' ? 'selected' : '' }}>Activos</option>
+                    <option value="0" {{ request('activo') == '0' ? 'selected' : '' }}>Inactivos</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="bloqueados" class="form-label">Bloqueados</label>
+                <select class="form-select" id="bloqueados" name="bloqueados">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('bloqueados') == '1' ? 'selected' : '' }}>Bloqueados</option>
+                    <option value="0" {{ request('bloqueados') == '0' ? 'selected' : '' }}>No Bloqueados</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterName" placeholder="Nombre">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterEmail" placeholder="Email">
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterRole">
-                            <option value="">Todos los roles</option>
-                            @foreach($roles ?? [] as $role)
-                                <option value="{{ $role['id'] }}">{{ $role['display_name'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterActive">
-                            <option value="">Todos</option>
-                            <option value="1">Activos</option>
-                            <option value="0">Inactivos</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary btn-sm w-100" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="usersTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Email</th>
-                                <th>Roles</th>
-                                <th>Último Acceso</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($users['data'] ?? [] as $user)
-                            <tr>
-                                <td>{{ $user['id'] }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-circle me-2" style="width: 32px; height: 32px; background-color: #e9ecef; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                            <span class="text-primary fw-bold">{{ substr($user['name'], 0, 1) }}</span>
-                                        </div>
-                                        {{ $user['name'] }}
-                                    </div>
-                                </td>
-                                <td>{{ $user['email'] }}</td>
-                                <td>
-                                    @foreach($user['roles'] ?? [] as $role)
-                                        <span class="badge bg-info">{{ $role['display_name'] }}</span>
-                                    @endforeach
-                                </td>
-                                <td>{{ $user['last_login'] ?? 'Nunca' }}</td>
-                                <td>
-                                    @if($user['is_active'])
-                                        <span class="badge bg-success">Activo</span>
-                                    @else
-                                        <span class="badge bg-danger">Inactivo</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('usuarios.show', $user['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('usuarios.edit', $user['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        @if($user['id'] != session('user.id'))
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-delete" 
-                                                data-id="{{ $user['id'] }}"
-                                                data-name="{{ $user['name'] }}"
-                                                title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($users['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $users['meta']['from'] ?? 0 }} a {{ $users['meta']['to'] ?? 0 }} de {{ $users['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($users['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
+        </form>
+        
+        <!-- Tabla de usuarios -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Identificación</th>
+                        <th>Nombre Completo</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Roles</th>
+                        <th>Estado</th>
+                        <th>Último Acceso</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($users as $user)
+                        <tr>
+                            <td>{{ $user['identificacion'] ?? 'N/A' }}</td>
+                            <td>
+                                <strong>{{ $user['nombres'] }} {{ $user['apellidos'] }}</strong>
+                            </td>
+                            <td>{{ $user['email'] }}</td>
+                            <td>{{ $user['telefono'] ?? 'N/A' }}</td>
+                            <td>
+                                @foreach($user['roles'] ?? [] as $rol)
+                                    <span class="badge bg-primary">{{ $rol['nombre'] }}</span>
                                 @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                @endif
-            </div>
+                            </td>
+                            <td>
+                                @if($user['bloqueado_hasta'] && now() < \Carbon\Carbon::parse($user['bloqueado_hasta']))
+                                    <span class="badge bg-danger">Bloqueado</span>
+                                    <small class="d-block">Hasta: {{ $user['bloqueado_hasta'] }}</small>
+                                @elseif(!$user['activo'])
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                @else
+                                    <span class="badge bg-success">Activo</span>
+                                @endif
+                            </td>
+                            <td>{{ $user['ultimo_acceso'] ?? 'Nunca' }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('users.show', $user['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('users.edit', $user['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ route('users.permisos', $user['id']) }}" class="btn btn-sm btn-secondary" title="Permisos">
+                                        <i class="bi bi-key"></i>
+                                    </a>
+                                    <a href="{{ route('users.actividad', $user['id']) }}" class="btn btn-sm btn-primary" title="Actividad">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                    @if($user['activo'] && !$user['bloqueado_hasta'])
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="confirmarBloqueo({{ $user['id'] }})" title="Bloquear">
+                                            <i class="bi bi-lock"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center">No hay usuarios registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 
-<!-- Formulario de eliminación -->
-<form id="deleteForm" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
+<!-- Modal de bloqueo -->
+<div class="modal fade" id="bloquearModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Bloquear Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="bloquearForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="motivo" class="form-label">Motivo del Bloqueo</label>
+                        <textarea class="form-control" id="motivo" name="motivo" 
+                                  rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="minutos_bloqueo" class="form-label">Duración del Bloqueo (minutos)</label>
+                        <select class="form-select" id="minutos_bloqueo" name="minutos_bloqueo">
+                            <option value="30">30 minutos</option>
+                            <option value="60">1 hora</option>
+                            <option value="120">2 horas</option>
+                            <option value="1440">24 horas</option>
+                            <option value="4320">3 días</option>
+                            <option value="10080">7 días</option>
+                            <option value="0">Permanente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Bloquear Usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
-
-@push('styles')
-<style>
-.avatar-circle {
-    width: 32px;
-    height: 32px;
-    background-color: #e9ecef;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.avatar-circle span {
-    font-size: 14px;
-    font-weight: bold;
-    color: #0d6efd;
-}
-</style>
-@endpush
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#usersTable').DataTable({
-        pageLength: {{ $users['meta']['per_page'] ?? 10 }},
-        order: [[0, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterName').val()) params.set('name', $('#filterName').val());
-        if ($('#filterEmail').val()) params.set('email', $('#filterEmail').val());
-        if ($('#filterRole').val()) params.set('role', $('#filterRole').val());
-        if ($('#filterActive').val()) params.set('active', $('#filterActive').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
-    });
-
-    // Botones de eliminar
-    $('.btn-delete').click(function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Deseas eliminar el usuario "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var form = $('#deleteForm');
-                form.attr('action', '{{ url("usuarios") }}/' + id);
-                form.submit();
-            }
-        });
-    });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterName').val(urlParams.get('name') || '');
-    $('#filterEmail').val(urlParams.get('email') || '');
-    $('#filterRole').val(urlParams.get('role') || '');
-    $('#filterActive').val(urlParams.get('active') || '');
 });
+
+function confirmarBloqueo(id) {
+    $('#bloquearForm').attr('action', `{{ url('users') }}/${id}/bloquear`);
+    new bootstrap.Modal(document.getElementById('bloquearModal')).show();
+}
 </script>
 @endpush

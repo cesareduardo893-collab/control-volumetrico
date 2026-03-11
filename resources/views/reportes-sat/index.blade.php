@@ -1,225 +1,382 @@
 @extends('layouts.app')
 
 @section('title', 'Reportes SAT')
+@section('header', 'Reportes para el SAT')
+
+@section('actions')
+<a href="{{ route('reportes-sat.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Reporte
+</a>
+<a href="{{ route('reportes-sat.historial-envios', request('instalacion_id')) }}?anio={{ now()->year }}" class="btn btn-sm btn-info">
+    <i class="bi bi-clock-history"></i> Historial de Envíos
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Reportes SAT</h6>
-                <a href="{{ route('reportes-sat.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Reporte
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('reportes-sat.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="instalacion_id" class="form-label">Instalación</label>
+                <select class="form-select select2" id="instalacion_id" name="instalacion_id">
+                    <option value="">Todas</option>
+                    @foreach($instalaciones ?? [] as $instalacion)
+                        <option value="{{ $instalacion['id'] }}" {{ request('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
+                            {{ $instalacion['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="folio" class="form-label">Folio</label>
+                <input type="text" class="form-control" id="folio" name="folio" 
+                       value="{{ request('folio') }}" placeholder="Buscar por folio">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="periodo" class="form-label">Período (AAAAMM)</label>
+                <input type="text" class="form-control" id="periodo" name="periodo" 
+                       value="{{ request('periodo') }}" placeholder="Ej: 202401" maxlength="7">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tipo_reporte" class="form-label">Tipo</label>
+                <select class="form-select" id="tipo_reporte" name="tipo_reporte">
+                    <option value="">Todos</option>
+                    <option value="MENSUAL" {{ request('tipo_reporte') == 'MENSUAL' ? 'selected' : '' }}>Mensual</option>
+                    <option value="ANUAL" {{ request('tipo_reporte') == 'ANUAL' ? 'selected' : '' }}>Anual</option>
+                    <option value="ESPECIAL" {{ request('tipo_reporte') == 'ESPECIAL' ? 'selected' : '' }}>Especial</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_generacion_inicio" class="form-label">Fecha Generación Inicio</label>
+                <input type="date" class="form-control datepicker" id="fecha_generacion_inicio" 
+                       name="fecha_generacion_inicio" value="{{ request('fecha_generacion_inicio') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_generacion_fin" class="form-label">Fecha Generación Fin</label>
+                <input type="date" class="form-control datepicker" id="fecha_generacion_fin" 
+                       name="fecha_generacion_fin" value="{{ request('fecha_generacion_fin') }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="estado" class="form-label">Estado</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE" {{ request('estado') == 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                    <option value="GENERADO" {{ request('estado') == 'GENERADO' ? 'selected' : '' }}>Generado</option>
+                    <option value="FIRMADO" {{ request('estado') == 'FIRMADO' ? 'selected' : '' }}>Firmado</option>
+                    <option value="ENVIADO" {{ request('estado') == 'ENVIADO' ? 'selected' : '' }}>Enviado</option>
+                    <option value="ACEPTADO" {{ request('estado') == 'ACEPTADO' ? 'selected' : '' }}>Aceptado</option>
+                    <option value="RECHAZADO" {{ request('estado') == 'RECHAZADO' ? 'selected' : '' }}>Rechazado</option>
+                    <option value="ERROR" {{ request('estado') == 'ERROR' ? 'selected' : '' }}>Error</option>
+                    <option value="REQUIERE_REENVIO" {{ request('estado') == 'REQUIERE_REENVIO' ? 'selected' : '' }}>Requiere Reenvío</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('reportes-sat.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterInstalacion">
-                            <option value="">Todas las instalaciones</option>
-                            @foreach($instalaciones ?? [] as $instalacion)
-                                <option value="{{ $instalacion['id'] }}">{{ $instalacion['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterPeriodo">
-                            <option value="">Todos los periodos</option>
-                            <option value="diario">Diario</option>
-                            <option value="semanal">Semanal</option>
-                            <option value="quincenal">Quincenal</option>
-                            <option value="mensual">Mensual</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterEstado">
-                            <option value="">Todos los estados</option>
-                            <option value="generado">Generado</option>
-                            <option value="firmado">Firmado</option>
-                            <option value="enviado">Enviado</option>
-                            <option value="recibido">Recibido</option>
-                            <option value="error">Error</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm" id="filterAnio" placeholder="Año">
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-primary btn-sm" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="btnClear">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
+        </form>
+        
+        <!-- Resumen -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h6>Total</h6>
+                        <h3>{{ $resumen['total'] ?? 0 }}</h3>
                     </div>
                 </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="reportesTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Instalación</th>
-                                <th>Periodo</th>
-                                <th>Año/Mes</th>
-                                <th>Fecha Inicio</th>
-                                <th>Fecha Fin</th>
-                                <th>Registros</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($reportes['data'] ?? [] as $reporte)
-                            <tr>
-                                <td>{{ $reporte['id'] }}</td>
-                                <td>{{ $reporte['instalacion']['nombre'] ?? 'N/A' }}</td>
-                                <td>{{ ucfirst($reporte['periodo']) }}</td>
-                                <td>{{ $reporte['anio'] }}-{{ str_pad($reporte['mes'], 2, '0', STR_PAD_LEFT) }}</td>
-                                <td>{{ $reporte['fecha_inicio'] }}</td>
-                                <td>{{ $reporte['fecha_fin'] }}</td>
-                                <td class="text-center">
-                                    <small>
-                                        G: {{ $reporte['registros_generados'] }} | 
-                                        V: {{ $reporte['registros_validos'] }} | 
-                                        I: {{ $reporte['registros_invalidos'] }}
-                                    </small>
-                                </td>
-                                <td>
-                                    @if($reporte['estado'] == 'generado')
-                                        <span class="badge bg-secondary">Generado</span>
-                                    @elseif($reporte['estado'] == 'firmado')
-                                        <span class="badge bg-info">Firmado</span>
-                                    @elseif($reporte['estado'] == 'enviado')
-                                        <span class="badge bg-primary">Enviado</span>
-                                    @elseif($reporte['estado'] == 'recibido')
-                                        <span class="badge bg-success">Recibido</span>
-                                    @else
-                                        <span class="badge bg-danger">Error</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('reportes-sat.show', $reporte['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        @if($reporte['estado'] == 'generado')
-                                        <a href="{{ route('reportes-sat.edit', $reporte['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-firmar" 
-                                                data-id="{{ $reporte['id'] }}"
-                                                title="Firmar">
-                                            <i class="fas fa-signature"></i>
-                                        </button>
-                                        @endif
-                                        @if($reporte['estado'] == 'firmado')
-                                        <button type="button" 
-                                                class="btn btn-primary btn-sm btn-enviar" 
-                                                data-id="{{ $reporte['id'] }}"
-                                                title="Enviar">
-                                            <i class="fas fa-paper-plane"></i>
-                                        </button>
-                                        @endif
-                                        @if($reporte['estado'] == 'enviado' || $reporte['estado'] == 'recibido')
-                                        <button type="button" 
-                                                class="btn btn-secondary btn-sm btn-acuse" 
-                                                data-id="{{ $reporte['id'] }}"
-                                                title="Acuse">
-                                            <i class="fas fa-file-signature"></i>
-                                        </button>
-                                        @endif
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-xml" 
-                                                data-id="{{ $reporte['id'] }}"
-                                                title="Descargar XML">
-                                            <i class="fas fa-file-code"></i>
-                                        </button>
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-pdf" 
-                                                data-id="{{ $reporte['id'] }}"
-                                                title="Descargar PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($reportes['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $reportes['meta']['from'] ?? 0 }} a {{ $reportes['meta']['to'] ?? 0 }} de {{ $reportes['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($reportes['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h6>Aceptados</h6>
+                        <h3>{{ $resumen['aceptados'] ?? 0 }}</h3>
                     </div>
                 </div>
-                @endif
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h6>Pendientes</h6>
+                        <h3>{{ $resumen['pendientes'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h6>Enviados</h6>
+                        <h3>{{ $resumen['enviados'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h6>Rechazados</h6>
+                        <h3>{{ $resumen['rechazados'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <h6>Errores</h6>
+                        <h3>{{ $resumen['errores'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
+        
+        <!-- Tabla de reportes -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Instalación</th>
+                        <th>Período</th>
+                        <th>Tipo</th>
+                        <th>Fecha Generación</th>
+                        <th>Usuario</th>
+                        <th>Estado</th>
+                        <th>Fecha Envío</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($reportes as $reporte)
+                        <tr>
+                            <td>{{ $reporte['folio'] }}</td>
+                            <td>
+                                @if(isset($reporte['instalacion']))
+                                    {{ $reporte['instalacion']['nombre'] }}
+                                @else
+                                    {{ $reporte['instalacion_id'] }}
+                                @endif
+                            </td>
+                            <td>{{ substr($reporte['periodo'], 0, 4) }}-{{ substr($reporte['periodo'], 4, 2) }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ $reporte['tipo_reporte'] }}</span>
+                            </td>
+                            <td>{{ $reporte['fecha_generacion'] }}</td>
+                            <td>
+                                @if(isset($reporte['usuario_genera']))
+                                    {{ $reporte['usuario_genera']['nombres'] }} {{ $reporte['usuario_genera']['apellidos'] }}
+                                @else
+                                    {{ $reporte['usuario_genera_id'] }}
+                                @endif
+                            </td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'ACEPTADO' => 'success',
+                                        'ENVIADO' => 'info',
+                                        'GENERADO' => 'primary',
+                                        'FIRMADO' => 'secondary',
+                                        'PENDIENTE' => 'warning',
+                                        'RECHAZADO' => 'danger',
+                                        'ERROR' => 'danger',
+                                        'REQUIERE_REENVIO' => 'warning'
+                                    ][$reporte['estado']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $reporte['estado'] }}</span>
+                            </td>
+                            <td>{{ $reporte['fecha_envio'] ?? 'No enviado' }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('reportes-sat.show', $reporte['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    
+                                    @if(in_array($reporte['estado'], ['GENERADO', 'PENDIENTE']))
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                onclick="confirmarEnvio({{ $reporte['id'] }})" title="Enviar">
+                                            <i class="bi bi-send"></i>
+                                        </button>
+                                    @endif
+                                    
+                                    @if($reporte['estado'] == 'GENERADO')
+                                        <button type="button" class="btn btn-sm btn-warning" 
+                                                onclick="confirmarFirma({{ $reporte['id'] }})" title="Firmar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                    @endif
+                                    
+                                    @if(in_array($reporte['estado'], ['PENDIENTE', 'GENERADO', 'ERROR', 'RECHAZADO']))
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="confirmarCancelacion({{ $reporte['id'] }})" title="Cancelar">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center">No hay reportes SAT registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 
-<!-- Modal firmar -->
-<div class="modal fade" id="firmarModal" tabindex="-1">
+<!-- Modal de envío -->
+<div class="modal fade" id="enviarModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="firmarForm" method="POST">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Enviar Reporte al SAT</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="enviarForm" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Firmar Reporte SAT</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
-                    <p>¿Está seguro de firmar este reporte?</p>
-                    <p class="text-muted">Una vez firmado, podrá ser enviado al SAT.</p>
+                    <div class="mb-3">
+                        <label for="fecha_envio" class="form-label">Fecha de Envío</label>
+                        <input type="date" class="form-control datepicker" id="fecha_envio" 
+                               name="fecha_envio" value="{{ now()->toDateString() }}" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Firmar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Reporte</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal enviar -->
-<div class="modal fade" id="enviarModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Modal de firma -->
+<div class="modal fade" id="firmarModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="enviarForm" method="POST">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Firmar Reporte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="firmarForm" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Enviar Reporte SAT</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
-                    <p>¿Está seguro de enviar este reporte al SAT?</p>
-                    <p class="text-muted">El reporte será transmitido electrónicamente.</p>
+                    <div class="mb-3">
+                        <label for="cadena_original" class="form-label">Cadena Original</label>
+                        <textarea class="form-control" id="cadena_original" name="cadena_original" 
+                                  rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sello_digital" class="form-label">Sello Digital</label>
+                        <textarea class="form-control" id="sello_digital" name="sello_digital" 
+                                  rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="certificado_sat" class="form-label">Certificado SAT</label>
+                        <textarea class="form-control" id="certificado_sat" name="certificado_sat" 
+                                  rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="folio_firma" class="form-label">Folio de Firma</label>
+                            <input type="text" class="form-control" id="folio_firma" name="folio_firma" 
+                                   value="{{ \Illuminate\Support\Str::uuid() }}" readonly>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_firma" class="form-label">Fecha de Firma</label>
+                            <input type="date" class="form-control datepicker" id="fecha_firma" 
+                                   name="fecha_firma" value="{{ now()->toDateString() }}" required>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Enviar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-warning">Firmar Reporte</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de cancelación -->
+<div class="modal fade" id="cancelarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cancelar Reporte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="cancelarForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="motivo_cancelacion" class="form-label">Motivo de Cancelación</label>
+                        <textarea class="form-control" id="motivo_cancelacion" 
+                                  name="motivo_cancelacion" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger">Cancelar Reporte</button>
                 </div>
             </form>
         </div>
@@ -230,72 +387,31 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#reportesTable').DataTable({
-        pageLength: {{ $reportes['meta']['per_page'] ?? 10 }},
-        order: [[4, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterInstalacion').val()) params.set('instalacion_id', $('#filterInstalacion').val());
-        if ($('#filterPeriodo').val()) params.set('periodo', $('#filterPeriodo').val());
-        if ($('#filterEstado').val()) params.set('estado', $('#filterEstado').val());
-        if ($('#filterAnio').val()) params.set('anio', $('#filterAnio').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
+    
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
     });
-
-    // Limpiar filtros
-    $('#btnClear').click(function() {
-        window.location.href = window.location.pathname;
-    });
-
-    // Botón firmar
-    $('.btn-firmar').click(function() {
-        var id = $(this).data('id');
-        var form = $('#firmarForm');
-        form.attr('action', '{{ url("reportes-sat") }}/' + id + '/firmar');
-        $('#firmarModal').modal('show');
-    });
-
-    // Botón enviar
-    $('.btn-enviar').click(function() {
-        var id = $(this).data('id');
-        var form = $('#enviarForm');
-        form.attr('action', '{{ url("reportes-sat") }}/' + id + '/enviar');
-        $('#enviarModal').modal('show');
-    });
-
-    // Botón acuse
-    $('.btn-acuse').click(function() {
-        var id = $(this).data('id');
-        window.open('{{ url("reportes-sat") }}/' + id + '/acuse', '_blank');
-    });
-
-    // Botón XML
-    $('.btn-xml').click(function() {
-        var id = $(this).data('id');
-        window.open('{{ url("reportes-sat") }}/' + id + '/descargar-xml', '_blank');
-    });
-
-    // Botón PDF
-    $('.btn-pdf').click(function() {
-        var id = $(this).data('id');
-        window.open('{{ url("reportes-sat") }}/' + id + '/descargar-pdf', '_blank');
-    });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterInstalacion').val(urlParams.get('instalacion_id') || '');
-    $('#filterPeriodo').val(urlParams.get('periodo') || '');
-    $('#filterEstado').val(urlParams.get('estado') || '');
-    $('#filterAnio').val(urlParams.get('anio') || '');
 });
+
+function confirmarEnvio(id) {
+    $('#enviarForm').attr('action', `{{ url('reportes-sat') }}/${id}/enviar`);
+    new bootstrap.Modal(document.getElementById('enviarModal')).show();
+}
+
+function confirmarFirma(id) {
+    $('#firmarForm').attr('action', `{{ url('reportes-sat') }}/${id}/firmar`);
+    new bootstrap.Modal(document.getElementById('firmarModal')).show();
+}
+
+function confirmarCancelacion(id) {
+    $('#cancelarForm').attr('action', `{{ url('reportes-sat') }}/${id}/cancelar`);
+    new bootstrap.Modal(document.getElementById('cancelarModal')).show();
+}
 </script>
 @endpush

@@ -1,197 +1,308 @@
 @extends('layouts.app')
 
 @section('title', 'Registros Volumétricos')
+@section('header', 'Registros Volumétricos')
+
+@section('actions')
+<a href="{{ route('registros-volumetricos.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Registro
+</a>
+<a href="{{ route('registros-volumetricos.resumen-diario') }}?instalacion_id={{ request('instalacion_id') }}&fecha={{ now()->toDateString() }}" class="btn btn-sm btn-info">
+    <i class="bi bi-calendar-day"></i> Resumen Diario
+</a>
+<a href="{{ route('registros-volumetricos.estadisticas-mensuales') }}?instalacion_id={{ request('instalacion_id') }}&anio={{ now()->year }}&mes={{ now()->month }}" class="btn btn-sm btn-success">
+    <i class="bi bi-graph-up"></i> Estadísticas Mensuales
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Registros Volumétricos</h6>
-                <a href="{{ route('registros-volumetricos.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Registro
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('registros-volumetricos.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="instalacion_id" class="form-label">Instalación</label>
+                <select class="form-select select2" id="instalacion_id" name="instalacion_id">
+                    <option value="">Todas</option>
+                    @foreach($instalaciones ?? [] as $instalacion)
+                        <option value="{{ $instalacion['id'] }}" {{ request('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
+                            {{ $instalacion['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tanque_id" class="form-label">Tanque</label>
+                <select class="form-select select2" id="tanque_id" name="tanque_id">
+                    <option value="">Todos</option>
+                    @foreach($tanques ?? [] as $tanque)
+                        <option value="{{ $tanque['id'] }}" {{ request('tanque_id') == $tanque['id'] ? 'selected' : '' }}>
+                            {{ $tanque['identificador'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="producto_id" class="form-label">Producto</label>
+                <select class="form-select select2" id="producto_id" name="producto_id">
+                    <option value="">Todos</option>
+                    @foreach($productos ?? [] as $producto)
+                        <option value="{{ $producto['id'] }}" {{ request('producto_id') == $producto['id'] ? 'selected' : '' }}>
+                            {{ $producto['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="numero_registro" class="form-label">N° Registro</label>
+                <input type="text" class="form-control" id="numero_registro" name="numero_registro" 
+                       value="{{ request('numero_registro') }}" placeholder="Buscar...">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control datepicker" id="fecha_inicio" 
+                       name="fecha_inicio" value="{{ request('fecha_inicio', now()->startOfMonth()->toDateString()) }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control datepicker" id="fecha_fin" 
+                       name="fecha_fin" value="{{ request('fecha_fin', now()->toDateString()) }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tipo_registro" class="form-label">Tipo Registro</label>
+                <select class="form-select" id="tipo_registro" name="tipo_registro">
+                    <option value="">Todos</option>
+                    <option value="operacion" {{ request('tipo_registro') == 'operacion' ? 'selected' : '' }}>Operación</option>
+                    <option value="acumulado" {{ request('tipo_registro') == 'acumulado' ? 'selected' : '' }}>Acumulado</option>
+                    <option value="existencias" {{ request('tipo_registro') == 'existencias' ? 'selected' : '' }}>Existencias</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="operacion" class="form-label">Operación</label>
+                <select class="form-select" id="operacion" name="operacion">
+                    <option value="">Todos</option>
+                    <option value="recepcion" {{ request('operacion') == 'recepcion' ? 'selected' : '' }}>Recepción</option>
+                    <option value="entrega" {{ request('operacion') == 'entrega' ? 'selected' : '' }}>Entrega</option>
+                    <option value="inventario_inicial" {{ request('operacion') == 'inventario_inicial' ? 'selected' : '' }}>Inventario Inicial</option>
+                    <option value="inventario_final" {{ request('operacion') == 'inventario_final' ? 'selected' : '' }}>Inventario Final</option>
+                    <option value="venta" {{ request('operacion') == 'venta' ? 'selected' : '' }}>Venta</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="estado" class="form-label">Estado</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE" {{ request('estado') == 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                    <option value="PROCESADO" {{ request('estado') == 'PROCESADO' ? 'selected' : '' }}>Procesado</option>
+                    <option value="VALIDADO" {{ request('estado') == 'VALIDADO' ? 'selected' : '' }}>Validado</option>
+                    <option value="ERROR" {{ request('estado') == 'ERROR' ? 'selected' : '' }}>Error</option>
+                    <option value="CANCELADO" {{ request('estado') == 'CANCELADO' ? 'selected' : '' }}>Cancelado</option>
+                    <option value="CON_ALARMA" {{ request('estado') == 'CON_ALARMA' ? 'selected' : '' }}>Con Alarma</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="documento_fiscal_uuid" class="form-label">UUID Documento</label>
+                <input type="text" class="form-control" id="documento_fiscal_uuid" name="documento_fiscal_uuid" 
+                       value="{{ request('documento_fiscal_uuid') }}" placeholder="UUID">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('registros-volumetricos.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterInstalacion">
-                            <option value="">Todas las instalaciones</option>
-                            @foreach($instalaciones ?? [] as $instalacion)
-                                <option value="{{ $instalacion['id'] }}">{{ $instalacion['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterTanque">
-                            <option value="">Todos los tanques</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterProducto">
-                            <option value="">Todos los productos</option>
-                            @foreach($productos ?? [] as $producto)
-                                <option value="{{ $producto['id'] }}">{{ $producto['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterTipoMovimiento">
-                            <option value="">Todos los tipos</option>
-                            <option value="entrada">Entrada</option>
-                            <option value="salida">Salida</option>
-                            <option value="trasiego">Trasiego</option>
-                            <option value="ajuste">Ajuste</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaInicio" placeholder="Fecha Inicio">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaFin" placeholder="Fecha Fin">
+        </form>
+        
+        <!-- Resumen -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Total Registros</h6>
+                        <h3>{{ $resumen['total'] ?? 0 }}</h3>
                     </div>
                 </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterEstado">
-                            <option value="">Todos los estados</option>
-                            <option value="registrado">Registrado</option>
-                            <option value="validado">Validado</option>
-                            <option value="anulado">Anulado</option>
-                        </select>
-                    </div>
-                    <div class="col-md-8">
-                        <button class="btn btn-primary btn-sm" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="btnClear">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
-                        <a href="{{ route('registros-volumetricos.exportar') }}" class="btn btn-success btn-sm" id="btnExport">
-                            <i class="fas fa-file-excel"></i> Exportar
-                        </a>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Validados</h6>
+                        <h3>{{ $resumen['validados'] ?? 0 }}</h3>
                     </div>
                 </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="registrosTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Instalación</th>
-                                <th>Tanque</th>
-                                <th>Producto</th>
-                                <th>Tipo</th>
-                                <th>Volumen Neto</th>
-                                <th>Temperatura</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($registros['data'] ?? [] as $registro)
-                            <tr>
-                                <td>{{ $registro['id'] }}</td>
-                                <td>{{ $registro['fecha_movimiento'] }}</td>
-                                <td>{{ $registro['hora_movimiento'] }}</td>
-                                <td>{{ $registro['instalacion']['nombre'] ?? 'N/A' }}</td>
-                                <td>{{ $registro['tanque']['nombre'] ?? 'N/A' }}</td>
-                                <td>{{ $registro['producto']['nombre'] ?? 'N/A' }}</td>
-                                <td>
-                                    @switch($registro['tipo_movimiento'])
-                                        @case('entrada')
-                                            <span class="badge bg-success">Entrada</span>
-                                            @break
-                                        @case('salida')
-                                            <span class="badge bg-danger">Salida</span>
-                                            @break
-                                        @case('trasiego')
-                                            <span class="badge bg-info">Trasiego</span>
-                                            @break
-                                        @case('ajuste')
-                                            <span class="badge bg-warning">Ajuste</span>
-                                            @break
-                                    @endswitch
-                                </td>
-                                <td class="text-end">{{ number_format($registro['volumen_neto'], 2) }} L</td>
-                                <td class="text-end">{{ $registro['temperatura'] }} °C</td>
-                                <td>
-                                    @if($registro['estado'] == 'validado')
-                                        <span class="badge bg-success">Validado</span>
-                                    @elseif($registro['estado'] == 'registrado')
-                                        <span class="badge bg-warning">Registrado</span>
-                                    @else
-                                        <span class="badge bg-danger">Anulado</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('registros-volumetricos.show', $registro['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        @if($registro['estado'] == 'registrado')
-                                        <a href="{{ route('registros-volumetricos.edit', $registro['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-validar" 
-                                                data-id="{{ $registro['id'] }}"
-                                                title="Validar">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        @endif
-                                        @if($registro['estado'] != 'anulado')
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-anular" 
-                                                data-id="{{ $registro['id'] }}"
-                                                title="Anular">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                        @endif
-                                        <button type="button" 
-                                                class="btn btn-secondary btn-sm btn-pdf" 
-                                                data-id="{{ $registro['id'] }}"
-                                                title="PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($registros['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $registros['meta']['from'] ?? 0 }} a {{ $registros['meta']['to'] ?? 0 }} de {{ $registros['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($registros['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6>Pendientes</h6>
+                        <h3>{{ $resumen['pendientes'] ?? 0 }}</h3>
                     </div>
                 </div>
-                @endif
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h6>Con Alarma</h6>
+                        <h3>{{ $resumen['con_alarma'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
+        
+        <!-- Tabla de registros -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>N° Registro</th>
+                        <th>Fecha/Hora</th>
+                        <th>Instalación</th>
+                        <th>Tanque</th>
+                        <th>Producto</th>
+                        <th>Volumen Operación</th>
+                        <th>Tipo</th>
+                        <th>Operación</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($registros as $registro)
+                        <tr>
+                            <td>{{ $registro['numero_registro'] }}</td>
+                            <td>{{ $registro['fecha'] }} {{ substr($registro['hora_inicio'], 0, 5) }}</td>
+                            <td>
+                                @if(isset($registro['instalacion']))
+                                    {{ $registro['instalacion']['nombre'] }}
+                                @else
+                                    {{ $registro['instalacion_id'] }}
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($registro['tanque']))
+                                    {{ $registro['tanque']['identificador'] }}
+                                @else
+                                    {{ $registro['tanque_id'] }}
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($registro['producto']))
+                                    {{ $registro['producto']['nombre'] }}
+                                @else
+                                    {{ $registro['producto_id'] }}
+                                @endif
+                            </td>
+                            <td><strong>{{ number_format($registro['volumen_operacion'], 3) }} L</strong></td>
+                            <td>
+                                <span class="badge bg-info">{{ $registro['tipo_registro'] }}</span>
+                            </td>
+                            <td>
+                                @php
+                                    $operacionClass = [
+                                        'recepcion' => 'success',
+                                        'entrega' => 'danger',
+                                        'venta' => 'warning',
+                                        'inventario_inicial' => 'secondary',
+                                        'inventario_final' => 'secondary'
+                                    ][$registro['operacion']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $operacionClass }}">{{ $registro['operacion'] }}</span>
+                            </td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'VALIDADO' => 'success',
+                                        'PROCESADO' => 'info',
+                                        'PENDIENTE' => 'warning',
+                                        'ERROR' => 'danger',
+                                        'CANCELADO' => 'secondary',
+                                        'CON_ALARMA' => 'danger'
+                                    ][$registro['estado']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $registro['estado'] }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('registros-volumetricos.show', $registro['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if(in_array($registro['estado'], ['PENDIENTE', 'ERROR']))
+                                        <button type="button" class="btn btn-sm btn-success" 
+                                                onclick="confirmarValidacion({{ $registro['id'] }})" title="Validar">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="confirmarCancelacion({{ $registro['id'] }})" title="Cancelar">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="10" class="text-center">No hay registros volumétricos</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -199,44 +310,48 @@
 <div class="modal fade" id="validarModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Validar Registro Volumétrico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
             <form id="validarForm" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Validar Registro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
-                    <p>¿Está seguro de validar este registro volumétrico?</p>
-                    <p class="text-muted">Una vez validado, no podrá ser modificado.</p>
+                    <div class="mb-3">
+                        <label for="observaciones_validacion" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observaciones_validacion" 
+                                  name="observaciones_validacion" rows="3"></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Validar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Validación</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal de anulación -->
-<div class="modal fade" id="anularModal" tabindex="-1">
+<!-- Modal de cancelación -->
+<div class="modal fade" id="cancelarModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="anularForm" method="POST">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cancelar Registro Volumétrico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="cancelarForm" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Anular Registro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="motivo_anulacion" class="form-label">Motivo de anulación <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="motivo_anulacion" name="motivo_anulacion" rows="3" required></textarea>
+                        <label for="motivo_cancelacion" class="form-label">Motivo de Cancelación</label>
+                        <textarea class="form-control" id="motivo_cancelacion" 
+                                  name="motivo_cancelacion" rows="3" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Anular</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
                 </div>
             </form>
         </div>
@@ -247,89 +362,26 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#registrosTable').DataTable({
-        pageLength: {{ $registros['meta']['per_page'] ?? 10 }},
-        order: [[1, 'desc'], [2, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
     });
-
-    // Cargar tanques por instalación
-    $('#filterInstalacion').change(function() {
-        var instalacionId = $(this).val();
-        var tanqueSelect = $('#filterTanque');
-        
-        tanqueSelect.empty().append('<option value="">Todos los tanques</option>');
-        
-        if (instalacionId) {
-            $.get('/api/tanques/por-instalacion/' + instalacionId, function(data) {
-                $.each(data, function(key, tanque) {
-                    tanqueSelect.append('<option value="' + tanque.id + '">' + tanque.nombre + '</option>');
-                });
-            });
-        }
-    });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterInstalacion').val()) params.set('instalacion_id', $('#filterInstalacion').val());
-        if ($('#filterTanque').val()) params.set('tanque_id', $('#filterTanque').val());
-        if ($('#filterProducto').val()) params.set('producto_id', $('#filterProducto').val());
-        if ($('#filterTipoMovimiento').val()) params.set('tipo_movimiento', $('#filterTipoMovimiento').val());
-        if ($('#filterFechaInicio').val()) params.set('fecha_inicio', $('#filterFechaInicio').val());
-        if ($('#filterFechaFin').val()) params.set('fecha_fin', $('#filterFechaFin').val());
-        if ($('#filterEstado').val()) params.set('estado', $('#filterEstado').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
-    });
-
-    // Limpiar filtros
-    $('#btnClear').click(function() {
-        window.location.href = window.location.pathname;
-    });
-
-    // Botones de validar
-    $('.btn-validar').click(function() {
-        var id = $(this).data('id');
-        var form = $('#validarForm');
-        form.attr('action', '{{ url("registros-volumetricos") }}/' + id + '/validar');
-        $('#validarModal').modal('show');
-    });
-
-    // Botones de anular
-    $('.btn-anular').click(function() {
-        var id = $(this).data('id');
-        var form = $('#anularForm');
-        form.attr('action', '{{ url("registros-volumetricos") }}/' + id + '/cancelar');
-        $('#anularModal').modal('show');
-    });
-
-    // Botones de PDF
-    $('.btn-pdf').click(function() {
-        var id = $(this).data('id');
-        window.open('{{ url("registros-volumetricos") }}/' + id + '/pdf', '_blank');
-    });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterInstalacion').val(urlParams.get('instalacion_id') || '');
-    $('#filterProducto').val(urlParams.get('producto_id') || '');
-    $('#filterTipoMovimiento').val(urlParams.get('tipo_movimiento') || '');
-    $('#filterFechaInicio').val(urlParams.get('fecha_inicio') || '');
-    $('#filterFechaFin').val(urlParams.get('fecha_fin') || '');
-    $('#filterEstado').val(urlParams.get('estado') || '');
     
-    // Cargar tanques si hay instalación seleccionada
-    if ($('#filterInstalacion').val()) {
-        $('#filterInstalacion').trigger('change');
-        setTimeout(function() {
-            $('#filterTanque').val(urlParams.get('tanque_id') || '');
-        }, 500);
-    }
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
 });
+
+function confirmarValidacion(id) {
+    $('#validarForm').attr('action', `{{ url('registros-volumetricos') }}/${id}/validar`);
+    new bootstrap.Modal(document.getElementById('validarModal')).show();
+}
+
+function confirmarCancelacion(id) {
+    $('#cancelarForm').attr('action', `{{ url('registros-volumetricos') }}/${id}/cancelar`);
+    new bootstrap.Modal(document.getElementById('cancelarModal')).show();
+}
 </script>
 @endpush

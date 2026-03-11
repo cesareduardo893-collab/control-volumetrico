@@ -1,92 +1,99 @@
 @extends('layouts.app')
 
-@section('title', 'Dispensarios de Instalación')
+@section('title', 'Dispensarios de la Instalación')
+@section('header', 'Dispensarios de la Instalación')
+
+@section('actions')
+<a href="{{ route('instalaciones.show', $instalacion_id) }}" class="btn btn-sm btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver a la Instalación
+</a>
+<a href="{{ route('dispensarios.create', ['instalacion_id' => $instalacion_id]) }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Dispensario
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Dispensarios de la Instalación</h6>
-                <div>
-                    <a href="{{ route('dispensarios.create', ['instalacion_id' => $id]) }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Nuevo Dispensario
-                    </a>
-                    <a href="{{ route('instalaciones.show', $id) }}" class="btn btn-info btn-sm">
-                        <i class="fas fa-arrow-left"></i> Volver a Instalación
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="dispensariosTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Clave</th>
-                                <th>Nombre</th>
-                                <th>Marca/Modelo</th>
-                                <th>Serie</th>
-                                <th>N° Mangueras</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($dispensarios['data'] ?? [] as $dispensario)
-                            <tr>
-                                <td>{{ $dispensario['id'] }}</td>
-                                <td>{{ $dispensario['clave_dispensario'] }}</td>
-                                <td>{{ $dispensario['nombre'] }}</td>
-                                <td>{{ $dispensario['marca'] }} / {{ $dispensario['modelo'] }}</td>
-                                <td>{{ $dispensario['serie'] }}</td>
-                                <td class="text-center">{{ $dispensario['mangueras_count'] ?? 0 }}</td>
-                                <td class="text-center">
-                                    @if($dispensario['activo'])
-                                        <span class="badge bg-success">Activo</span>
-                                    @else
-                                        <span class="badge bg-danger">Inactivo</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('dispensarios.show', $dispensario['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('dispensarios.edit', $dispensario['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                
-                @if(empty($dispensarios['data']))
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-info-circle"></i> Esta instalación no tiene dispensarios registrados.
-                </div>
-                @endif
-            </div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Clave</th>
+                        <th>Descripción</th>
+                        <th>Modelo</th>
+                        <th>Fabricante</th>
+                        <th>N° Mangueras</th>
+                        <th>Estado</th>
+                        <th>Activo</th>
+                        <th>Próx. Mantenimiento</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($dispensarios as $dispensario)
+                        <tr>
+                            <td>{{ $dispensario['clave'] }}</td>
+                            <td>{{ $dispensario['descripcion'] ?? '-' }}</td>
+                            <td>{{ $dispensario['modelo'] ?? '-' }}</td>
+                            <td>{{ $dispensario['fabricante'] ?? '-' }}</td>
+                            <td><span class="badge bg-info">{{ $dispensario['mangueras_count'] ?? 0 }}</span></td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'OPERATIVO' => 'success',
+                                        'MANTENIMIENTO' => 'warning',
+                                        'FUERA_SERVICIO' => 'danger'
+                                    ][$dispensario['estado']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $dispensario['estado'] }}</span>
+                            </td>
+                            <td>
+                                @if($dispensario['activo'])
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($dispensario['fecha_proximo_mantenimiento']))
+                                    @php
+                                        $dias = now()->diffInDays($dispensario['fecha_proximo_mantenimiento'], false);
+                                        $badgeClass = $dias < 7 ? 'danger' : ($dias < 15 ? 'warning' : 'success');
+                                    @endphp
+                                    {{ $dispensario['fecha_proximo_mantenimiento'] }}
+                                    <span class="badge bg-{{ $badgeClass }}">{{ round($dias) }} días</span>
+                                @else
+                                    No programado
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('dispensarios.show', $dispensario['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('dispensarios.edit', $dispensario['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ route('dispensarios.mangueras', $dispensario['id']) }}" class="btn btn-sm btn-secondary" title="Mangueras">
+                                        <i class="bi bi-pip"></i>
+                                    </a>
+                                    <a href="{{ route('dispensarios.verificar-estado', $dispensario['id']) }}" class="btn btn-sm btn-primary" title="Verificar Estado">
+                                        <i class="bi bi-check-circle"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center">
+                                No hay dispensarios registrados para esta instalación.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-$(document).ready(function() {
-    $('#dispensariosTable').DataTable({
-        pageLength: 10,
-        order: [[0, 'desc']],
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-        }
-    });
-});
-</script>
-@endpush

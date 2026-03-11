@@ -1,200 +1,216 @@
 @extends('layouts.app')
 
 @section('title', 'Roles')
+@section('header', 'Administración de Roles')
+
+@section('actions')
+<a href="{{ route('roles.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Rol
+</a>
+<a href="{{ route('roles.matriz-permisos') }}" class="btn btn-sm btn-info">
+    <i class="bi bi-grid-3x3-gap-fill"></i> Matriz de Permisos
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Roles</h6>
-                <a href="{{ route('roles.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Rol
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('roles.index') }}" class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label for="nombre" class="form-label">Nombre del Rol</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" 
+                       value="{{ request('nombre') }}" placeholder="Buscar por nombre">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="nivel_minimo" class="form-label">Nivel Mínimo</label>
+                <input type="number" class="form-control" id="nivel_minimo" name="nivel_minimo" 
+                       value="{{ request('nivel_minimo') }}" placeholder="Ej: 1" min="1" max="100">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="es_administrador" class="form-label">Es Admin</label>
+                <select class="form-select" id="es_administrador" name="es_administrador">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('es_administrador') == '1' ? 'selected' : '' }}>Sí</option>
+                    <option value="0" {{ request('es_administrador') == '0' ? 'selected' : '' }}>No</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="activo" class="form-label">Activo</label>
+                <select class="form-select" id="activo" name="activo">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('activo') == '1' ? 'selected' : '' }}>Activos</option>
+                    <option value="0" {{ request('activo') == '0' ? 'selected' : '' }}>Inactivos</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('roles.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="rolesTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Nombre para mostrar</th>
-                                <th>Descripción</th>
-                                <th>Usuarios</th>
-                                <th>Permisos</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($roles['data'] ?? [] as $role)
-                            <tr>
-                                <td>{{ $role['id'] }}</td>
-                                <td>{{ $role['name'] }}</td>
-                                <td>{{ $role['display_name'] }}</td>
-                                <td>{{ $role['description'] ?? 'Sin descripción' }}</td>
-                                <td class="text-center">{{ $role['users_count'] ?? 0 }}</td>
-                                <td class="text-center">{{ count($role['permissions'] ?? []) }}</td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('roles.show', $role['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('roles.edit', $role['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-permisos" 
-                                                data-id="{{ $role['id'] }}"
-                                                data-name="{{ $role['display_name'] }}"
-                                                title="Asignar Permisos">
-                                            <i class="fas fa-shield-alt"></i>
-                                        </button>
-                                        @if(($role['users_count'] ?? 0) == 0)
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-delete" 
-                                                data-id="{{ $role['id'] }}"
-                                                data-name="{{ $role['display_name'] }}"
-                                                title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($roles['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $roles['meta']['from'] ?? 0 }} a {{ $roles['meta']['to'] ?? 0 }} de {{ $roles['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($roles['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                @endif
-            </div>
+        </form>
+        
+        <!-- Tabla de roles -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Nivel Jerárquico</th>
+                        <th>Permisos</th>
+                        <th>Usuarios</th>
+                        <th>Es Admin</th>
+                        <th>Activo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($roles as $rol)
+                        <tr>
+                            <td><strong>{{ $rol['nombre'] }}</strong></td>
+                            <td>{{ $rol['descripcion'] ?? '-' }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ $rol['nivel_jerarquico'] }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary">{{ count($rol['permissions'] ?? []) }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">{{ $rol['usuarios_count'] ?? 0 }}</span>
+                            </td>
+                            <td class="text-center">
+                                @if($rol['es_administrador'])
+                                    <span class="badge bg-success">Sí</span>
+                                @else
+                                    <span class="badge bg-secondary">No</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rol['activo'])
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('roles.show', $rol['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('roles.edit', $rol['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-success" 
+                                            onclick="confirmarClonar({{ $rol['id'] }})" title="Clonar">
+                                        <i class="bi bi-copy"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center">No hay roles registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 
-<!-- Modal Asignar Permisos -->
-<div class="modal fade" id="permisosModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<!-- Modal de clonación -->
+<div class="modal fade" id="clonarModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <form id="permisosForm" method="POST">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Clonar Rol</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="clonarForm" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Asignar Permisos al Rol</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
-                    <div class="row">
-                        @foreach($permisos ?? [] as $permiso)
-                        <div class="col-md-4 mb-2">
-                            <div class="form-check">
-                                <input type="checkbox" 
-                                       class="form-check-input permiso-checkbox" 
-                                       name="permission_ids[]" 
-                                       value="{{ $permiso['id'] }}"
-                                       id="permiso_{{ $permiso['id'] }}">
-                                <label class="form-check-label" for="permiso_{{ $permiso['id'] }}">
-                                    {{ $permiso['display_name'] }}
-                                </label>
-                            </div>
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre del Nuevo Rol</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="incluir_permisos" 
+                                   name="incluir_permisos" value="1" checked>
+                            <label class="form-check-label" for="incluir_permisos">
+                                Incluir permisos del rol original
+                            </label>
                         </div>
-                        @endforeach
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Permisos</button>
+                    <button type="submit" class="btn btn-success">Clonar Rol</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<!-- Formulario de eliminación -->
-<form id="deleteForm" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
 @endsection
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#rolesTable').DataTable({
-        pageLength: {{ $roles['meta']['per_page'] ?? 10 }},
-        order: [[0, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
-    });
-
-    // Botón asignar permisos
-    $('.btn-permisos').click(function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        var form = $('#permisosForm');
-        
-        form.attr('action', '{{ url("roles") }}/' + id + '/asignar-permisos');
-        $('#permisosModal .modal-title').text('Asignar Permisos al Rol: ' + name);
-        
-        // Cargar permisos actuales
-        $.get('/roles/' + id + '/permisos', function(data) {
-            $('.permiso-checkbox').prop('checked', false);
-            
-            $.each(data, function(index, permisoId) {
-                $('#permiso_' + permisoId).prop('checked', true);
-            });
-        });
-        
-        $('#permisosModal').modal('show');
-    });
-
-    // Botones de eliminar
-    $('.btn-delete').click(function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Deseas eliminar el rol "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var form = $('#deleteForm');
-                form.attr('action', '{{ url("roles") }}/' + id);
-                form.submit();
-            }
-        });
-    });
-});
+function confirmarClonar(id) {
+    $('#clonarForm').attr('action', `{{ url('roles') }}/${id}/clonar`);
+    new bootstrap.Modal(document.getElementById('clonarModal')).show();
+}
 </script>
 @endpush

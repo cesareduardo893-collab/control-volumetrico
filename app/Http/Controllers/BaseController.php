@@ -3,13 +3,25 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
-class BaseController extends Controller
+abstract class BaseController extends Controller
 {
+    use Traits\ConsumesApi, Traits\LogsActivity;
+
+    protected $apiClient;
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->initApiClient();
+    }
+
     /**
-     * Respuesta exitosa
+     * Respuesta exitosa JSON
      */
-    public function success($data = null, string $message = '', int $code = 200): JsonResponse
+    public function jsonSuccess($data = null, string $message = '', int $code = 200): JsonResponse
     {
         return response()->json([
             'success' => true,
@@ -19,46 +31,88 @@ class BaseController extends Controller
     }
 
     /**
-     * Respuesta de error
+     * Respuesta de error JSON
      */
-    public function error(string $message, int $code = 400, $errors = null): JsonResponse
+    public function jsonError(string $message, int $code = 400, $errors = null): JsonResponse
     {
-        return response()->json([
+        $response = [
             'success' => false,
             'message' => $message,
-            'errors' => $errors,
-        ], $code);
+        ];
+
+        if (!is_null($errors)) {
+            $response['errors'] = $errors;
+        }
+
+        return response()->json($response, $code);
     }
 
     /**
-     * Error de validación
+     * Renderizar vista con datos de API
      */
-    public function validationError($errors, string $message = 'Error de validación'): JsonResponse
+    protected function renderView($view, $apiResponse, $defaultData = [], $filters = [])
     {
-        return $this->error($message, 422, $errors);
+        if (!$this->apiResponseSuccessful($apiResponse)) {
+            return redirect()->back()->with('error', $this->apiResponseMessage($apiResponse, 'Error al cargar datos'));
+        }
+
+        $data = $this->apiResponseData($apiResponse, []);
+
+        $viewData = array_merge($defaultData, [
+            'filters' => $filters
+        ]);
+
+        if (isset($apiResponse->meta)) {
+            $viewData['meta'] = $apiResponse->meta;
+            $viewData['links'] = $apiResponse->links ?? [];
+        }
+
+        // Asignar los datos principales según el contexto
+        if (isset($defaultData['key'])) {
+            $viewData[$defaultData['key']] = $data;
+        } else {
+            $viewData['data'] = $data;
+        }
+
+        return view($view, $viewData);
     }
 
     /**
-     * Error de autenticación
+     * Obtener catálogo para selects
      */
-    public function unauthorized(string $message = 'No autorizado'): JsonResponse
+    protected function getCatalog($endpoint, $params = [])
     {
-        return $this->error($message, 401);
+        try {
+            $this->setApiToken(session('api_token'));
+            $response = $this->apiGet($endpoint, array_merge(['per_page' => 500], $params));
+            
+            if ($this->apiResponseSuccessful($response)) {
+                return $this->apiResponseData($response, []);
+            }
+            
+            return [];
+        } catch (\Exception $e) {
+            Log::error('Error al obtener catálogo', [
+                'endpoint' => $endpoint,
+                'error' => $e->getMessage()
+            ]);
+            return [];
+        }
     }
 
     /**
-     * Error de permisos
+     * Parsear user agent
      */
-    public function forbidden(string $message = 'Acceso prohibido'): JsonResponse
+    protected function parseUserAgent(?string $userAgent): ?string
     {
-        return $this->error($message, 403);
-    }
+        if (!$userAgent) {
+            return null;
+        }
 
-    /**
-     * Error de recurso no encontrado
-     */
-    public function notFound(string $message = 'Recurso no encontrado'): JsonResponse
-    {
-        return $this->error($message, 404);
+        if (preg_match('/\((.*?)\)/', $userAgent, $matches)) {
+            return substr($matches[1], 0, 100);
+        }
+
+        return substr($userAgent, 0, 100);
     }
 }

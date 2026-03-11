@@ -1,262 +1,149 @@
 @extends('layouts.app')
 
 @section('title', 'Detalle del Producto')
+@section('header', 'Detalle del Producto')
+
+@section('actions')
+<a href="{{ route('productos.edit', $producto['id']) }}" class="btn btn-sm btn-warning">
+    <i class="bi bi-pencil"></i> Editar
+</a>
+<a href="{{ route('productos.index') }}" class="btn btn-sm btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver
+</a>
+@endsection
 
 @section('content')
 <div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Detalle del Producto: {{ $producto['nombre'] }}</h6>
-                <div>
-                    <a href="{{ route('productos.edit', $producto['id']) }}" class="btn btn-warning btn-sm">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
-                    <a href="{{ route('productos.index') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </a>
-                </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Información General</h5>
             </div>
             <div class="card-body">
-                <!-- Información General -->
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Información General
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Clave Producto</small>
-                            <h6 class="mb-0">{{ $producto['clave_producto'] }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-5">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Nombre</small>
-                            <h6 class="mb-0">{{ $producto['nombre'] }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Tipo</small>
-                            <h6 class="mb-0">{{ ucfirst($producto['tipo']) }}</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                @if($producto['descripcion'])
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Descripción</small>
-                            <h6 class="mb-0">{{ $producto['descripcion'] }}</h6>
-                        </div>
-                    </div>
-                </div>
-                @endif
-                
-                <!-- Clasificación SAT -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-file-invoice"></i> Clasificación SAT
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Clave SAT</small>
-                            <h6 class="mb-0">{{ $producto['clave_sat'] }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Clave Unidad</small>
-                            <h6 class="mb-0">{{ $producto['clave_unidad'] }}</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Propiedades Físicas -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-flask"></i> Propiedades Físicas
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Densidad de Referencia</small>
-                            <h6 class="mb-0">{{ $producto['densidad_referencia'] }} kg/m³</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Temperatura de Referencia</small>
-                            <h6 class="mb-0">{{ $producto['temperatura_referencia'] }} °C</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Factor de Corrección</small>
-                            <h6 class="mb-0">{{ $producto['factor_correccion'] }}</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Rangos Operativos -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-chart-line"></i> Rangos Operativos
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Temperatura Mínima</small>
-                            <h6 class="mb-0">{{ $producto['rango_temperatura_min'] }} °C</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Temperatura Máxima</small>
-                            <h6 class="mb-0">{{ $producto['rango_temperatura_max'] }} °C</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Presión Mínima</small>
-                            <h6 class="mb-0">{{ $producto['rango_presion_min'] }} psi</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Presión Máxima</small>
-                            <h6 class="mb-0">{{ $producto['rango_presion_max'] }} psi</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Estado -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Estado</small>
-                            <h6 class="mb-0">
-                                @if($producto['activo'])
-                                    <span class="badge bg-success">Activo</span>
-                                @else
-                                    <span class="badge bg-danger">Inactivo</span>
-                                @endif
-                            </h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Fechas de registro -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <hr>
-                        <small class="text-muted">
-                            <i class="fas fa-clock"></i> Creado: {{ $producto['created_at'] ?? 'N/A' }} | 
-                            Última actualización: {{ $producto['updated_at'] ?? 'N/A' }}
-                        </small>
-                    </div>
-                </div>
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Clave SAT:</th>
+                        <td><strong>{{ $producto['clave_sat'] }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Código Interno:</th>
+                        <td>{{ $producto['codigo'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Clave Identificación:</th>
+                        <td>{{ $producto['clave_identificacion'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Nombre:</th>
+                        <td>{{ $producto['nombre'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Tipo Hidrocarburo:</th>
+                        <td>
+                            <span class="badge bg-info">{{ ucfirst(str_replace('_', ' ', $producto['tipo_hidrocarburo'])) }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Unidad de Medida:</th>
+                        <td>{{ $producto['unidad_medida'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Activo:</th>
+                        <td>
+                            @if($producto['activo'])
+                                <span class="badge bg-success">Activo</span>
+                            @else
+                                <span class="badge bg-secondary">Inactivo</span>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Propiedades Físicas</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Densidad Referencia:</th>
+                        <td>{{ $producto['densidad_referencia'] ?? 'No especificada' }} kg/L</td>
+                    </tr>
+                    <tr>
+                        <th>Temperatura Referencia:</th>
+                        <td>{{ $producto['temperatura_referencia'] ?? '15' }} °C</td>
+                    </tr>
+                    <tr>
+                        <th>Factor de Conversión:</th>
+                        <td>{{ $producto['factor_conversion'] ?? '1' }}</td>
+                    </tr>
+                    @if(isset($producto['octanaje']))
+                        <tr>
+                            <th>Octanaje:</th>
+                            <td>{{ $producto['octanaje'] }}</td>
+                        </tr>
+                    @endif
+                    @if(isset($producto['numero_octano']))
+                        <tr>
+                            <th>Número de Octano:</th>
+                            <td>{{ $producto['numero_octano'] }}</td>
+                        </tr>
+                    @endif
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Estadísticas -->
-<div class="row mt-3">
-    <div class="col-md-4">
-        <div class="card bg-primary text-white mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">Tanques</h6>
-                        <h3>{{ $producto['tanques_count'] ?? 0 }}</h3>
-                    </div>
-                    <i class="fas fa-oil-can fa-2x"></i>
-                </div>
+@if(!empty($producto['descripcion']))
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">Descripción</h5>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card bg-success text-white mb-3">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">Existencias</h6>
-                        <h3>{{ $producto['existencias_count'] ?? 0 }}</h3>
-                    </div>
-                    <i class="fas fa-boxes fa-2x"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card bg-info text-white mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">Volumen Total</h6>
-                        <h3>{{ number_format($producto['volumen_total'] ?? 0, 2) }} L</h3>
-                    </div>
-                    <i class="fas fa-chart-line fa-2x"></i>
-                </div>
+                <p class="mb-0">{{ $producto['descripcion'] }}</p>
             </div>
         </div>
     </div>
 </div>
+@endif
 
-<!-- Últimos movimientos -->
-<div class="row mt-3">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Últimos Movimientos</h6>
+<!-- Especificaciones técnicas -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="card-title mb-0">Especificaciones Técnicas</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered">
+                    <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Fecha</th>
-                                <th>Instalación</th>
-                                <th>Tanque</th>
-                                <th>Tipo</th>
-                                <th>Volumen</th>
+                                <th>Parámetro</th>
+                                <th>Valor Mínimo</th>
+                                <th>Valor Máximo</th>
+                                <th>Unidad</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($producto['ultimos_movimientos'] ?? [] as $movimiento)
-                            <tr>
-                                <td>{{ $movimiento['fecha_movimiento'] }}</td>
-                                <td>{{ $movimiento['instalacion'] }}</td>
-                                <td>{{ $movimiento['tanque'] }}</td>
-                                <td>{{ ucfirst($movimiento['tipo_movimiento']) }}</td>
-                                <td class="text-end">{{ number_format($movimiento['volumen_neto'], 2) }} L</td>
-                            </tr>
+                            @forelse($producto['especificaciones'] ?? [] as $espec)
+                                <tr>
+                                    <td>{{ $espec['parametro'] }}</td>
+                                    <td>{{ $espec['minimo'] ?? '-' }}</td>
+                                    <td>{{ $espec['maximo'] ?? '-' }}</td>
+                                    <td>{{ $espec['unidad'] }}</td>
+                                </tr>
                             @empty
-                            <tr>
-                                <td colspan="5" class="text-center">No hay movimientos registrados</td>
-                            </tr>
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay especificaciones registradas</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -264,5 +151,126 @@
             </div>
         </div>
     </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">Normas Aplicables</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    @forelse($producto['normas'] ?? [] as $norma)
+                        <li class="list-group-item">
+                            <strong>{{ $norma['clave'] }}</strong>
+                            <p class="mb-0 small">{{ $norma['descripcion'] }}</p>
+                        </li>
+                    @empty
+                        <li class="list-group-item text-muted">No hay normas registradas</li>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Estadísticas de uso -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white mb-4">
+            <div class="card-body text-center">
+                <h3>{{ $producto['tanques_count'] ?? 0 }}</h3>
+                <h6>Tanques Asignados</h6>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white mb-4">
+            <div class="card-body text-center">
+                <h3>{{ $producto['registros_count'] ?? 0 }}</h3>
+                <h6>Registros Volumétricos</h6>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white mb-4">
+            <div class="card-body text-center">
+                <h3>{{ $producto['cfdi_count'] ?? 0 }}</h3>
+                <h6>CFDI Relacionados</h6>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white mb-4">
+            <div class="card-body text-center">
+                <h3>{{ $producto['dictamenes_count'] ?? 0 }}</h3>
+                <h6>Dictámenes</h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos registros volumétricos con este producto -->
+@if(!empty($producto['ultimos_registros']))
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Últimos Registros Volumétricos</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>N° Registro</th>
+                                <th>Instalación</th>
+                                <th>Tanque</th>
+                                <th>Volumen</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($producto['ultimos_registros'] as $registro)
+                                <tr>
+                                    <td>{{ $registro['fecha'] }}</td>
+                                    <td>{{ $registro['numero_registro'] }}</td>
+                                    <td>{{ $registro['instalacion']['nombre'] ?? '' }}</td>
+                                    <td>{{ $registro['tanque']['identificador'] ?? '' }}</td>
+                                    <td>{{ number_format($registro['volumen_operacion'], 3) }} L</td>
+                                    <td>
+                                        @php
+                                            $estadoClass = [
+                                                'VALIDADO' => 'success',
+                                                'PROCESADO' => 'info',
+                                                'PENDIENTE' => 'warning'
+                                            ][$registro['estado']] ?? 'secondary';
+                                        @endphp
+                                        <span class="badge bg-{{ $estadoClass }}">{{ $registro['estado'] }}</span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- Botón de eliminar (solo si no tiene registros asociados) -->
+@if(($producto['tanques_count'] ?? 0) == 0 && ($producto['registros_count'] ?? 0) == 0)
+<form method="POST" action="{{ route('productos.destroy', $producto['id']) }}" class="d-inline"
+      onsubmit="return confirm('¿Está seguro de eliminar este producto? Esta acción no se puede deshacer.');">
+    @csrf
+    @method('DELETE')
+    <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash"></i> Eliminar Producto
+    </button>
+</form>
+@endif
 @endsection

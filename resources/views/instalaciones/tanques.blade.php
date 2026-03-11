@@ -1,94 +1,127 @@
 @extends('layouts.app')
 
-@section('title', 'Tanques de Instalación')
+@section('title', 'Tanques de la Instalación')
+@section('header', 'Tanques de la Instalación')
+
+@section('actions')
+<a href="{{ route('instalaciones.show', $instalacion_id) }}" class="btn btn-sm btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver a la Instalación
+</a>
+<a href="{{ route('tanques.create', ['instalacion_id' => $instalacion_id]) }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Tanque
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Tanques de la Instalación</h6>
-                <div>
-                    <a href="{{ route('tanques.create', ['instalacion_id' => $id]) }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Nuevo Tanque
-                    </a>
-                    <a href="{{ route('instalaciones.show', $id) }}" class="btn btn-info btn-sm">
-                        <i class="fas fa-arrow-left"></i> Volver a Instalación
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="tanquesTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Clave</th>
-                                <th>Nombre</th>
-                                <th>Producto</th>
-                                <th>Capacidad (L)</th>
-                                <th>Tipo</th>
-                                <th>Forma</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($tanques['data'] ?? [] as $tanque)
-                            <tr>
-                                <td>{{ $tanque['id'] }}</td>
-                                <td>{{ $tanque['clave_tanque'] }}</td>
-                                <td>{{ $tanque['nombre'] }}</td>
-                                <td>{{ $tanque['producto']['nombre'] ?? 'N/A' }}</td>
-                                <td class="text-end">{{ number_format($tanque['capacidad'], 2) }}</td>
-                                <td>{{ ucfirst(str_replace('_', ' ', $tanque['tipo_tanque'])) }}</td>
-                                <td>{{ ucfirst($tanque['forma']) }}</td>
-                                <td class="text-center">
-                                    @if($tanque['activo'])
-                                        <span class="badge bg-success">Activo</span>
-                                    @else
-                                        <span class="badge bg-danger">Inactivo</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('tanques.show', $tanque['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('tanques.existencias', $tanque['id']) }}" 
-                                           class="btn btn-secondary btn-sm" title="Existencias">
-                                            <i class="fas fa-boxes"></i>
-                                        </a>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Identificador</th>
+                        <th>Producto</th>
+                        <th>Capacidad Total</th>
+                        <th>Capacidad Util</th>
+                        <th>Volumen Actual</th>
+                        <th>% Ocupación</th>
+                        <th>Estado</th>
+                        <th>Activo</th>
+                        <th>Próx. Calibración</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($tanques as $tanque)
+                        <tr>
+                            <td>{{ $tanque['identificador'] }}</td>
+                            <td>
+                                @if(isset($tanque['producto']))
+                                    {{ $tanque['producto']['nombre'] }}
+                                @else
+                                    <span class="text-muted">No asignado</span>
+                                @endif
+                            </td>
+                            <td>{{ number_format($tanque['capacidad_total'], 3) }} L</td>
+                            <td>{{ number_format($tanque['capacidad_util'], 3) }} L</td>
+                            <td>
+                                @if(isset($tanque['volumen_actual']))
+                                    <strong>{{ number_format($tanque['volumen_actual'], 3) }} L</strong>
+                                @else
+                                    <span class="text-muted">N/A</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($tanque['volumen_actual']) && $tanque['capacidad_util'] > 0)
+                                    @php
+                                        $porcentaje = ($tanque['volumen_actual'] / $tanque['capacidad_util']) * 100;
+                                        $barClass = $porcentaje > 90 ? 'danger' : ($porcentaje > 75 ? 'warning' : 'success');
+                                    @endphp
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-{{ $barClass }}" role="progressbar" 
+                                             style="width: {{ $porcentaje }}%">{{ number_format($porcentaje, 1) }}%</div>
                                     </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                
-                @if(empty($tanques['data']))
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-info-circle"></i> Esta instalación no tiene tanques registrados.
-                </div>
-                @endif
-            </div>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'OPERATIVO' => 'success',
+                                        'MANTENIMIENTO' => 'warning',
+                                        'FUERA_SERVICIO' => 'danger',
+                                        'CALIBRACION' => 'info'
+                                    ][$tanque['estado']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $tanque['estado'] }}</span>
+                            </td>
+                            <td>
+                                @if($tanque['activo'])
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($tanque['fecha_proxima_calibracion']))
+                                    @php
+                                        $dias = now()->diffInDays($tanque['fecha_proxima_calibracion'], false);
+                                        $badgeClass = $dias < 7 ? 'danger' : ($dias < 15 ? 'warning' : 'success');
+                                    @endphp
+                                    {{ $tanque['fecha_proxima_calibracion'] }}
+                                    <span class="badge bg-{{ $badgeClass }}">{{ round($dias) }} días</span>
+                                @else
+                                    No programada
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('tanques.show', $tanque['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('tanques.edit', $tanque['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ route('tanques.curva-calibracion', $tanque['id']) }}" class="btn btn-sm btn-secondary" title="Curva Calibración">
+                                        <i class="bi bi-graph-up"></i>
+                                    </a>
+                                    <a href="{{ route('tanques.verificar-estado', $tanque['id']) }}" class="btn btn-sm btn-primary" title="Verificar Estado">
+                                        <i class="bi bi-check-circle"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="10" class="text-center">
+                                No hay tanques registrados para esta instalación.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-$(document).ready(function() {
-    $('#tanquesTable').DataTable({
-        pageLength: 10,
-        order: [[0, 'desc']],
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-        }
-    });
-});
-</script>
-@endpush

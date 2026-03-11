@@ -1,184 +1,254 @@
 @extends('layouts.app')
 
 @section('title', 'Dictámenes')
+@section('header', 'Dictámenes de Calidad')
+
+@section('actions')
+<a href="{{ route('dictamenes.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Dictamen
+</a>
+<a href="{{ route('dictamenes.estadisticas') }}?contribuyente_id={{ request('contribuyente_id') }}&anio={{ now()->year }}" class="btn btn-sm btn-info">
+    <i class="bi bi-graph-up"></i> Estadísticas
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Dictámenes</h6>
-                <a href="{{ route('dictamenes.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Dictamen
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('dictamenes.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="contribuyente_id" class="form-label">Contribuyente</label>
+                <select class="form-select select2" id="contribuyente_id" name="contribuyente_id">
+                    <option value="">Todos</option>
+                    @foreach($contribuyentes ?? [] as $contribuyente)
+                        <option value="{{ $contribuyente['id'] }}" {{ request('contribuyente_id') == $contribuyente['id'] ? 'selected' : '' }}>
+                            {{ $contribuyente['razon_social'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="folio" class="form-label">Folio</label>
+                <input type="text" class="form-control" id="folio" name="folio" 
+                       value="{{ request('folio') }}" placeholder="Buscar por folio">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="numero_lote" class="form-label">Número de Lote</label>
+                <input type="text" class="form-control" id="numero_lote" name="numero_lote" 
+                       value="{{ request('numero_lote') }}" placeholder="Número de lote">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="laboratorio_rfc" class="form-label">RFC Laboratorio</label>
+                <input type="text" class="form-control" id="laboratorio_rfc" name="laboratorio_rfc" 
+                       value="{{ request('laboratorio_rfc') }}" placeholder="Ej: ABC123456789">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="producto_id" class="form-label">Producto</label>
+                <select class="form-select select2" id="producto_id" name="producto_id">
+                    <option value="">Todos</option>
+                    @foreach($productos ?? [] as $producto)
+                        <option value="{{ $producto['id'] }}" {{ request('producto_id') == $producto['id'] ? 'selected' : '' }}>
+                            {{ $producto['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_emision_inicio" class="form-label">Fecha Emisión Inicio</label>
+                <input type="date" class="form-control datepicker" id="fecha_emision_inicio" 
+                       name="fecha_emision_inicio" value="{{ request('fecha_emision_inicio') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="fecha_emision_fin" class="form-label">Fecha Emisión Fin</label>
+                <input type="date" class="form-control datepicker" id="fecha_emision_fin" 
+                       name="fecha_emision_fin" value="{{ request('fecha_emision_fin') }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="estado" class="form-label">Estado</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option value="VIGENTE" {{ request('estado') == 'VIGENTE' ? 'selected' : '' }}>Vigente</option>
+                    <option value="CADUCADO" {{ request('estado') == 'CADUCADO' ? 'selected' : '' }}>Caducado</option>
+                    <option value="CANCELADO" {{ request('estado') == 'CANCELADO' ? 'selected' : '' }}>Cancelado</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="vigente" class="form-label">Vigente</label>
+                <select class="form-select" id="vigente" name="vigente">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('vigente') == '1' ? 'selected' : '' }}>Vigentes</option>
+                    <option value="0" {{ request('vigente') == '0' ? 'selected' : '' }}>No Vigentes</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('dictamenes.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm" id="filterNumero" placeholder="Número de Dictamen">
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterInstalacion">
-                            <option value="">Todas las instalaciones</option>
-                            @foreach($instalaciones ?? [] as $instalacion)
-                                <option value="{{ $instalacion['id'] }}">{{ $instalacion['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterTipo">
-                            <option value="">Todos los tipos</option>
-                            <option value="inicial">Inicial</option>
-                            <option value="periodico">Periódico</option>
-                            <option value="extraordinario">Extraordinario</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterEstatus">
-                            <option value="">Todos los estatus</option>
-                            <option value="aprobado">Aprobado</option>
-                            <option value="rechazado">Rechazado</option>
-                            <option value="pendiente">Pendiente</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterResultado">
-                            <option value="">Todos los resultados</option>
-                            <option value="aprobado">Aprobado</option>
-                            <option value="rechazado">Rechazado</option>
-                            <option value="observaciones">Con Observaciones</option>
-                        </select>
+        </form>
+        
+        <!-- Resumen -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Total Dictámenes</h6>
+                        <h3>{{ $resumen['total'] ?? 0 }}</h3>
                     </div>
                 </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaInicio" placeholder="Fecha Emisión Inicio">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFechaFin" placeholder="Fecha Emisión Fin">
-                    </div>
-                    <div class="col-md-6">
-                        <button class="btn btn-primary btn-sm" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="btnClear">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Vigentes</h6>
+                        <h3>{{ $resumen['vigentes'] ?? 0 }}</h3>
                     </div>
                 </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="dictamenesTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Número</th>
-                                <th>Instalación</th>
-                                <th>Tipo</th>
-                                <th>Fecha Emisión</th>
-                                <th>Fecha Vigencia</th>
-                                <th>Estatus</th>
-                                <th>Resultado</th>
-                                <th>Puntos</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($dictamenes['data'] ?? [] as $dictamen)
-                            <tr>
-                                <td>{{ $dictamen['id'] }}</td>
-                                <td>{{ $dictamen['numero_dictamen'] }}</td>
-                                <td>{{ $dictamen['instalacion']['nombre'] ?? 'N/A' }}</td>
-                                <td>
-                                    @switch($dictamen['tipo_dictamen'])
-                                        @case('inicial')
-                                            Inicial
-                                            @break
-                                        @case('periodico')
-                                            Periódico
-                                            @break
-                                        @case('extraordinario')
-                                            Extraordinario
-                                            @break
-                                    @endswitch
-                                </td>
-                                <td>{{ $dictamen['fecha_emision'] }}</td>
-                                <td>{{ $dictamen['fecha_vigencia'] }}</td>
-                                <td>
-                                    @if($dictamen['estatus'] == 'aprobado')
-                                        <span class="badge bg-success">Aprobado</span>
-                                    @elseif($dictamen['estatus'] == 'rechazado')
-                                        <span class="badge bg-danger">Rechazado</span>
-                                    @else
-                                        <span class="badge bg-warning">Pendiente</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($dictamen['resultado'] == 'aprobado')
-                                        <span class="badge bg-success">Aprobado</span>
-                                    @elseif($dictamen['resultado'] == 'rechazado')
-                                        <span class="badge bg-danger">Rechazado</span>
-                                    @else
-                                        <span class="badge bg-info">Con Observaciones</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <small>
-                                        C: {{ $dictamen['puntos_criticos'] ?? 0 }} | 
-                                        A: {{ $dictamen['puntos_atencion'] ?? 0 }} | 
-                                        L: {{ $dictamen['puntos_leves'] ?? 0 }}
-                                    </small>
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('dictamenes.show', $dictamen['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('dictamenes.edit', $dictamen['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-pdf" 
-                                                data-id="{{ $dictamen['id'] }}"
-                                                title="PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($dictamenes['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $dictamenes['meta']['from'] ?? 0 }} a {{ $dictamenes['meta']['to'] ?? 0 }} de {{ $dictamenes['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($dictamenes['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6>Próximos a Vencer</h6>
+                        <h3>{{ $resumen['proximos_vencer'] ?? 0 }}</h3>
                     </div>
                 </div>
-                @endif
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h6>Vencidos</h6>
+                        <h3>{{ $resumen['vencidos'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
+        
+        <!-- Tabla de dictámenes -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Contribuyente</th>
+                        <th>Producto</th>
+                        <th>N° Lote</th>
+                        <th>Fecha Emisión</th>
+                        <th>Laboratorio</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($dictamenes as $dictamen)
+                        <tr>
+                            <td>{{ $dictamen['folio'] }}</td>
+                            <td>
+                                {{ $dictamen['contribuyente']['razon_social'] ?? '' }}<br>
+                                <small class="text-muted">{{ $dictamen['contribuyente']['rfc'] ?? '' }}</small>
+                            </td>
+                            <td>{{ $dictamen['producto']['nombre'] ?? $dictamen['producto_id'] }}</td>
+                            <td>{{ $dictamen['numero_lote'] }}</td>
+                            <td>{{ $dictamen['fecha_emision'] }}</td>
+                            <td>
+                                {{ $dictamen['laboratorio_nombre'] }}<br>
+                                <small class="text-muted">{{ $dictamen['laboratorio_rfc'] }}</small>
+                            </td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'VIGENTE' => 'success',
+                                        'CADUCADO' => 'warning',
+                                        'CANCELADO' => 'secondary'
+                                    ][$dictamen['estado']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $dictamen['estado'] }}</span>
+                                @if($dictamen['vigente'] ?? true)
+                                    <br><small class="text-success">Vigente</small>
+                                @else
+                                    <br><small class="text-danger">No Vigente</small>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('dictamenes.show', $dictamen['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if($dictamen['estado'] == 'VIGENTE')
+                                        <a href="{{ route('dictamenes.edit', $dictamen['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{{ route('dictamenes.verificar-vigencia', $dictamen['id']) }}" class="btn btn-sm btn-secondary" title="Verificar Vigencia">
+                                            <i class="bi bi-check-circle"></i>
+                                        </a>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center">No hay dictámenes registrados</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 @endsection
@@ -186,50 +256,16 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#dictamenesTable').DataTable({
-        pageLength: {{ $dictamenes['meta']['per_page'] ?? 10 }},
-        order: [[4, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
     });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterNumero').val()) params.set('numero_dictamen', $('#filterNumero').val());
-        if ($('#filterInstalacion').val()) params.set('instalacion_id', $('#filterInstalacion').val());
-        if ($('#filterTipo').val()) params.set('tipo_dictamen', $('#filterTipo').val());
-        if ($('#filterEstatus').val()) params.set('estatus', $('#filterEstatus').val());
-        if ($('#filterResultado').val()) params.set('resultado', $('#filterResultado').val());
-        if ($('#filterFechaInicio').val()) params.set('fecha_inicio', $('#filterFechaInicio').val());
-        if ($('#filterFechaFin').val()) params.set('fecha_fin', $('#filterFechaFin').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
+    
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
     });
-
-    // Limpiar filtros
-    $('#btnClear').click(function() {
-        window.location.href = window.location.pathname;
-    });
-
-    // Botón PDF
-    $('.btn-pdf').click(function() {
-        var id = $(this).data('id');
-        window.open('{{ url("dictamenes") }}/' + id + '/pdf', '_blank');
-    });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterNumero').val(urlParams.get('numero_dictamen') || '');
-    $('#filterInstalacion').val(urlParams.get('instalacion_id') || '');
-    $('#filterTipo').val(urlParams.get('tipo_dictamen') || '');
-    $('#filterEstatus').val(urlParams.get('estatus') || '');
-    $('#filterResultado').val(urlParams.get('resultado') || '');
-    $('#filterFechaInicio').val(urlParams.get('fecha_inicio') || '');
-    $('#filterFechaFin').val(urlParams.get('fecha_fin') || '');
 });
 </script>
 @endpush

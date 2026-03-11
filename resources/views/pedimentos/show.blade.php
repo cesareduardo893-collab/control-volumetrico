@@ -1,258 +1,241 @@
 @extends('layouts.app')
 
 @section('title', 'Detalle del Pedimento')
+@section('header', 'Detalle del Pedimento')
+
+@section('actions')
+@if($pedimento['estado'] == 'ACTIVO')
+    <a href="{{ route('pedimentos.edit', $pedimento['id']) }}" class="btn btn-sm btn-warning">
+        <i class="bi bi-pencil"></i> Editar
+    </a>
+    <button type="button" class="btn btn-sm btn-danger" onclick="confirmarCancelacion()">
+        <i class="bi bi-x-circle"></i> Cancelar
+    </button>
+    @if(!isset($pedimento['registro_volumetrico_id']))
+        <button type="button" class="btn btn-sm btn-success" onclick="confirmarUtilizado()">
+            <i class="bi bi-check-circle"></i> Marcar como Utilizado
+        </button>
+    @endif
+@endif
+<a href="{{ route('pedimentos.index') }}" class="btn btn-sm btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver
+</a>
+@endsection
 
 @section('content')
 <div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Detalle del Pedimento: {{ $pedimento['numero_pedimento'] }}</h6>
-                <div>
-                    @if($pedimento['estado'] == 'activo')
-                    <a href="{{ route('pedimentos.edit', $pedimento['id']) }}" class="btn btn-warning btn-sm">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
-                    @endif
-                    <a href="{{ route('pedimentos.index') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </a>
-                </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Información General</h5>
             </div>
             <div class="card-body">
-                <!-- Información General -->
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Información General
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Número de Pedimento</small>
-                            <h6 class="mb-0">{{ $pedimento['numero_pedimento'] }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Aduana</small>
-                            <h6 class="mb-0">{{ $pedimento['aduana'] }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Patente</small>
-                            <h6 class="mb-0">{{ $pedimento['patente'] }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Ejercicio</small>
-                            <h6 class="mb-0">{{ $pedimento['ejercicio'] }}</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Contribuyente</small>
-                            <h6 class="mb-0">{{ $pedimento['contribuyente']['razon_social'] ?? 'N/A' }}</h6>
-                            <small>{{ $pedimento['contribuyente']['rfc'] ?? '' }}</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Producto</small>
-                            <h6 class="mb-0">{{ $pedimento['producto']['nombre'] ?? 'N/A' }}</h6>
-                            <small>{{ $pedimento['producto']['clave_producto'] ?? '' }}</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Fecha de Importación</small>
-                            <h6 class="mb-0">{{ $pedimento['fecha_importacion'] }}</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Datos de Importación -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-ship"></i> Datos de Importación
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Tipo de Cambio</small>
-                            <h6 class="mb-0">{{ number_format($pedimento['tipo_cambio'], 4) }}</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Peso Bruto</small>
-                            <h6 class="mb-0">{{ number_format($pedimento['peso_bruto'], 2) }} kg</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Peso Neto</small>
-                            <h6 class="mb-0">{{ number_format($pedimento['peso_neto'], 2) }} kg</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Volumen</small>
-                            <h6 class="mb-0">{{ number_format($pedimento['volumen'], 2) }} L</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Cantidades -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-chart-bar"></i> Cantidades
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Cantidad Importada</small>
-                            <h6 class="mb-0">{{ number_format($pedimento['cantidad_importada'], 2) }} L</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Cantidad Despachada</small>
-                            <h6 class="mb-0">{{ number_format($pedimento['cantidad_despachada'], 2) }} L</h6>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Cantidad Pendiente</small>
-                            <h6 class="mb-0">{{ number_format($pedimento['cantidad_pendiente'], 2) }} L</h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Estado -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="border p-3 rounded">
-                            <small class="text-muted">Estado</small>
-                            <h6 class="mb-0">
-                                @if($pedimento['estado'] == 'activo')
-                                    <span class="badge bg-success">Activo</span>
-                                @elseif($pedimento['estado'] == 'liquidado')
-                                    <span class="badge bg-info">Liquidado</span>
-                                @else
-                                    <span class="badge bg-danger">Cancelado</span>
-                                @endif
-                            </h6>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Observaciones -->
-                @if($pedimento['observaciones'])
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-comment"></i> Observaciones
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="border p-3 rounded">
-                            <p class="mb-0">{{ $pedimento['observaciones'] }}</p>
-                        </div>
-                    </div>
-                </div>
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Número de Pedimento:</th>
+                        <td><strong>{{ $pedimento['numero_pedimento'] }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Fecha del Pedimento:</th>
+                        <td>{{ $pedimento['fecha_pedimento'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            @php
+                                $estadoClass = [
+                                    'ACTIVO' => 'success',
+                                    'UTILIZADO' => 'info',
+                                    'CANCELADO' => 'secondary'
+                                ][$pedimento['estado']] ?? 'secondary';
+                            @endphp
+                            <span class="badge bg-{{ $estadoClass }}">{{ $pedimento['estado'] }}</span>
+                        </td>
+                    </tr>
+                    @if($pedimento['estado'] == 'CANCELADO' && !empty($pedimento['motivo_cancelacion']))
+                        <tr>
+                            <th>Motivo Cancelación:</th>
+                            <td>{{ $pedimento['motivo_cancelacion'] }}</td>
+                        </tr>
+                    @endif
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Contribuyente</h5>
+            </div>
+            <div class="card-body">
+                @if(isset($pedimento['contribuyente']))
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 40%">RFC:</th>
+                            <td>{{ $pedimento['contribuyente']['rfc'] }}</td>
+                        </tr>
+                        <tr>
+                            <th>Razón Social:</th>
+                            <td>{{ $pedimento['contribuyente']['razon_social'] }}</td>
+                        </tr>
+                    </table>
+                @else
+                    <p class="text-muted">ID: {{ $pedimento['contribuyente_id'] }}</p>
                 @endif
-                
-                <!-- Registros Asociados -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-link"></i> Registros Volumétricos Asociados
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Fecha</th>
-                                        <th>Instalación</th>
-                                        <th>Tanque</th>
-                                        <th>Volumen</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($pedimento['registros_volumetricos'] ?? [] as $registro)
-                                    <tr>
-                                        <td>{{ $registro['id'] }}</td>
-                                        <td>{{ $registro['fecha_movimiento'] }}</td>
-                                        <td>{{ $registro['instalacion']['nombre'] ?? 'N/A' }}</td>
-                                        <td>{{ $registro['tanque']['nombre'] ?? 'N/A' }}</td>
-                                        <td class="text-end">{{ number_format($registro['volumen_neto'], 2) }} L</td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">No hay registros asociados</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Fechas de registro -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <hr>
-                        <small class="text-muted">
-                            <i class="fas fa-clock"></i> Creado: {{ $pedimento['created_at'] ?? 'N/A' }} | 
-                            Última actualización: {{ $pedimento['updated_at'] ?? 'N/A' }}
-                        </small>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Botones de acción adicionales -->
-@if($pedimento['cantidad_pendiente'] > 0 && $pedimento['estado'] == 'activo')
-<div class="row mt-3">
-    <div class="col-md-12">
-        <div class="card bg-success text-white mb-3">
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">Producto y Volumen</h5>
+            </div>
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">Asociar a Registro Volumétrico</h6>
-                        <small>Cantidad pendiente: {{ number_format($pedimento['cantidad_pendiente'], 2) }} L</small>
-                    </div>
-                    <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#asociarModal">
-                        <i class="fas fa-plus"></i> Asociar
-                    </button>
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Producto:</th>
+                        <td>
+                            @if(isset($pedimento['producto']))
+                                <strong>{{ $pedimento['producto']['nombre'] }}</strong><br>
+                                <small class="text-muted">Clave SAT: {{ $pedimento['producto']['clave_sat'] }}</small>
+                            @else
+                                {{ $pedimento['producto_id'] }}
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Volumen:</th>
+                        <td><strong>{{ number_format($pedimento['volumen'], 3) }} {{ $pedimento['unidad_medida'] }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="card-title mb-0">Origen y Destino</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">País Origen:</th>
+                        <td>{{ $pedimento['pais_origen'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>País Destino:</th>
+                        <td>{{ $pedimento['pais_destino'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Medio Transporte:</th>
+                        <td>{{ $pedimento['medio_transporte_entrada'] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Aduana Entrada:</th>
+                        <td>{{ $pedimento['aduana_entrada'] ?? 'No especificada' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">Valor Comercial</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Valor:</th>
+                        <td>
+                            <strong>{{ $pedimento['moneda'] }} {{ number_format($pedimento['valor_comercial'], 2) }}</strong>
+                        </td>
+                    </tr>
+                    @if(isset($pedimento['tipo_cambio']))
+                        <tr>
+                            <th>Tipo de Cambio:</th>
+                            <td>{{ number_format($pedimento['tipo_cambio'], 4) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Valor en MXN:</th>
+                            <td><strong>${{ number_format($pedimento['valor_comercial'] * $pedimento['tipo_cambio'], 2) }}</strong></td>
+                        </tr>
+                    @endif
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Fechas Importantes</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 40%">Fecha de Arribo:</th>
+                        <td>{{ $pedimento['fecha_arribo'] ?? 'No registrada' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de Pago:</th>
+                        <td>{{ $pedimento['fecha_pago'] ?? 'No registrada' }}</td>
+                    </tr>
+                    @if(isset($pedimento['registro_volumetrico_id']))
+                        <tr>
+                            <th>Registro Volumétrico:</th>
+                            <td>
+                                <a href="{{ route('registros-volumetricos.show', $pedimento['registro_volumetrico_id']) }}">
+                                    {{ $pedimento['registro_volumetrico_id'] }}
+                                </a>
+                            </td>
+                        </tr>
+                    @endif
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if(!empty($pedimento['observaciones']))
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Observaciones</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ $pedimento['observaciones'] }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- Documentos adjuntos -->
+@if(!empty($pedimento['documentos']))
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Documentos Adjuntos</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    @foreach($pedimento['documentos'] as $documento)
+                        <a href="{{ $documento['url'] }}" class="list-group-item list-group-item-action" target="_blank">
+                            <i class="bi bi-file-pdf text-danger"></i> {{ $documento['nombre'] }}
+                            <small class="text-muted">({{ $documento['tamano'] }})</small>
+                        </a>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -260,27 +243,52 @@
 </div>
 @endif
 
-<!-- Modal asociar a registro -->
-<div class="modal fade" id="asociarModal" tabindex="-1">
+<!-- Modales -->
+<div class="modal fade" id="cancelarModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="asociarForm" method="POST" action="{{ route('pedimentos.asociar-registro', $pedimento['id']) }}">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cancelar Pedimento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('pedimentos.cancelar', $pedimento['id']) }}">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Asociar a Registro Volumétrico</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="registro_volumetrico_id" class="form-label">Seleccionar Registro</label>
-                        <select class="form-select select2" id="registro_volumetrico_id" name="registro_volumetrico_id" required>
-                            <option value="">Buscar registro...</option>
-                        </select>
+                        <label for="motivo_cancelacion" class="form-label">Motivo de Cancelación</label>
+                        <textarea class="form-control" id="motivo_cancelacion" 
+                                  name="motivo_cancelacion" rows="3" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Asociar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger">Cancelar Pedimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="utilizadoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Marcar como Utilizado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('pedimentos.utilizado', $pedimento['id']) }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="registro_volumetrico_id" class="form-label">Registro Volumétrico</label>
+                        <input type="number" class="form-control" id="registro_volumetrico_id" 
+                               name="registro_volumetrico_id" required>
+                        <small class="text-muted">ID del registro volumétrico asociado</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-success">Marcar como Utilizado</button>
                 </div>
             </form>
         </div>
@@ -290,19 +298,12 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Cargar registros disponibles
-    $('#asociarModal').on('shown.bs.modal', function() {
-        $.get('/api/registros-volumetricos/disponibles', function(data) {
-            var select = $('#registro_volumetrico_id');
-            select.empty().append('<option value="">Seleccione un registro...</option>');
-            
-            $.each(data, function(key, registro) {
-                select.append('<option value="' + registro.id + '">' + 
-                    registro.fecha_movimiento + ' - ' + registro.tanque.nombre + ' (' + registro.volumen_neto + ' L)</option>');
-            });
-        });
-    });
-});
+function confirmarCancelacion() {
+    new bootstrap.Modal(document.getElementById('cancelarModal')).show();
+}
+
+function confirmarUtilizado() {
+    new bootstrap.Modal(document.getElementById('utilizadoModal')).show();
+}
 </script>
 @endpush

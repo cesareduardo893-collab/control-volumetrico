@@ -1,179 +1,260 @@
 @extends('layouts.app')
 
 @section('title', 'Existencias')
+@section('header', 'Control de Existencias')
+
+@section('actions')
+<a href="{{ route('existencias.create') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus-circle"></i> Nuevo Registro
+</a>
+<a href="{{ route('existencias.reporte-mermas') }}?instalacion_id={{ request('instalacion_id') }}&fecha_inicio={{ now()->startOfMonth()->toDateString() }}&fecha_fin={{ now()->toDateString() }}" class="btn btn-sm btn-info">
+    <i class="bi bi-graph-up"></i> Reporte de Mermas
+</a>
+@endsection
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Listado de Existencias</h6>
-                <a href="{{ route('existencias.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nueva Existencia
+<div class="card">
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('existencias.index') }}" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="tanque_id" class="form-label">Tanque</label>
+                <select class="form-select select2" id="tanque_id" name="tanque_id">
+                    <option value="">Todos</option>
+                    @foreach($tanques ?? [] as $tanque)
+                        <option value="{{ $tanque['id'] }}" {{ request('tanque_id') == $tanque['id'] ? 'selected' : '' }}>
+                            {{ $tanque['identificador'] }} - {{ $tanque['producto']['nombre'] ?? '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="producto_id" class="form-label">Producto</label>
+                <select class="form-select select2" id="producto_id" name="producto_id">
+                    <option value="">Todos</option>
+                    @foreach($productos ?? [] as $producto)
+                        <option value="{{ $producto['id'] }}" {{ request('producto_id') == $producto['id'] ? 'selected' : '' }}>
+                            {{ $producto['nombre'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="fecha" class="form-label">Fecha</label>
+                <input type="date" class="form-control datepicker" id="fecha" name="fecha" 
+                       value="{{ request('fecha') }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tipo_registro" class="form-label">Tipo Registro</label>
+                <select class="form-select" id="tipo_registro" name="tipo_registro">
+                    <option value="">Todos</option>
+                    <option value="inicial" {{ request('tipo_registro') == 'inicial' ? 'selected' : '' }}>Inicial</option>
+                    <option value="operacion" {{ request('tipo_registro') == 'operacion' ? 'selected' : '' }}>Operación</option>
+                    <option value="final" {{ request('tipo_registro') == 'final' ? 'selected' : '' }}>Final</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="tipo_movimiento" class="form-label">Tipo Movimiento</label>
+                <select class="form-select" id="tipo_movimiento" name="tipo_movimiento">
+                    <option value="">Todos</option>
+                    <option value="INICIAL" {{ request('tipo_movimiento') == 'INICIAL' ? 'selected' : '' }}>Inicial</option>
+                    <option value="RECEPCION" {{ request('tipo_movimiento') == 'RECEPCION' ? 'selected' : '' }}>Recepción</option>
+                    <option value="ENTREGA" {{ request('tipo_movimiento') == 'ENTREGA' ? 'selected' : '' }}>Entrega</option>
+                    <option value="VENTA" {{ request('tipo_movimiento') == 'VENTA' ? 'selected' : '' }}>Venta</option>
+                    <option value="TRASPASO" {{ request('tipo_movimiento') == 'TRASPASO' ? 'selected' : '' }}>Traspaso</option>
+                    <option value="AJUSTE" {{ request('tipo_movimiento') == 'AJUSTE' ? 'selected' : '' }}>Ajuste</option>
+                    <option value="INVENTARIO" {{ request('tipo_movimiento') == 'INVENTARIO' ? 'selected' : '' }}>Inventario</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="estado" class="form-label">Estado</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE" {{ request('estado') == 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                    <option value="VALIDADO" {{ request('estado') == 'VALIDADO' ? 'selected' : '' }}>Validado</option>
+                    <option value="EN_REVISION" {{ request('estado') == 'EN_REVISION' ? 'selected' : '' }}>En Revisión</option>
+                    <option value="CON_ALARMA" {{ request('estado') == 'CON_ALARMA' ? 'selected' : '' }}>Con Alarma</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="numero_registro" class="form-label">N° Registro</label>
+                <input type="text" class="form-control" id="numero_registro" name="numero_registro" 
+                       value="{{ request('numero_registro') }}" placeholder="Buscar...">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Registros por página</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ route('existencias.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar
                 </a>
             </div>
-            <div class="card-body">
-                <!-- Filtros -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterInstalacion">
-                            <option value="">Todas las instalaciones</option>
-                            @foreach($instalaciones ?? [] as $instalacion)
-                                <option value="{{ $instalacion['id'] }}">{{ $instalacion['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterTanque">
-                            <option value="">Todos los tanques</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterProducto">
-                            <option value="">Todos los productos</option>
-                            @foreach($productos ?? [] as $producto)
-                                <option value="{{ $producto['id'] }}">{{ $producto['nombre'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm datepicker" id="filterFecha" placeholder="Fecha">
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterEstado">
-                            <option value="">Todos los estados</option>
-                            <option value="valida">Válida</option>
-                            <option value="invalida">Inválida</option>
-                            <option value="pendiente">Pendiente</option>
-                        </select>
+        </form>
+        
+        <!-- Resumen -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Total Registros</h6>
+                        <h3>{{ $resumen['total'] ?? 0 }}</h3>
                     </div>
                 </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" id="filterMetodo">
-                            <option value="">Todos los métodos</option>
-                            <option value="manual">Manual</option>
-                            <option value="automatica">Automática</option>
-                        </select>
-                    </div>
-                    <div class="col-md-10">
-                        <button class="btn btn-primary btn-sm" id="btnFilter">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="btnClear">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
-                        <a href="{{ route('existencias.inventario-diario') }}" class="btn btn-info btn-sm">
-                            <i class="fas fa-chart-line"></i> Inventario Diario
-                        </a>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Validados</h6>
+                        <h3>{{ $resumen['validados'] ?? 0 }}</h3>
                     </div>
                 </div>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="existenciasTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Instalación</th>
-                                <th>Tanque</th>
-                                <th>Producto</th>
-                                <th>Volumen Neto</th>
-                                <th>Temperatura</th>
-                                <th>Método</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($existencias['data'] ?? [] as $existencia)
-                            <tr>
-                                <td>{{ $existencia['id'] }}</td>
-                                <td>{{ $existencia['fecha_medicion'] }}</td>
-                                <td>{{ $existencia['hora_medicion'] }}</td>
-                                <td>{{ $existencia['tanque']['instalacion']['nombre'] ?? 'N/A' }}</td>
-                                <td>{{ $existencia['tanque']['nombre'] ?? 'N/A' }}</td>
-                                <td>{{ $existencia['producto']['nombre'] ?? 'N/A' }}</td>
-                                <td class="text-end">{{ number_format($existencia['volumen_neto'], 2) }} L</td>
-                                <td class="text-end">{{ $existencia['temperatura'] }} °C</td>
-                                <td>{{ ucfirst($existencia['metodo_medicion']) }}</td>
-                                <td>
-                                    @if($existencia['estado'] == 'valida')
-                                        <span class="badge bg-success">Válida</span>
-                                    @elseif($existencia['estado'] == 'invalida')
-                                        <span class="badge bg-danger">Inválida</span>
-                                    @else
-                                        <span class="badge bg-warning">Pendiente</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('existencias.show', $existencia['id']) }}" 
-                                           class="btn btn-info btn-sm" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        @if($existencia['estado'] == 'pendiente')
-                                        <a href="{{ route('existencias.edit', $existencia['id']) }}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-validar" 
-                                                data-id="{{ $existencia['id'] }}"
-                                                title="Validar">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        @endif
-                                        @if($existencia['estado'] == 'valida' && !$existencia['cfdi_id'])
-                                        <button type="button" 
-                                                class="btn btn-primary btn-sm btn-asociar-cfdi" 
-                                                data-id="{{ $existencia['id'] }}"
-                                                title="Asociar CFDI">
-                                            <i class="fas fa-file-invoice"></i>
-                                        </button>
-                                        @endif
-                                        @if($existencia['estado'] == 'valida' && !$existencia['pedimento_id'])
-                                        <button type="button" 
-                                                class="btn btn-secondary btn-sm btn-asociar-pedimento" 
-                                                data-id="{{ $existencia['id'] }}"
-                                                title="Asociar Pedimento">
-                                            <i class="fas fa-file-alt"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if(isset($existencias['meta']))
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <p>Mostrando {{ $existencias['meta']['from'] ?? 0 }} a {{ $existencias['meta']['to'] ?? 0 }} de {{ $existencias['meta']['total'] ?? 0 }} registros</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end">
-                                @foreach($existencias['meta']['links'] ?? [] as $link)
-                                    <li class="page-item {{ $link['active'] ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $link['url'] }}" {!! !$link['url'] ? 'disabled' : '' !!}>
-                                            {!! $link['label'] !!}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </nav>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6>En Revisión</h6>
+                        <h3>{{ $resumen['en_revision'] ?? 0 }}</h3>
                     </div>
                 </div>
-                @endif
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h6>Con Alarma</h6>
+                        <h3>{{ $resumen['con_alarma'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
+        
+        <!-- Tabla de existencias -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>N° Registro</th>
+                        <th>Fecha/Hora</th>
+                        <th>Tanque</th>
+                        <th>Producto</th>
+                        <th>Volumen Medido</th>
+                        <th>Volumen Corregido</th>
+                        <th>Volumen Disponible</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($existencias as $existencia)
+                        <tr>
+                            <td>{{ $existencia['numero_registro'] }}</td>
+                            <td>{{ $existencia['fecha'] }} {{ $existencia['hora'] }}</td>
+                            <td>
+                                @if(isset($existencia['tanque']))
+                                    {{ $existencia['tanque']['identificador'] }}
+                                @else
+                                    {{ $existencia['tanque_id'] }}
+                                @endif
+                            </td>
+                            <td>
+                                @if(isset($existencia['producto']))
+                                    {{ $existencia['producto']['nombre'] }}
+                                @else
+                                    {{ $existencia['producto_id'] }}
+                                @endif
+                            </td>
+                            <td>{{ number_format($existencia['volumen_medido'], 3) }} L</td>
+                            <td>{{ number_format($existencia['volumen_corregido'], 3) }} L</td>
+                            <td>{{ number_format($existencia['volumen_disponible'], 3) }} L</td>
+                            <td>
+                                <span class="badge bg-info">{{ $existencia['tipo_registro'] }}</span>
+                                <br>
+                                <small>{{ $existencia['tipo_movimiento'] }}</small>
+                            </td>
+                            <td>
+                                @php
+                                    $estadoClass = [
+                                        'VALIDADO' => 'success',
+                                        'PENDIENTE' => 'warning',
+                                        'EN_REVISION' => 'info',
+                                        'CON_ALARMA' => 'danger'
+                                    ][$existencia['estado']] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $estadoClass }}">{{ $existencia['estado'] }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('existencias.show', $existencia['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if($existencia['estado'] == 'PENDIENTE')
+                                        <button type="button" class="btn btn-sm btn-success" 
+                                                onclick="confirmarValidacion({{ $existencia['id'] }})" title="Validar">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="10" class="text-center">No hay registros de existencias</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        @if(isset($meta))
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Mostrando {{ $meta['from'] ?? 0 }} - {{ $meta['to'] ?? 0 }} de {{ $meta['total'] ?? 0 }} registros
+            </div>
+            <nav>
+                <ul class="pagination">
+                    @if(isset($links['prev']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['prev'] }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                    
+                    @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
+                        <li class="page-item {{ $i == ($meta['current_page'] ?? 1) ? 'active' : '' }}">
+                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    
+                    @if(isset($links['next']))
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $links['next'] }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -181,73 +262,22 @@
 <div class="modal fade" id="validarModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Validar Existencia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
             <form id="validarForm" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Validar Existencia</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>¿Está seguro de validar esta existencia?</p>
-                    <p class="text-muted">Una vez validada, no podrá ser modificada.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Validar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal asociar CFDI -->
-<div class="modal fade" id="asociarCfdiModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="asociarCfdiForm" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Asociar CFDI</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="cfdi_id" class="form-label">Seleccionar CFDI</label>
-                        <select class="form-select select2" id="cfdi_id" name="cfdi_id" required>
-                            <option value="">Buscar CFDI...</option>
-                        </select>
+                        <label for="observaciones_validacion" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observaciones_validacion" 
+                                  name="observaciones_validacion" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Asociar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal asociar Pedimento -->
-<div class="modal fade" id="asociarPedimentoModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="asociarPedimentoForm" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Asociar Pedimento</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="pedimento_id" class="form-label">Seleccionar Pedimento</label>
-                        <select class="form-select select2" id="pedimento_id" name="pedimento_id" required>
-                            <option value="">Buscar pedimento...</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Asociar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Validación</button>
                 </div>
             </form>
         </div>
@@ -258,111 +288,21 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar DataTable
-    var table = $('#existenciasTable').DataTable({
-        pageLength: {{ $existencias['meta']['per_page'] ?? 10 }},
-        order: [[1, 'desc'], [2, 'desc']],
-        searching: false,
-        paging: false,
-        info: false
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'es',
+        autoclose: true
     });
-
-    // Cargar tanques por instalación
-    $('#filterInstalacion').change(function() {
-        var instalacionId = $(this).val();
-        var tanqueSelect = $('#filterTanque');
-        
-        tanqueSelect.empty().append('<option value="">Todos los tanques</option>');
-        
-        if (instalacionId) {
-            $.get('/api/tanques/por-instalacion/' + instalacionId, function(data) {
-                $.each(data, function(key, tanque) {
-                    tanqueSelect.append('<option value="' + tanque.id + '">' + tanque.nombre + '</option>');
-                });
-            });
-        }
-    });
-
-    // Filtros
-    $('#btnFilter').click(function() {
-        var params = new URLSearchParams();
-        
-        if ($('#filterInstalacion').val()) params.set('instalacion_id', $('#filterInstalacion').val());
-        if ($('#filterTanque').val()) params.set('tanque_id', $('#filterTanque').val());
-        if ($('#filterProducto').val()) params.set('producto_id', $('#filterProducto').val());
-        if ($('#filterFecha').val()) params.set('fecha_medicion', $('#filterFecha').val());
-        if ($('#filterEstado').val()) params.set('estado', $('#filterEstado').val());
-        if ($('#filterMetodo').val()) params.set('metodo_medicion', $('#filterMetodo').val());
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
-    });
-
-    // Limpiar filtros
-    $('#btnClear').click(function() {
-        window.location.href = window.location.pathname;
-    });
-
-    // Botones de validar
-    $('.btn-validar').click(function() {
-        var id = $(this).data('id');
-        var form = $('#validarForm');
-        form.attr('action', '{{ url("existencias") }}/' + id + '/validar');
-        $('#validarModal').modal('show');
-    });
-
-    // Botones asociar CFDI
-    $('.btn-asociar-cfdi').click(function() {
-        var id = $(this).data('id');
-        var form = $('#asociarCfdiForm');
-        form.attr('action', '{{ url("existencias") }}/' + id + '/asociar-cfdi');
-        
-        // Cargar CFDI disponibles
-        $.get('/api/cfdi/disponibles', function(data) {
-            var select = $('#cfdi_id');
-            select.empty().append('<option value="">Seleccione un CFDI...</option>');
-            
-            $.each(data, function(key, cfdi) {
-                select.append('<option value="' + cfdi.id + '">' + cfdi.uuid + ' - $' + cfdi.total + '</option>');
-            });
-        });
-        
-        $('#asociarCfdiModal').modal('show');
-    });
-
-    // Botones asociar Pedimento
-    $('.btn-asociar-pedimento').click(function() {
-        var id = $(this).data('id');
-        var form = $('#asociarPedimentoForm');
-        form.attr('action', '{{ url("existencias") }}/' + id + '/asociar-pedimento');
-        
-        // Cargar pedimentos disponibles
-        $.get('/api/pedimentos/disponibles', function(data) {
-            var select = $('#pedimento_id');
-            select.empty().append('<option value="">Seleccione un pedimento...</option>');
-            
-            $.each(data, function(key, pedimento) {
-                select.append('<option value="' + pedimento.id + '">' + pedimento.numero_pedimento + ' - ' + pedimento.aduana + '</option>');
-            });
-        });
-        
-        $('#asociarPedimentoModal').modal('show');
-    });
-
-    // Cargar valores de filtros desde URL
-    var urlParams = new URLSearchParams(window.location.search);
-    $('#filterInstalacion').val(urlParams.get('instalacion_id') || '');
-    $('#filterProducto').val(urlParams.get('producto_id') || '');
-    $('#filterFecha').val(urlParams.get('fecha_medicion') || '');
-    $('#filterEstado').val(urlParams.get('estado') || '');
-    $('#filterMetodo').val(urlParams.get('metodo_medicion') || '');
     
-    // Cargar tanques si hay instalación seleccionada
-    if ($('#filterInstalacion').val()) {
-        $('#filterInstalacion').trigger('change');
-        setTimeout(function() {
-            $('#filterTanque').val(urlParams.get('tanque_id') || '');
-        }, 500);
-    }
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
 });
+
+function confirmarValidacion(id) {
+    $('#validarForm').attr('action', `{{ url('existencias') }}/${id}/validar`);
+    new bootstrap.Modal(document.getElementById('validarModal')).show();
+}
 </script>
 @endpush
