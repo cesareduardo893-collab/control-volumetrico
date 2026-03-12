@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 abstract class BaseController extends Controller
 {
@@ -55,22 +56,45 @@ abstract class BaseController extends Controller
             return redirect()->back()->with('error', $this->apiResponseMessage($apiResponse, 'Error al cargar datos'));
         }
 
-        $data = $this->apiResponseData($apiResponse, []);
+        $responseData = $this->apiResponseData($apiResponse);
+        $meta = [];
+        $links = [];
+
+        if (Arr::accessible($responseData) && Arr::exists($responseData, 'data') && Arr::accessible($responseData['data'])) {
+            $metaKeys = [
+                'current_page', 'from', 'to', 'per_page',
+                'last_page', 'total', 'path', 'next_page_url', 'prev_page_url'
+            ];
+
+            foreach ($metaKeys as $key) {
+                if (Arr::exists($responseData, $key)) {
+                    $meta[$key] = $responseData[$key];
+                }
+            }
+
+            $links = $responseData['links'] ?? [];
+            $responseData = $responseData['data'];
+        } else {
+            $meta = Arr::get($apiResponse, 'meta', []);
+            $links = Arr::get($apiResponse, 'links', []);
+        }
 
         $viewData = array_merge($defaultData, [
             'filters' => $filters
         ]);
 
-        if (isset($apiResponse->meta)) {
-            $viewData['meta'] = $apiResponse->meta;
-            $viewData['links'] = $apiResponse->links ?? [];
+        if (!empty($meta)) {
+            $viewData['meta'] = $meta;
         }
 
-        // Asignar los datos principales según el contexto
+        if (!empty($links)) {
+            $viewData['links'] = $links;
+        }
+
         if (isset($defaultData['key'])) {
-            $viewData[$defaultData['key']] = $data;
+            $viewData[$defaultData['key']] = $responseData;
         } else {
-            $viewData['data'] = $data;
+            $viewData['data'] = $responseData;
         }
 
         return view($view, $viewData);

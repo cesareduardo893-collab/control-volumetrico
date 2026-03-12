@@ -122,9 +122,9 @@ trait ConsumesApi
         return isset($response['success']) && $response['success'] === true;
     }
 
-    public function apiResponseData($response)
+    public function apiResponseData($response, $default = [])
     {
-        return $response['data'] ?? [];
+        return $response['data'] ?? $default;
     }
 
     public function apiResponseMessage($response, $default = 'Error')

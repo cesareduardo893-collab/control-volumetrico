@@ -135,7 +135,7 @@
                 <tbody>
                     @forelse($eventos as $evento)
                         <tr>
-                            <td>{{ $evento['fecha_hora'] }}</td>
+                            <td>{{ $evento['fecha_hora'] ?? $evento['created_at'] ?? '-' }}</td>
                             <td>
                                 @if($evento['usuario'])
                                     {{ $evento['usuario']['nombres'] }} {{ $evento['usuario']['apellidos'] }}

@@ -7,9 +7,15 @@
 <a href="{{ route('productos.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Producto
 </a>
-<a href="{{ route('productos.por-tipo') }}" class="btn btn-sm btn-info">
-    <i class="bi bi-grid-3x3-gap-fill"></i> Ver por Tipo
-</a>
+@if(request()->filled('tipo_hidrocarburo'))
+    <a href="{{ route('productos.por-tipo', request('tipo_hidrocarburo')) }}" class="btn btn-sm btn-info">
+        <i class="bi bi-grid-3x3-gap-fill"></i> Ver por Tipo
+    </a>
+@else
+    <button type="button" class="btn btn-sm btn-info" disabled title="Filtra por tipo para habilitar">
+        <i class="bi bi-grid-3x3-gap-fill"></i> Ver por Tipo
+    </button>
+@endif
 @endsection
 
 @section('content')

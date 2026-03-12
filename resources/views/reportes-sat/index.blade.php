@@ -7,9 +7,15 @@
 <a href="{{ route('reportes-sat.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Reporte
 </a>
-<a href="{{ route('reportes-sat.historial-envios', request('instalacion_id')) }}?anio={{ now()->year }}" class="btn btn-sm btn-info">
-    <i class="bi bi-clock-history"></i> Historial de Envíos
-</a>
+@if(request()->filled('instalacion_id'))
+    <a href="{{ route('reportes-sat.historial-envios', request('instalacion_id')) }}?anio={{ now()->year }}" class="btn btn-sm btn-info">
+        <i class="bi bi-clock-history"></i> Historial de Envíos
+    </a>
+@else
+    <button type="button" class="btn btn-sm btn-info" disabled title="Selecciona una instalación para ver el historial">
+        <i class="bi bi-clock-history"></i> Historial de Envíos
+    </button>
+@endif
 @endsection
 
 @section('content')
