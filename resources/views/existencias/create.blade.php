@@ -49,11 +49,17 @@
                             <label for="tanque_id" class="form-label">Tanque *</label>
                             <select class="form-select select2" id="tanque_id" name="tanque_id" required>
                                 <option value="">Seleccione...</option>
-                                @foreach($tanques as $tanque)
-                                    <option value="{{ $tanque['id'] }}" {{ old('tanque_id') == $tanque['id'] ? 'selected' : '' }}>
-                                        {{ $tanque['identificador'] }} - {{ $tanque['instalacion']['nombre'] ?? '' }}
-                                        @if(isset($tanque['producto']))
-                                            ({{ $tanque['producto']['nombre'] }})
+                        @foreach($tanques as $tanque)
+                                    @php
+                                        $id = data_get($tanque, 'id');
+                                        $identificador = data_get($tanque, 'identificador');
+                                        $instalacionNombre = data_get($tanque, 'instalacion.nombre', '');
+                                        $productoNombre = data_get($tanque, 'producto.nombre', null);
+                                    @endphp
+                                    <option value="{{ $id }}" {{ old('tanque_id') == $id ? 'selected' : '' }}>
+                                        {{ $identificador }} - {{ $instalacionNombre }}
+                                        @if($productoNombre)
+                                            ({{ $productoNombre }})
                                         @endif
                                     </option>
                                 @endforeach
