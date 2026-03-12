@@ -44,7 +44,16 @@ class ExistenciaController extends BaseController
             $this->setApiToken(Session::get('api_token'));
 
             // Obtener catálogos para los selects
-            $tanques = $this->getCatalog('/api/tanques', ['activo' => true]);
+            $tanquesRaw = $this->getCatalog('/api/tanques', ['activo' => true]);
+            // Estandarizar estructura de tanques para la vista
+            $tanques = collect($tanquesRaw)->map(function ($tanque) {
+                return [
+                    'id' => data_get($tanque, 'id'),
+                    'identificador' => data_get($tanque, 'identificador'),
+                    'instalacion' => ['nombre' => data_get($tanque, 'instalacion.nombre', '')],
+                    'producto' => ['nombre' => data_get($tanque, 'producto.nombre')]
+                ];
+            })->values()->toArray();
             $productos = $this->getCatalog('/api/productos', ['activo' => true]);
 
             return view('existencias.create', [
