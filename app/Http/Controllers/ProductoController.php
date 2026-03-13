@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -69,7 +70,7 @@ class ProductoController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'catalogos',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PRODUCTO_CREADO',
                     'Productos',
                     "Producto creado: {$request->clave_sat}",
@@ -192,7 +193,7 @@ class ProductoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'catalogos',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PRODUCTO_ACTUALIZADO',
                     'Productos',
                     "Producto actualizado ID: {$id}",
@@ -240,7 +241,7 @@ class ProductoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'catalogos',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PRODUCTO_ELIMINADO',
                     'Productos',
                     "Producto eliminado ID: {$id}",
