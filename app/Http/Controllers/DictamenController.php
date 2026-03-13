@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -99,7 +100,7 @@ class DictamenController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'calidad',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'DICTAMEN_CREADO',
                     'Dictámenes',
                     "Dictamen creado: {$request->folio}",
@@ -215,7 +216,7 @@ class DictamenController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'calidad',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'DICTAMEN_ACTUALIZADO',
                     'Dictámenes',
                     "Dictamen actualizado ID: {$id}",
@@ -267,7 +268,7 @@ class DictamenController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'calidad',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'DICTAMEN_CANCELADO',
                     'Dictámenes',
                     "Dictamen cancelado ID: {$id}",
