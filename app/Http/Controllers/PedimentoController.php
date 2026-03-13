@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -94,7 +95,7 @@ class PedimentoController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'comercio_exterior',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PEDIMENTO_CREADO',
                     'Pedimentos',
                     "Pedimento creado: {$request->numero_pedimento}",
@@ -220,7 +221,7 @@ class PedimentoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'comercio_exterior',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PEDIMENTO_ACTUALIZADO',
                     'Pedimentos',
                     "Pedimento actualizado ID: {$id}",
@@ -272,7 +273,7 @@ class PedimentoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'comercio_exterior',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PEDIMENTO_CANCELADO',
                     'Pedimentos',
                     "Pedimento cancelado ID: {$id}",
@@ -322,7 +323,7 @@ class PedimentoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'comercio_exterior',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PEDIMENTO_UTILIZADO',
                     'Pedimentos',
                     "Pedimento marcado como utilizado ID: {$id}",
@@ -406,7 +407,7 @@ class PedimentoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'comercio_exterior',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PEDIMENTO_ELIMINADO',
                     'Pedimentos',
                     "Pedimento eliminado ID: {$id}",
