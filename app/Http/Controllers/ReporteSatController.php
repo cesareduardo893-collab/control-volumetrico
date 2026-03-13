@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -88,11 +89,11 @@ class ReporteSatController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'REPORTE_SAT_CREADO',
                     'Reportes SAT',
                     "Reporte SAT creado: {$request->folio}",
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     $reporteId
                 );
 
@@ -171,11 +172,11 @@ class ReporteSatController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'REPORTE_SAT_ENVIADO',
                     'Reportes SAT',
                     "Reporte SAT enviado ID: {$id}",
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     $id
                 );
 
@@ -220,11 +221,11 @@ class ReporteSatController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'REPORTE_SAT_FIRMADO',
                     'Reportes SAT',
                     "Reporte SAT firmado ID: {$id}",
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     $id
                 );
 
@@ -265,11 +266,11 @@ class ReporteSatController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'REPORTE_SAT_CANCELADO',
                     'Reportes SAT',
                     "Reporte SAT cancelado ID: {$id}",
-                    'reportes_sat',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     $id
                 );
 
