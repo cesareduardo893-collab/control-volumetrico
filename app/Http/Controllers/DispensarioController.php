@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -84,7 +85,7 @@ class DispensarioController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'DISPENSARIO_CREADO',
                     'Dispensarios',
                     "Dispensario creado: {$request->clave}",
@@ -204,7 +205,7 @@ class DispensarioController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'DISPENSARIO_ACTUALIZADO',
                     'Dispensarios',
                     "Dispensario actualizado ID: {$id}",
@@ -252,7 +253,7 @@ class DispensarioController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'DISPENSARIO_ELIMINADO',
                     'Dispensarios',
                     "Dispensario eliminado ID: {$id}",
