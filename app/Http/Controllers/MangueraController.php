@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -84,7 +85,7 @@ class MangueraController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MANGUERA_CREADA',
                     'Mangueras',
                     "Manguera creada: {$request->clave}",
@@ -206,7 +207,7 @@ class MangueraController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MANGUERA_ACTUALIZADA',
                     'Mangueras',
                     "Manguera actualizada ID: {$id}",
@@ -254,7 +255,7 @@ class MangueraController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MANGUERA_ELIMINADA',
                     'Mangueras',
                     "Manguera eliminada ID: {$id}",
@@ -297,7 +298,7 @@ class MangueraController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MEDIDOR_ASIGNADO_MANGUERA',
                     'Mangueras',
                     "Medidor asignado a manguera ID: {$id}",
@@ -343,7 +344,7 @@ class MangueraController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MEDIDOR_QUITADO_MANGUERA',
                     'Mangueras',
                     "Medidor quitado de manguera ID: {$id}",
