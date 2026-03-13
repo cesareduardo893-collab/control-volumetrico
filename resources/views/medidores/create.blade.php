@@ -30,8 +30,25 @@
                             <select class="form-select select2" id="instalacion_id" name="instalacion_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($instalaciones as $instalacion)
-                                    <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
-                                        {{ $instalacion['nombre'] }}
+                                    @php
+                                        if (is_int($instalacion) || is_string($instalacion)) {
+                                            $id = $instalacion;
+                                            $nombre = $instalacion;
+                                        } else {
+                                            if (is_array($instalacion)) {
+                                                $id = $instalacion['id'] ?? '';
+                                                $nombre = $instalacion['nombre'] ?? '';
+                                            } else { // object
+                                                $id = $instalacion->id ?? '';
+                                                $nombre = $instalacion->nombre ?? '';
+                                            }
+                                        }
+                                        if ($nombre === '' && $id !== '') {
+                                            $nombre = (string)$id;
+                                        }
+                                    @endphp
+                                    <option value="{{ $id }}" {{ old('instalacion_id') == $id ? 'selected' : '' }}>
+                                        {{ $nombre }}
                                     </option>
                                 @endforeach
                             </select>
@@ -42,8 +59,28 @@
                             <select class="form-select select2" id="tanque_id" name="tanque_id">
                                 <option value="">Seleccione (opcional)</option>
                                 @foreach($tanques as $tanque)
-                                    <option value="{{ $tanque['id'] }}" {{ old('tanque_id') == $tanque['id'] ? 'selected' : '' }}>
-                                        {{ $tanque['identificador'] }} - {{ $tanque['instalacion']['nombre'] ?? '' }}
+                                    @php
+                                        $id = '';
+                                        $identificador = '';
+                                        $instalacionNombre = '';
+                                        if (is_array($tanque)) {
+                                            $id = $tanque['id'] ?? '';
+                                            $identificador = $tanque['identificador'] ?? '';
+                                            $instalacionNombre = $tanque['instalacion']['nombre'] ?? '';
+                                        } elseif (is_object($tanque)) {
+                                            $id = $tanque->id ?? '';
+                                            $identificador = $tanque->identificador ?? '';
+                                            $instalacionNombre = isset($tanque->instalacion->nombre) ? $tanque->instalacion->nombre : '';
+                                        } else {
+                                            $id = (string) $tanque;
+                                        }
+                                        $texto = trim(trim($identificador) . (!empty($instalacionNombre) ? ' - ' . $instalacionNombre : ''));
+                                        if ($texto === '') {
+                                            $texto = $id;
+                                        }
+                                    @endphp
+                                    <option value="{{ $id }}" {{ old('tanque_id') == $id ? 'selected' : '' }}>
+                                        {{ $texto }}
                                     </option>
                                 @endforeach
                             </select>

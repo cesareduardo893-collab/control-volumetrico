@@ -30,9 +30,19 @@
                             <select class="form-select select2" id="instalacion_id" name="instalacion_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($instalaciones as $instalacion)
-                                    <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
-                                        {{ $instalacion['nombre'] }} ({{ $instalacion['clave_instalacion'] }})
-                                    </option>
+                                    @php
+                                        $iid = is_array($instalacion) ? ($instalacion['id'] ?? $instalacion['ID'] ?? null)
+                                            : (is_object($instalacion) ? ($instalacion->id ?? $instalacion->ID ?? null) : $instalacion);
+                                        $iname = is_array($instalacion) ? ($instalacion['nombre'] ?? $instalacion['name'] ?? '')
+                                            : (is_object($instalacion) ? ($instalacion->nombre ?? $instalacion->name ?? '') : '');
+                                        $ikey = is_array($instalacion) ? ($instalacion['clave_instalacion'] ?? $instalacion['clave'] ?? '')
+                                            : (is_object($instalacion) ? ($instalacion->clave_instalacion ?? $instalacion->clave ?? '') : '');
+                                    @endphp
+                                    @if ($iid !== null)
+                                        <option value="{{ $iid }}" {{ old('instalacion_id') == $iid ? 'selected' : '' }}>
+                                            {{ $iname ?: (string)$iid }} ({{ $ikey }})
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>

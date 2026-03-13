@@ -29,10 +29,21 @@
                             <label for="contribuyente_id" class="form-label">Contribuyente *</label>
                             <select class="form-select select2" id="contribuyente_id" name="contribuyente_id" required>
                                 <option value="">Seleccione...</option>
-                                @foreach($contribuyentes as $contribuyente)
-                                    <option value="{{ $contribuyente['id'] }}" {{ old('contribuyente_id') == $contribuyente['id'] ? 'selected' : '' }}>
-                                        {{ $contribuyente['razon_social'] }} ({{ $contribuyente['rfc'] }})
-                                    </option>
+                                @foreach ($contribuyentes as $contribuyente)
+                                    @php
+                                        // Soporte para diferentes shapes de datos: array / object / valor simple
+                                        $cid = is_array($contribuyente) ? ($contribuyente['id'] ?? $contribuyente['ID'] ?? null)
+                                            : (is_object($contribuyente) ? ($contribuyente->id ?? $contribuyente->ID ?? null) : $contribuyente);
+                                        $crazon = is_array($contribuyente) ? ($contribuyente['razon_social'] ?? $contribuyente['razon'] ?? '')
+                                            : (is_object($contribuyente) ? ($contribuyente->razon_social ?? $contribuyente->razon ?? '') : '');
+                                        $crfc = is_array($contribuyente) ? ($contribuyente['rfc'] ?? '')
+                                            : (is_object($contribuyente) ? ($contribuyente->rfc ?? '') : '');
+                                    @endphp
+                                    @if ($cid !== null)
+                                        <option value="{{ $cid }}" {{ old('contribuyente_id') == $cid ? 'selected' : '' }}>
+                                            {{ $crazon ?: $cid }} ({{ $crfc }})
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>

@@ -40,6 +40,9 @@ class TanqueController extends BaseController
      */
     public function create()
     {
+        // Contexto para depuración incluso si falla la obtención de catálogos
+        $instalaciones = [];
+        $productos = [];
         try {
             $this->setApiToken(Session::get('api_token'));
 
@@ -52,9 +55,14 @@ class TanqueController extends BaseController
                 'productos' => $productos
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error al cargar formulario de creación', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'instalaciones_count' => count($instalaciones),
+                'productos_count' => count($productos)
             ]);
 
             return redirect()->route('tanques.index')

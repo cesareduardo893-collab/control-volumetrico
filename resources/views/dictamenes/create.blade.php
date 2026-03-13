@@ -49,10 +49,21 @@
                             <label for="contribuyente_id" class="form-label">Contribuyente *</label>
                             <select class="form-select select2" id="contribuyente_id" name="contribuyente_id" required>
                                 <option value="">Seleccione...</option>
-                                @foreach($contribuyentes as $contribuyente)
-                                    <option value="{{ $contribuyente['id'] }}" {{ old('contribuyente_id') == $contribuyente['id'] ? 'selected' : '' }}>
-                                        {{ $contribuyente['razon_social'] }} ({{ $contribuyente['rfc'] }})
-                                    </option>
+                                @foreach ($contribuyentes as $contribuyente)
+                                    @php
+                                        // Soporte para distintos shapes de datos (array / object / valor simple)
+                                        $cid = is_array($contribuyente) ? ($contribuyente['id'] ?? $contribuyente['ID'] ?? null)
+                                            : (is_object($contribuyente) ? ($contribuyente->id ?? $contribuyente->ID ?? null) : $contribuyente);
+                                        $crazon = is_array($contribuyente) ? ($contribuyente['razon_social'] ?? $contribuyente['razon'] ?? '')
+                                            : (is_object($contribuyente) ? ($contribuyente->razon_social ?? $contribuyente->razon ?? '') : '');
+                                        $rrfc = is_array($contribuyente) ? ($contribuyente['rfc'] ?? '')
+                                            : (is_object($contribuyente) ? ($contribuyente->rfc ?? '') : '');
+                                    @endphp
+                                    @if ($cid !== null)
+                                        <option value="{{ $cid }}" {{ old('contribuyente_id') == $cid ? 'selected' : '' }}>
+                                            {{ $crazon ?: $cid }} ({{ $rrfc }})
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>
@@ -62,9 +73,17 @@
                             <select class="form-select select2" id="instalacion_id" name="instalacion_id">
                                 <option value="">Seleccione (opcional)</option>
                                 @foreach($instalaciones as $instalacion)
-                                    <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
-                                        {{ $instalacion['nombre'] }}
-                                    </option>
+                                    @php
+                                        $iid = is_array($instalacion) ? ($instalacion['id'] ?? $instalacion['ID'] ?? null)
+                                            : (is_object($instalacion) ? ($instalacion->id ?? $instalacion->ID ?? null) : $instalacion);
+                                        $iname = is_array($instalacion) ? ($instalacion['nombre'] ?? $instalacion['name'] ?? '')
+                                            : (is_object($instalacion) ? ($instalacion->nombre ?? $instalacion->name ?? '') : '');
+                                    @endphp
+                                    @if ($iid !== null)
+                                        <option value="{{ $iid }}" {{ old('instalacion_id') == $iid ? 'selected' : '' }}>
+                                            {{ $iname ?: (string)$iid }}
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>
@@ -126,9 +145,17 @@
                             <select class="form-select select2" id="producto_id" name="producto_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($productos as $producto)
-                                    <option value="{{ $producto['id'] }}" {{ old('producto_id') == $producto['id'] ? 'selected' : '' }}>
-                                        {{ $producto['nombre'] }}
-                                    </option>
+                                    @php
+                                        $pid = is_array($producto) ? ($producto['id'] ?? $producto['ID'] ?? null)
+                                            : (is_object($producto) ? ($producto->id ?? $producto->ID ?? null) : $producto);
+                                        $pName = is_array($producto) ? ($producto['nombre'] ?? $producto['name'] ?? '')
+                                            : (is_object($producto) ? ($producto->nombre ?? $producto->name ?? '') : (string)$producto);
+                                    @endphp
+                                    @if ($pid !== null)
+                                        <option value="{{ $pid }}" {{ old('producto_id') == $pid ? 'selected' : '' }}>
+                                            {{ $pName ?: (string)$pid }}
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>

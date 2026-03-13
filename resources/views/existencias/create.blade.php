@@ -71,8 +71,13 @@
                             <select class="form-select select2" id="producto_id" name="producto_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($productos as $producto)
-                                    <option value="{{ $producto['id'] }}" {{ old('producto_id') == $producto['id'] ? 'selected' : '' }}>
-                                        {{ $producto['nombre'] }} ({{ $producto['clave_sat'] }})
+                                    @php
+                                        $pid = data_get($producto, 'id');
+                                        $pName = data_get($producto, 'nombre');
+                                        $pCode = data_get($producto, 'clave_sat');
+                                    @endphp
+                                    <option value="{{ $pid }}" {{ old('producto_id') == $pid ? 'selected' : '' }}>
+                                        {{ $pName }} @if($pCode) ({{ $pCode }}) @endif
                                     </option>
                                 @endforeach
                             </select>

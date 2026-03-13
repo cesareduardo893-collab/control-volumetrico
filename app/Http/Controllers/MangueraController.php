@@ -34,6 +34,14 @@ class MangueraController extends BaseController
     }
 
     /**
+     * Show the form for creating a new manguera
+     */
+    public function create()
+    {
+        return view('mangueras.create');
+    }
+
+    /**
      * Mostrar manguera
      */
     public function show($id)

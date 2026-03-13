@@ -30,8 +30,20 @@
                             <select class="form-select select2" id="instalacion_id" name="instalacion_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($instalaciones as $instalacion)
-                                    <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
-                                        {{ $instalacion['nombre'] }}
+                                    @php
+                                        if (is_array($instalacion)) {
+                                            $idInst = $instalacion['id'] ?? '';
+                                            $nombreInst = $instalacion['nombre'] ?? '';
+                                        } elseif (is_object($instalacion)) {
+                                            $idInst = $instalacion->id ?? '';
+                                            $nombreInst = $instalacion->nombre ?? '';
+                                        } else {
+                                            $idInst = (string)$instalacion;
+                                            $nombreInst = $idInst;
+                                        }
+                                    @endphp
+                                    <option value="{{ $idInst }}" {{ old('instalacion_id') == $idInst ? 'selected' : '' }}>
+                                        {{ $nombreInst }}
                                     </option>
                                 @endforeach
                             </select>

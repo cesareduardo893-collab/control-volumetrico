@@ -116,9 +116,17 @@
                             <select class="form-select select2" id="producto_id" name="producto_id">
                                 <option value="">Seleccione (opcional)</option>
                                 @foreach($productos as $producto)
-                                    <option value="{{ $producto['id'] }}" {{ old('producto_id') == $producto['id'] ? 'selected' : '' }}>
-                                        {{ $producto['nombre'] }}
-                                    </option>
+                                    @php
+                                        $pid = is_array($producto) ? ($producto['id'] ?? $producto['ID'] ?? null)
+                                            : (is_object($producto) ? ($producto->id ?? $producto->ID ?? null) : $producto);
+                                        $pName = is_array($producto) ? ($producto['nombre'] ?? $producto['name'] ?? '')
+                                            : (is_object($producto) ? ($producto->nombre ?? $producto->name ?? '') : '');
+                                    @endphp
+                                    @if ($pid !== null)
+                                        <option value="{{ $pid }}" {{ old('producto_id') == $pid ? 'selected' : '' }}>
+                                            {{ $pName ?: (string)$pid }}
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>

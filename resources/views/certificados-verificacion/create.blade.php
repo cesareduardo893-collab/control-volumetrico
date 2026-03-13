@@ -36,8 +36,14 @@
                             <select class="form-select select2" id="contribuyente_id" name="contribuyente_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($contribuyentes as $contribuyente)
-                                    <option value="{{ $contribuyente['id'] }}" {{ old('contribuyente_id') == $contribuyente['id'] ? 'selected' : '' }}>
-                                        {{ $contribuyente['razon_social'] }} ({{ $contribuyente['rfc'] }})
+                                    @php
+                                        // Soporte para diferentes shapes de datos: array, object o valor simple
+                                        $idValue = is_array($contribuyente) ? ($contribuyente['id'] ?? $contribuyente['ID'] ?? null) : (is_object($contribuyente) ? ($contribuyente->id ?? $contribuyente->ID ?? null) : $contribuyente);
+                                        $razonSocial = is_array($contribuyente) ? ($contribuyente['razon_social'] ?? $contribuyente['razon'] ?? '') : (is_object($contribuyente) ? ($contribuyente->razon_social ?? $contribuyente->razon ?? '') : '');
+                                        $rfc = is_array($contribuyente) ? ($contribuyente['rfc'] ?? '') : (is_object($contribuyente) ? ($contribuyente->rfc ?? '') : '');
+                                    @endphp
+                                    <option value="{{ $idValue }}" {{ old('contribuyente_id') == $idValue ? 'selected' : '' }}>
+                                        {{ $razonSocial ?: $idValue }} ({{ $rfc }})
                                     </option>
                                 @endforeach
                             </select>

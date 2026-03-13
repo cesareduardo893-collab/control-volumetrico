@@ -44,8 +44,20 @@
                             <select class="form-select select2" id="instalacion_id" name="instalacion_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($instalaciones as $instalacion)
-                                    <option value="{{ $instalacion['id'] }}" {{ old('instalacion_id') == $instalacion['id'] ? 'selected' : '' }}>
-                                        {{ $instalacion['nombre'] }}
+                                    @php
+                                        if (is_array($instalacion)) {
+                                            $id = $instalacion['id'] ?? '';
+                                            $nombre = $instalacion['nombre'] ?? '';
+                                        } elseif (is_object($instalacion)) {
+                                            $id = $instalacion->id ?? '';
+                                            $nombre = $instalacion->nombre ?? '';
+                                        } else {
+                                            $id = (string) $instalacion;
+                                            $nombre = (string) $instalacion;
+                                        }
+                                    @endphp
+                                    <option value="{{ $id }}" {{ old('instalacion_id') == $id ? 'selected' : '' }}>
+                                        {{ $nombre }}
                                     </option>
                                 @endforeach
                             </select>
@@ -56,8 +68,24 @@
                             <select class="form-select select2" id="tanque_id" name="tanque_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($tanques as $tanque)
-                                    <option value="{{ $tanque['id'] }}" {{ old('tanque_id') == $tanque['id'] ? 'selected' : '' }}>
-                                        {{ $tanque['identificador'] }} - {{ $tanque['instalacion']['nombre'] ?? '' }}
+                                    @php
+                                        if (is_array($tanque)) {
+                                            $tid = $tanque['id'] ?? '';
+                                            $identificador = $tanque['identificador'] ?? '';
+                                            $instNombre = $tanque['instalacion']['nombre'] ?? '';
+                                        } elseif (is_object($tanque)) {
+                                            $tid = $tanque->id ?? '';
+                                            $identificador = $tanque->identificador ?? '';
+                                            $instNombre = !empty($tanque->instalacion->nombre) ? $tanque->instalacion->nombre : '';
+                                        } else {
+                                            $tid = (string) $tanque;
+                                            $identificador = $tid;
+                                            $instNombre = '';
+                                        }
+                                        $textoTanque = trim($identificador . (!empty($instNombre) ? ' - ' . $instNombre : ''));
+                                    @endphp
+                                    <option value="{{ $tid }}" {{ old('tanque_id') == $tid ? 'selected' : '' }}>
+                                        {{ $textoTanque ?? '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -68,8 +96,20 @@
                             <select class="form-select select2" id="producto_id" name="producto_id" required>
                                 <option value="">Seleccione...</option>
                                 @foreach($productos as $producto)
-                                    <option value="{{ $producto['id'] }}" {{ old('producto_id') == $producto['id'] ? 'selected' : '' }}>
-                                        {{ $producto['nombre'] }}
+                                    @php
+                                        if (is_array($producto)) {
+                                            $pid = $producto['id'] ?? '';
+                                            $nombreP = $producto['nombre'] ?? '';
+                                        } elseif (is_object($producto)) {
+                                            $pid = $producto->id ?? '';
+                                            $nombreP = $producto->nombre ?? '';
+                                        } else {
+                                            $pid = (string)$producto;
+                                            $nombreP = (string)$producto;
+                                        }
+                                    @endphp
+                                    <option value="{{ $pid }}" {{ old('producto_id') == $pid ? 'selected' : '' }}>
+                                        {{ $nombreP }}
                                     </option>
                                 @endforeach
                             </select>
@@ -94,8 +134,23 @@
                             <select class="form-select select2" id="medidor_id" name="medidor_id">
                                 <option value="">Seleccione (opcional)</option>
                                 @foreach($medidores as $medidor)
-                                    <option value="{{ $medidor['id'] }}" {{ old('medidor_id') == $medidor['id'] ? 'selected' : '' }}>
-                                        {{ $medidor['clave'] }} - {{ $medidor['numero_serie'] }}
+                                    @php
+                                        if (is_array($medidor)) {
+                                            $mid = $medidor['id'] ?? '';
+                                            $clave = $medidor['clave'] ?? '';
+                                            $ns = $medidor['numero_serie'] ?? '';
+                                        } elseif (is_object($medidor)) {
+                                            $mid = $medidor->id ?? '';
+                                            $clave = $medidor->clave ?? '';
+                                            $ns = $medidor->numero_serie ?? '';
+                                        } else {
+                                            $mid = (string)$medidor;
+                                            $clave = $mid;
+                                            $ns = '';
+                                        }
+                                    @endphp
+                                    <option value="{{ $mid }}" {{ old('medidor_id') == $mid ? 'selected' : '' }}>
+                                        {{ $clave }} - {{ $ns }}
                                     </option>
                                 @endforeach
                             </select>

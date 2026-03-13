@@ -54,7 +54,15 @@ class ExistenciaController extends BaseController
                     'producto' => ['nombre' => data_get($tanque, 'producto.nombre')]
                 ];
             })->values()->toArray();
-            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
+            $productosRaw = $this->getCatalog('/api/productos', ['activo' => true]);
+            // Normalizar productos para manejo seguro en la vista
+            $productos = collect($productosRaw)->map(function ($p) {
+                return [
+                    'id' => data_get($p, 'id'),
+                    'nombre' => data_get($p, 'nombre'),
+                    'clave_sat' => data_get($p, 'clave_sat')
+                ];
+            })->values()->toArray();
 
             return view('existencias.create', [
                 'tanques' => $tanques,
