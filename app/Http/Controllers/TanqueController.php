@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -100,7 +101,7 @@ class TanqueController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'TANQUE_CREADO',
                     'Tanques',
                     "Tanque creado: {$request->identificador}",
@@ -227,7 +228,7 @@ class TanqueController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'TANQUE_ACTUALIZADO',
                     'Tanques',
                     "Tanque actualizado ID: {$id}",
@@ -275,7 +276,7 @@ class TanqueController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'TANQUE_ELIMINADO',
                     'Tanques',
                     "Tanque eliminado ID: {$id}",
@@ -328,7 +329,7 @@ class TanqueController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'mantenimiento',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'CALIBRACION_TANQUE_REGISTRADA',
                     'Tanques',
                     "Calibración registrada para tanque ID: {$id}",
@@ -415,7 +416,7 @@ class TanqueController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'operacion',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'CAMBIO_PRODUCTO_TANQUE',
                     'Tanques',
                     "Producto cambiado en tanque ID: {$id}",
