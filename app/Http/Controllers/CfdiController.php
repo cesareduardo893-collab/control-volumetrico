@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -89,7 +90,7 @@ class CfdiController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'fiscal',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'CFDI_CREADO',
                     'CFDI',
                     "CFDI creado: {$request->uuid}",
@@ -172,7 +173,7 @@ class CfdiController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'fiscal',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'CFDI_CANCELADO',
                     'CFDI',
                     "CFDI cancelado ID: {$id}",
