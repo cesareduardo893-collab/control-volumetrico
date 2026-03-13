@@ -110,7 +110,14 @@ abstract class BaseController extends Controller
             $response = $this->apiGet($endpoint, array_merge(['per_page' => 500], $params));
             
             if ($this->apiResponseSuccessful($response)) {
-                return $this->apiResponseData($response, []);
+                $data = $this->apiResponseData($response, []);
+                
+                // Si la respuesta tiene estructura de paginación (data es array con 'data' dentro)
+                if (is_array($data) && isset($data['data'])) {
+                    return $data['data'];
+                }
+                
+                return $data;
             }
             
             return [];

@@ -44,8 +44,8 @@ class PedimentoController extends BaseController
             $this->setApiToken(Session::get('api_token'));
 
             // Obtener contribuyentes y productos para los selects
-            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
-            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
+            $contribuyentes = $this->getCatalog('/api/catalogo/contribuyentes');
+            $productos = $this->getCatalog('/api/catalogo/productos');
 
             return view('pedimentos.create', [
                 'contribuyentes' => $contribuyentes,
@@ -170,8 +170,8 @@ class PedimentoController extends BaseController
             $this->setApiToken(Session::get('api_token'));
 
             // Obtener contribuyentes y productos para los selects
-            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
-            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
+            $contribuyentes = $this->getCatalog('/api/catalogo/contribuyentes');
+            $productos = $this->getCatalog('/api/catalogo/productos');
 
             // Obtener datos del pedimento
             $response = $this->apiGet("/api/pedimentos/{$id}");

@@ -14,6 +14,9 @@
         <i class="bi bi-arrow-repeat"></i> Actualizar Estado
     </a>
 @endif
+<a href="{{ route('alarmas.edit', $alarma['id']) }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-pencil"></i> Editar
+</a>
 <a href="{{ route('alarmas.index') }}" class="btn btn-sm btn-secondary">
     <i class="bi bi-arrow-left"></i> Volver
 </a>
@@ -58,12 +61,13 @@
                         <th>Estado:</th>
                         <td>
                             @php
-                                $estadoClass = [
+                                $estadoClasses = [
                                     'PENDIENTE' => 'danger',
                                     'EN_PROCESO' => 'warning',
                                     'RESUELTA' => 'success',
                                     'IGNORADA' => 'secondary'
-                                ][$alarma['estado_atencion']] ?? 'secondary';
+                                ];
+                                $estadoClass = $estadoClasses[$alarma['estado_atencion']] ?? 'secondary';
                             @endphp
                             <span class="badge bg-{{ $estadoClass }}">{{ $alarma['estado_atencion'] }}</span>
                         </td>
@@ -143,7 +147,10 @@
                                     <td>{{ $atencion['usuario']['nombres'] ?? '' }} {{ $atencion['usuario']['apellidos'] ?? '' }}</td>
                                     <td>{{ $atencion['acciones_tomadas'] }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $estadoClass[$atencion['estado_atencion']] ?? 'secondary' }}">
+                                        @php
+                                            $atencionClass = $estadoClasses[$atencion['estado_atencion']] ?? 'secondary';
+                                        @endphp
+                                        <span class="badge bg-{{ $atencionClass }}">
                                             {{ $atencion['estado_atencion'] }}
                                         </span>
                                     </td>

@@ -44,9 +44,9 @@ class DictamenController extends BaseController
             $this->setApiToken(Session::get('api_token'));
 
             // Obtener catálogos para los selects
-            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
+            $contribuyentes = $this->getCatalog('/api/catalogo/contribuyentes');
             $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
-            $productos = $this->getCatalog('/api/productos', ['activo' => true]);
+            $productos = $this->getCatalog('/api/catalogo/productos');
 
             return view('dictamenes.create', [
                 'contribuyentes' => $contribuyentes,

@@ -325,7 +325,8 @@ Route::middleware('api.auth')->group(function () {
 
     // ==================== API INTERNAS (para AJAX) ====================
     Route::prefix('api')->name('api.')->group(function () {
-        Route::get('/dashboard/resumen', [DashboardController::class, 'resumen'])->name('dashboard.resumen');
+        Route::get('/dashboard/grafica-movimientos', [DashboardController::class, 'graficaMovimientos'])->name('dashboard.grafica-movimientos');
+        Route::get('/dashboard/grafica-productos', [DashboardController::class, 'graficaProductos'])->name('dashboard.grafica-productos');
         Route::get('/notificaciones', [DashboardController::class, 'notificaciones'])->name('notificaciones');
         Route::get('/catalogos', function () {
             return response()->json(['error' => 'Catálogo no implementado'], 501);

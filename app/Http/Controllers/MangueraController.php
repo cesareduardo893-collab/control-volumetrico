@@ -38,7 +38,84 @@ class MangueraController extends BaseController
      */
     public function create()
     {
-        return view('mangueras.create');
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener dispensarios y medidores para los selects
+            $dispensarios = $this->getCatalog('/api/dispensarios', ['activo' => true]);
+            $medidores = $this->getCatalog('/api/medidores', ['activo' => true]);
+
+            return view('mangueras.create', [
+                'dispensarios' => $dispensarios,
+                'medidores' => $medidores
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de creación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('mangueras.index')
+                ->with('error', 'Error al cargar formulario');
+        }
+    }
+
+    /**
+     * Store a newly created manguera
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'dispensario_id' => 'required|integer',
+            'clave' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'medidor_id' => 'nullable|integer',
+            'estado' => 'required|in:OPERATIVO,MANTENIMIENTO,FUERA_SERVICIO',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiPost('/api/mangueras', $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $mangueraData = $this->apiResponseData($response, []);
+                $mangueraId = $mangueraData['id'] ?? null;
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'configuracion',
+                    'MANGUERA_CREADA',
+                    'Mangueras',
+                    "Manguera creada: {$request->clave}",
+                    'mangueras',
+                    $mangueraId
+                );
+
+                return redirect()->route('mangueras.show', $mangueraId)
+                    ->with('success', 'Manguera creada exitosamente');
+            }
+
+            if ($response['status'] === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al crear manguera'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al crear manguera', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear manguera');
+        }
     }
 
     /**

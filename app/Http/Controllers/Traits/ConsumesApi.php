@@ -131,4 +131,9 @@ trait ConsumesApi
     {
         return $response['message'] ?? $default;
     }
+
+    public function apiResponseErrors($response, $default = [])
+    {
+        return $response['errors'] ?? $default;
+    }
 }

@@ -328,4 +328,200 @@ class AlarmaController extends BaseController
             return redirect()->back()->with('error', 'Error al cargar alarmas activas');
         }
     }
+
+    /**
+     * Mostrar formulario para atender alarma
+     */
+    public function atenderForm($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet("/api/alarmas/{$id}");
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('alarmas.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Alarma no encontrada'));
+            }
+
+            $alarma = $this->apiResponseData($response, []);
+
+            return view('alarmas.atender', [
+                'alarma' => $alarma
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de atención', [
+                'error' => $e->getMessage(),
+                'alarma_id' => $id
+            ]);
+
+            return redirect()->route('alarmas.index')
+                ->with('error', 'Error al cargar formulario de atención');
+        }
+    }
+
+    /**
+     * Mostrar formulario para actualizar estado de alarma
+     */
+    public function actualizarEstadoForm($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet("/api/alarmas/{$id}");
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('alarmas.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Alarma no encontrada'));
+            }
+
+            $alarma = $this->apiResponseData($response, []);
+
+            return view('alarmas.actualizar-estado', [
+                'alarma' => $alarma
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de actualización', [
+                'error' => $e->getMessage(),
+                'alarma_id' => $id
+            ]);
+
+            return redirect()->route('alarmas.index')
+                ->with('error', 'Error al cargar formulario de actualización');
+        }
+    }
+
+    /**
+     * Mostrar formulario de edición
+     */
+    public function edit($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet("/api/alarmas/{$id}");
+
+            if (!$this->apiResponseSuccessful($response)) {
+                return redirect()->route('alarmas.index')
+                    ->with('error', $this->apiResponseMessage($response, 'Alarma no encontrada'));
+            }
+
+            $alarma = $this->apiResponseData($response, []);
+
+            // Obtener tipos de alarma del catálogo
+            $tiposAlarma = $this->getCatalog('/api/catalogos', ['tipo' => 'tipo_alarma']);
+
+            return view('alarmas.edit', [
+                'alarma' => $alarma,
+                'tiposAlarma' => $tiposAlarma
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al cargar formulario de edición', [
+                'error' => $e->getMessage(),
+                'alarma_id' => $id
+            ]);
+
+            return redirect()->route('alarmas.index')
+                ->with('error', 'Error al cargar formulario de edición');
+        }
+    }
+
+    /**
+     * Actualizar alarma
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'numero_registro' => 'sometimes|string|max:255',
+            'fecha_hora' => 'sometimes|date',
+            'componente_tipo' => 'sometimes|string|max:255',
+            'componente_identificador' => 'sometimes|string|max:255',
+            'tipo_alarma_id' => 'sometimes|integer',
+            'gravedad' => 'sometimes|in:BAJA,MEDIA,ALTA,CRITICA',
+            'descripcion' => 'sometimes|string',
+            'estado_atencion' => 'sometimes|in:PENDIENTE,EN_PROCESO,RESUELTA,IGNORADA',
+        ]);
+
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiPut("/api/alarmas/{$id}", $request->all());
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'seguridad',
+                    'ALARMA_ACTUALIZADA',
+                    'Alarmas',
+                    "Alarma actualizada ID: {$id}",
+                    'alarmas',
+                    $id
+                );
+
+                return redirect()->route('alarmas.show', $id)
+                    ->with('success', 'Alarma actualizada exitosamente');
+            }
+
+            if ($response->status === 422) {
+                $errors = $this->apiResponseErrors($response, []);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $this->apiResponseMessage($response, 'Error al actualizar alarma'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar alarma', [
+                'error' => $e->getMessage(),
+                'alarma_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar alarma');
+        }
+    }
+
+    /**
+     * Eliminar alarma
+     */
+    public function destroy($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiDelete("/api/alarmas/{$id}");
+
+            if ($this->apiResponseSuccessful($response)) {
+                $this->logActivity(
+                    Session::get('user_id'),
+                    'seguridad',
+                    'ALARMA_ELIMINADA',
+                    'Alarmas',
+                    "Alarma eliminada ID: {$id}",
+                    'alarmas',
+                    $id
+                );
+
+                return redirect()->route('alarmas.index')
+                    ->with('success', 'Alarma eliminada exitosamente');
+            }
+
+            return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al eliminar alarma'));
+
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar alarma', [
+                'error' => $e->getMessage(),
+                'alarma_id' => $id
+            ]);
+
+            return redirect()->back()->with('error', 'Error al eliminar alarma');
+        }
+    }
 }

@@ -391,7 +391,7 @@ function cargarGraficas() {
 }
 
 function cargarGraficaMovimientos(dias) {
-    $.get('/dashboard/grafica-movimientos', { dias: dias }, function(data) {
+    $.get('{{ route("api.dashboard.grafica-movimientos") }}', { dias: dias }, function(data) {
         const ctx = document.getElementById('graficaMovimientos').getContext('2d');
         
         if (window.movimientosChart) {
@@ -436,7 +436,7 @@ function cargarGraficaMovimientos(dias) {
 }
 
 function cargarGraficaProductos() {
-    $.get('/dashboard/grafica-productos', function(data) {
+    $.get('{{ route("api.dashboard.grafica-productos") }}', function(data) {
         const ctx = document.getElementById('graficaProductos').getContext('2d');
         
         new Chart(ctx, {

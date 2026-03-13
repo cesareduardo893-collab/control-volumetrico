@@ -43,7 +43,7 @@ class InstalacionController extends BaseController
             $this->setApiToken(Session::get('api_token'));
 
             // Obtener contribuyentes para el select
-            $contribuyentes = $this->getCatalog('/api/contribuyentes', ['activo' => true]);
+            $contribuyentes = $this->getCatalog('/api/catalogo/contribuyentes');
 
             return view('instalaciones.create', [
                 'contribuyentes' => $contribuyentes

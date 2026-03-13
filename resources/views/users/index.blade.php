@@ -118,9 +118,9 @@
                                 @endforeach
                             </td>
                             <td>
-                                @if($user['bloqueado_hasta'] && now() < \Carbon\Carbon::parse($user['bloqueado_hasta']))
+                                @if($user['locked_until'] && now() < \Carbon\Carbon::parse($user['locked_until']))
                                     <span class="badge bg-danger">Bloqueado</span>
-                                    <small class="d-block">Hasta: {{ $user['bloqueado_hasta'] }}</small>
+                                    <small class="d-block">Hasta: {{ $user['locked_until'] }}</small>
                                 @elseif(!$user['activo'])
                                     <span class="badge bg-secondary">Inactivo</span>
                                 @else
@@ -142,7 +142,7 @@
                                     <a href="{{ route('users.actividad', $user['id']) }}" class="btn btn-sm btn-primary" title="Actividad">
                                         <i class="bi bi-clock-history"></i>
                                     </a>
-                                    @if($user['activo'] && !$user['bloqueado_hasta'])
+                                    @if($user['activo'] && !$user['locked_until'])
                                         <button type="button" class="btn btn-sm btn-danger" 
                                                 onclick="confirmarBloqueo({{ $user['id'] }})" title="Bloquear">
                                             <i class="bi bi-lock"></i>
