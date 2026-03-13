@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -87,7 +89,7 @@ class InstalacionController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'INSTALACION_CREADA',
                     'Instalaciones',
                     "Instalación creada: {$request->clave_instalacion}",
@@ -210,7 +212,7 @@ class InstalacionController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'INSTALACION_ACTUALIZADA',
                     'Instalaciones',
                     "Instalación actualizada ID: {$id}",
@@ -258,7 +260,7 @@ class InstalacionController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'INSTALACION_ELIMINADA',
                     'Instalaciones',
                     "Instalación eliminada ID: {$id}",
