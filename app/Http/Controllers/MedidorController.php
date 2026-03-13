@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -93,7 +94,7 @@ class MedidorController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MEDIDOR_CREADO',
                     'Medidores',
                     "Medidor creado: {$request->numero_serie}",
@@ -227,7 +228,7 @@ class MedidorController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MEDIDOR_ACTUALIZADO',
                     'Medidores',
                     "Medidor actualizado ID: {$id}",
@@ -281,7 +282,7 @@ class MedidorController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'configuracion',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'MEDIDOR_ELIMINADO',
                     'Medidores',
                     "Medidor eliminado ID: {$id}",
@@ -333,7 +334,7 @@ class MedidorController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'mantenimiento',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'CALIBRACION_MEDIDOR_REGISTRADA',
                     'Medidores',
                     "Calibración registrada para medidor ID: {$id}",
