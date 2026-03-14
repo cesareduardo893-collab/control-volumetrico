@@ -94,6 +94,7 @@ class RegistroVolumetricoController extends BaseController
             'tipo_registro' => 'required|in:operacion,acumulado,existencias',
             'operacion' => 'required|in:recepcion,entrega,inventario_inicial,inventario_final,venta',
             'estado' => 'required|in:PENDIENTE,PROCESADO,VALIDADO,ERROR,CANCELADO,CON_ALARMA',
+            'usuario_registro_id' => 'nullable|integer',
         ]);
 
         try {

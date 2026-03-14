@@ -191,9 +191,9 @@
                         </div>
                         
                         <div class="col-md-4 mb-3">
-                            <label for="usuario_registro_id" class="form-label">Usuario Registro *</label>
-                            <select class="form-select" id="usuario_registro_id" name="usuario_registro_id" required>
-                                <option value="">Seleccione...</option>
+                            <label for="usuario_registro_id" class="form-label">Usuario Registro</label>
+                            <select class="form-select" id="usuario_registro_id" name="usuario_registro_id">
+                                <option value="">Automático (usuario autenticado)</option>
                                 @foreach($usuarios as $usuario)
                                     @php
                                         if (is_array($usuario)) {
