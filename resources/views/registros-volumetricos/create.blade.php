@@ -185,6 +185,44 @@
                     
                     <div class="row">
                         <div class="col-md-4 mb-3">
+                            <label for="factor_correccion" class="form-label">Factor Corrección *</label>
+                            <input type="number" step="0.0001" min="0" class="form-control" 
+                                   id="factor_correccion" name="factor_correccion" value="{{ old('factor_correccion', 1) }}" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="usuario_registro_id" class="form-label">Usuario Registro *</label>
+                            <select class="form-select" id="usuario_registro_id" name="usuario_registro_id" required>
+                                <option value="">Seleccione...</option>
+                                @foreach($usuarios as $usuario)
+                                    @php
+                                        if (is_array($usuario)) {
+                                            $uid = $usuario['id'] ?? '';
+                                            $nombre = $usuario['name'] ?? '';
+                                        } elseif (is_object($usuario)) {
+                                            $uid = $usuario->id ?? '';
+                                            $nombre = $usuario->name ?? '';
+                                        } else {
+                                            $uid = (string) $usuario;
+                                            $nombre = (string) $usuario;
+                                        }
+                                        $selected = '';
+                                        if (old('usuario_registro_id')) {
+                                            $selected = old('usuario_registro_id') == $uid ? 'selected' : '';
+                                        } elseif (Session::get('user_id') == $uid) {
+                                            $selected = 'selected';
+                                        }
+                                    @endphp
+                                    <option value="{{ $uid }}" {{ $selected }}>
+                                        {{ $nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
                             <label for="temperatura_inicial" class="form-label">Temperatura Inicial (°C) *</label>
                             <input type="number" step="0.1" class="form-control" 
                                    id="temperatura_inicial" name="temperatura_inicial" value="{{ old('temperatura_inicial', 15) }}" required>

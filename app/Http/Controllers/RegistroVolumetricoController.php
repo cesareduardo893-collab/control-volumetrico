@@ -50,12 +50,14 @@ class RegistroVolumetricoController extends BaseController
             $tanques = $this->getCatalog('/api/tanques', ['activo' => true]);
             $medidores = $this->getCatalog('/api/medidores', ['activo' => true]);
             $productos = $this->getCatalog('/api/productos', ['activo' => true]);
+            $usuarios = $this->getCatalog('/api/users');
 
             return view('registros-volumetricos.create', [
                 'instalaciones' => $instalaciones,
                 'tanques' => $tanques,
                 'medidores' => $medidores,
-                'productos' => $productos
+                'productos' => $productos,
+                'usuarios' => $usuarios
             ]);
 
         } catch (\Exception $e) {
@@ -88,6 +90,7 @@ class RegistroVolumetricoController extends BaseController
             'temperatura_final' => 'required|numeric',
             'densidad' => 'required|numeric|min:0',
             'volumen_corregido' => 'required|numeric|min:0',
+            'factor_correccion' => 'required|numeric|min:0',
             'tipo_registro' => 'required|in:operacion,acumulado,existencias',
             'operacion' => 'required|in:recepcion,entrega,inventario_inicial,inventario_final,venta',
             'estado' => 'required|in:PENDIENTE,PROCESADO,VALIDADO,ERROR,CANCELADO,CON_ALARMA',
