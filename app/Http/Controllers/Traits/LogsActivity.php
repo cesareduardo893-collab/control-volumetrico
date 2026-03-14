@@ -12,7 +12,7 @@ trait LogsActivity
     /**
      * Log an activity to the bitacora
      */
-    protected function logActivity($userId, $categoria, $tipoEvento, $modulo, $descripcion, $tabla = null, $registroId = null, $datosAnteriores = null, $datosNuevos = null, $metadatos = [])
+    protected function logActivity($userId, $tipoEvento, $subtipoEvento, $modulo, $descripcion, $tabla = null, $registroId = null, $datosAnteriores = null, $datosNuevos = null, $metadatos = [])
     {
 // Use a valid tipo_evento from the allowed ENUM values
         $allowedTiposEvento = [
@@ -37,7 +37,7 @@ trait LogsActivity
         $bitacora->numero_registro = $this->getNextBitacoraNumber();
         $bitacora->usuario_id = $userId;
         $bitacora->tipo_evento = $tipoEvento;
-        $bitacora->subtipo_evento = $categoria;
+        $bitacora->subtipo_evento = $subtipoEvento;
         $bitacora->modulo = $modulo;
         $bitacora->tabla = $tabla;
         $bitacora->registro_id = $registroId;

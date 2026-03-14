@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -32,6 +33,49 @@ class CertificadoVerificacionController extends BaseController
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar certificados');
+        }
+    }
+
+    /**
+     * Exportar certificados de verificación
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'contribuyente_id', 'folio', 'proveedor_rfc', 'resultado',
+                'fecha_emision_inicio', 'fecha_emision_fin', 'vigente',
+                'requiere_verificacion_extraordinaria'
+            ]);
+
+            $response = $this->apiGet('/api/certificados-verificacion/exportar', $params);
+
+            if ($response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            $json = $response->json();
+            return $this->jsonError(
+                $json['message'] ?? 'Error al exportar certificados de verificación',
+                $response->status(),
+                $json['errors'] ?? null
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al exportar certificados de verificación', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar certificados de verificación');
         }
     }
 
@@ -88,8 +132,8 @@ class CertificadoVerificacionController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
+                    Bitacora::TIPO_EVENTO_VERIFICACIONES,
                     'verificacion',
-                    'CERTIFICADO_VERIFICACION_CREADO',
                     'Verificación',
                     "Certificado de verificación creado: {$request->folio}",
                     'certificados_verificacion',
@@ -206,8 +250,8 @@ class CertificadoVerificacionController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
+                    Bitacora::TIPO_EVENTO_VERIFICACIONES,
                     'verificacion',
-                    'CERTIFICADO_VERIFICACION_ACTUALIZADO',
                     'Verificación',
                     "Certificado de verificación actualizado ID: {$id}",
                     'certificados_verificacion',
