@@ -101,7 +101,7 @@ class ReporteSatController extends BaseController
                     ->with('success', 'Reporte SAT creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()

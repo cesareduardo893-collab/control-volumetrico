@@ -107,7 +107,7 @@ class PedimentoController extends BaseController
                     ->with('success', 'Pedimento creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -233,7 +233,7 @@ class PedimentoController extends BaseController
                     ->with('success', 'Pedimento actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -285,7 +285,7 @@ class PedimentoController extends BaseController
                     ->with('success', $this->apiResponseMessage($response, 'Pedimento cancelado exitosamente'));
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'El pedimento ya está cancelado');
             }
@@ -335,7 +335,7 @@ class PedimentoController extends BaseController
                     ->with('success', $this->apiResponseMessage($response, 'Pedimento marcado como utilizado exitosamente'));
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'El pedimento no está en estado ACTIVO');
             }
@@ -419,7 +419,7 @@ class PedimentoController extends BaseController
                     ->with('success', 'Pedimento eliminado exitosamente');
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'No se puede eliminar el pedimento');
             }

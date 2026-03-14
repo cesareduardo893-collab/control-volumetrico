@@ -113,7 +113,7 @@ class TanqueController extends BaseController
                     ->with('success', 'Tanque creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -240,7 +240,7 @@ class TanqueController extends BaseController
                     ->with('success', 'Tanque actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -288,7 +288,7 @@ class TanqueController extends BaseController
                     ->with('success', 'Tanque eliminado exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 $error = $this->apiResponseData($response, 'No se puede eliminar el tanque');
                 return redirect()->back()
                     ->with('error', $error);
@@ -341,7 +341,7 @@ class TanqueController extends BaseController
                     ->with('success', 'Calibración registrada exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -428,7 +428,7 @@ class TanqueController extends BaseController
                     ->with('success', 'Producto cambiado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()

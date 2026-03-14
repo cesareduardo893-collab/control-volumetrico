@@ -147,4 +147,73 @@ class DashboardController extends BaseController
             ]);
         }
     }
+
+    /**
+     * Exportar datos del dashboard
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'fecha_inicio', 'fecha_fin', 'tipo_reporte'
+            ]);
+
+            $modulo = 'dashboard';
+            $response = $this->apiGetRaw('/api/exportar/' . $modulo, $params);
+
+            if ($response && $response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            if ($response) {
+                $json = $response->json();
+                return $this->jsonError(
+                    $json['message'] ?? 'Error al exportar dashboard',
+                    $response->status(),
+                    $json['errors'] ?? null
+                );
+            }
+
+            return $this->jsonError('Error al exportar dashboard', 500);
+        } catch (\Exception $e) {
+            Log::error('Error al exportar dashboard', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar dashboard');
+        }
+    }
+
+    /**
+     * Obtener notificaciones (API)
+     */
+    public function notificaciones(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+            
+            $response = $this->apiGet('/api/notificaciones');
+            
+            if ($this->apiResponseSuccessful($response)) {
+                return response()->json($this->apiResponseData($response, []));
+            }
+            
+            return response()->json([]);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener notificaciones', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([]);
+        }
+    }
 }

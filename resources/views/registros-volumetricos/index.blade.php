@@ -7,6 +7,14 @@
 <a href="{{ route('registros-volumetricos.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Registro
 </a>
+<div class="btn-group">
+    <a href="{{ route('registros-volumetricos.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('registros-volumetricos.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 <a href="{{ route('registros-volumetricos.resumen-diario') }}?instalacion_id={{ request('instalacion_id') }}&fecha={{ now()->toDateString() }}" class="btn btn-sm btn-info">
     <i class="bi bi-calendar-day"></i> Resumen Diario
 </a>
@@ -375,8 +383,13 @@ $(document).ready(function() {
 });
 
 function confirmarValidacion(id) {
-    $('#validarForm').attr('action', `{{ url('registros-volumetricos') }}/${id}/validar`);
+    $('#validarForm').attr('action', '{{ url('registros-volumetricos') }}' + '/' + id + '/validar');
     new bootstrap.Modal(document.getElementById('validarModal')).show();
+}
+
+function confirmarCancelacion(id) {
+    $('#cancelarForm').attr('action', '{{ url('registros-volumetricos') }}' + '/' + id + '/cancelar');
+    new bootstrap.Modal(document.getElementById('cancelarModal')).show();
 }
 
 function confirmarCancelacion(id) {

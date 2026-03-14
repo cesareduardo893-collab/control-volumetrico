@@ -28,7 +28,7 @@ class AuthController extends BaseController
 
         try {
             Log::info('Paso 1: Validación OK');
-            $this->initApiClient(false);
+            $this->initApiClient();
 
             $response = $this->apiPost('/api/login', [
                 'email' => $request->email,

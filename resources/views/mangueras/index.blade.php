@@ -7,6 +7,14 @@
 <a href="{{ route('mangueras.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nueva Manguera
 </a>
+<div class="btn-group">
+    <a href="{{ route('mangueras.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('mangueras.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 @endsection
 
 @section('content')
@@ -255,7 +263,7 @@ $(document).ready(function() {
 });
 
 function confirmarQuitarMedidor(id) {
-    $('#quitarMedidorForm').attr('action', `{{ url('mangueras') }}/${id}/quitar-medidor`);
+    $('#quitarMedidorForm').attr('action', "{{ url('mangueras') }}/" + id + "/quitar-medidor");
     new bootstrap.Modal(document.getElementById('quitarMedidorModal')).show();
 }
 </script>

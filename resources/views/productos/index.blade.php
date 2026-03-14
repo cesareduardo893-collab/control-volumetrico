@@ -7,6 +7,14 @@
 <a href="{{ route('productos.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Producto
 </a>
+<div class="btn-group">
+    <a href="{{ route('productos.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('productos.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 @if(request()->filled('tipo_hidrocarburo'))
     <a href="{{ route('productos.por-tipo', request('tipo_hidrocarburo')) }}" class="btn btn-sm btn-info">
         <i class="bi bi-grid-3x3-gap-fill"></i> Ver por Tipo

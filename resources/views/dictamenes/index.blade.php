@@ -7,6 +7,14 @@
 <a href="{{ route('dictamenes.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Dictamen
 </a>
+<div class="btn-group">
+    <a href="{{ route('dictamenes.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('dictamenes.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 <a href="{{ route('dictamenes.estadisticas') }}?contribuyente_id={{ request('contribuyente_id') }}&anio={{ now()->year }}" class="btn btn-sm btn-info">
     <i class="bi bi-graph-up"></i> Estadísticas
 </a>

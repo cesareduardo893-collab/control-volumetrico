@@ -37,6 +37,49 @@ class DictamenController extends BaseController
     }
 
     /**
+     * Exportar dictámenes
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'contribuyente_id', 'instalacion_id', 'producto_id', 'folio',
+                'numero_lote', 'laboratorio_rfc', 'fecha_emision_inicio',
+                'fecha_emision_fin', 'estado', 'vigente'
+            ]);
+
+            $response = $this->apiGet('/api/dictamenes/exportar', $params);
+
+            if ($response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            $json = $response->json();
+            return $this->jsonError(
+                $json['message'] ?? 'Error al exportar dictámenes',
+                $response->status(),
+                $json['errors'] ?? null
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al exportar dictámenes', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar dictámenes');
+        }
+    }
+
+    /**
      * Mostrar formulario de creación
      */
     public function create()
@@ -112,7 +155,7 @@ class DictamenController extends BaseController
                     ->with('success', 'Dictamen creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -228,7 +271,7 @@ class DictamenController extends BaseController
                     ->with('success', 'Dictamen actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -280,7 +323,7 @@ class DictamenController extends BaseController
                     ->with('success', 'Dictamen cancelado exitosamente');
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'El dictamen ya está cancelado');
             }

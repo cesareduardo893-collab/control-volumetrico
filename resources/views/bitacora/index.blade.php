@@ -4,9 +4,14 @@
 @section('header', 'Bitácora de Eventos')
 
 @section('actions')
-<a href="{{ route('bitacora.exportar') }}" class="btn btn-sm btn-success">
-    <i class="bi bi-download"></i> Exportar
-</a>
+<div class="btn-group">
+    <a href="{{ route('bitacora.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('bitacora.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 <a href="{{ route('bitacora.resumen') }}?fecha_inicio={{ now()->startOfMonth()->toDateString() }}&fecha_fin={{ now()->toDateString() }}" class="btn btn-sm btn-info">
     <i class="bi bi-file-text"></i> Resumen
 </a>

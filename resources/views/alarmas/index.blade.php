@@ -13,6 +13,14 @@
 <a href="{{ route('alarmas.activas') }}" class="btn btn-sm btn-warning">
     <i class="bi bi-exclamation-triangle"></i> Activas
 </a>
+<div class="btn-group">
+    <a href="{{ route('alarmas.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('alarmas.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 @endsection
 
 @section('content')

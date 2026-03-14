@@ -7,7 +7,15 @@
 <a href="{{ route('roles.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Rol
 </a>
-<a href="{{ route('roles.matriz-permisos') }}" class="btn btn-sm btn-info">
+<div class="btn-group">
+    <a href="{{ route('roles.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('roles.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
+<a href="{{ route('roles.matriz-permisos) }}" class="btn btn-sm btn-info">
     <i class="bi bi-grid-3x3-gap-fill"></i> Matriz de Permisos
 </a>
 @endsection
@@ -209,7 +217,7 @@
 @push('scripts')
 <script>
 function confirmarClonar(id) {
-    $('#clonarForm').attr('action', `{{ url('roles') }}/${id}/clonar`);
+    $('#clonarForm').attr('action', '{{ url('roles') }}' + '/' + id + '/clonar');
     new bootstrap.Modal(document.getElementById('clonarModal')).show();
 }
 </script>

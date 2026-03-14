@@ -1,6 +1,16 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
+@section('actions')
+<div class="btn-group">
+    <a href="{{ route('dashboard.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('dashboard.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
+@endsection
 
 @section('content')
 <!-- Módulos de acceso rápido -->

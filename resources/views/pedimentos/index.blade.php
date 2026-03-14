@@ -7,6 +7,14 @@
 <a href="{{ route('pedimentos.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Pedimento
 </a>
+<div class="btn-group">
+    <a href="{{ route('pedimentos.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('pedimentos.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 <a href="{{ route('pedimentos.resumen-comercio-exterior') }}?contribuyente_id={{ request('contribuyente_id') }}&anio={{ now()->year }}" class="btn btn-sm btn-info">
     <i class="bi bi-graph-up"></i> Resumen Comercio Exterior
 </a>
@@ -322,12 +330,17 @@ $(document).ready(function() {
 });
 
 function confirmarCancelacion(id) {
-    $('#cancelarForm').attr('action', `{{ url('pedimentos') }}/${id}/cancelar`);
+    $('#cancelarForm').attr('action', '{{ url('pedimentos') }}' + '/' + id + '/cancelar');
     new bootstrap.Modal(document.getElementById('cancelarModal')).show();
 }
 
 function confirmarUtilizado(id) {
-    $('#utilizadoForm').attr('action', `{{ url('pedimentos') }}/${id}/utilizado`);
+    $('#utilizadoForm').attr('action', '{{ url('pedimentos') }}' + '/' + id + '/utilizado');
+    new bootstrap.Modal(document.getElementById('utilizadoModal')).show();
+}
+
+function confirmarUtilizado(id) {
+    $('#utilizadoForm').attr('action', "{{ url('pedimentos') }}/" + id + "/utilizado");
     new bootstrap.Modal(document.getElementById('utilizadoModal')).show();
 }
 </script>

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlarmaController;
@@ -43,6 +44,7 @@ Route::middleware('api.auth')->group(function () {
 
     // Dashboard
      Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+     Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->name('dashboard.exportar');
     // Perfil de usuario y cambio de contraseña
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::get('/change-password', [AuthController::class, 'showChangePasswordForm'])->name('password.change.form');
@@ -65,6 +67,7 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/actualizar-estado', [AlarmaController::class, 'actualizarEstado'])->name('actualizar-estado');
         Route::get('/estadisticas', [AlarmaController::class, 'estadisticas'])->name('estadisticas');
         Route::get('/activas/list', [AlarmaController::class, 'activas'])->name('activas');
+        Route::get('/exportar', [AlarmaController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== BITÁCORA ====================
@@ -87,9 +90,10 @@ Route::middleware('api.auth')->group(function () {
         Route::delete('/{id}', [CertificadoVerificacionController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/verificar-vigencia', [CertificadoVerificacionController::class, 'verificarVigencia'])->name('verificar-vigencia');
         Route::get('/estadisticas', [CertificadoVerificacionController::class, 'estadisticas'])->name('estadisticas');
+        Route::get('/exportar', [CertificadoVerificacionController::class, 'exportar'])->name('exportar');
     });
 
-    // ==================== CFDI ====================
+    // ==================== CFDI ==================__
     Route::prefix('cfdi')->name('cfdi.')->group(function () {
         Route::get('/', [CfdiController::class, 'index'])->name('index');
         Route::get('/create', [CfdiController::class, 'create'])->name('create');
@@ -101,6 +105,7 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/cancelar', [CfdiController::class, 'cancelar'])->name('cancelar');
         Route::get('/rfc/{rfc}', [CfdiController::class, 'porRfc'])->name('por-rfc');
         Route::get('/resumen/fiscal', [CfdiController::class, 'resumenFiscal'])->name('resumen-fiscal');
+        Route::get('/exportar', [CfdiController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== CONTRIBUYENTES ====================
@@ -115,6 +120,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/{id}/instalaciones', [ContribuyenteController::class, 'instalaciones'])->name('instalaciones');
         Route::get('/{id}/cumplimiento', [ContribuyenteController::class, 'cumplimiento'])->name('cumplimiento');
         Route::get('/catalogo/list', [ContribuyenteController::class, 'catalogo'])->name('catalogo');
+        Route::get('/exportar', [ContribuyenteController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== DICTÁMENES ====================
@@ -130,6 +136,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/{id}/verificar-vigencia', [DictamenController::class, 'verificarVigencia'])->name('verificar-vigencia');
         Route::get('/estadisticas', [DictamenController::class, 'estadisticas'])->name('estadisticas');
         Route::get('/producto/{productoId}', [DictamenController::class, 'porProducto'])->name('por-producto');
+        Route::get('/exportar', [DictamenController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== DISPENSARIOS ====================
@@ -143,6 +150,7 @@ Route::middleware('api.auth')->group(function () {
         Route::delete('/{id}', [DispensarioController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/mangueras', [DispensarioController::class, 'mangueras'])->name('mangueras');
         Route::get('/{id}/verificar-estado', [DispensarioController::class, 'verificarEstado'])->name('verificar-estado');
+        Route::get('/exportar', [DispensarioController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== EXISTENCIAS ====================
@@ -159,6 +167,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/historico/{tanqueId}', [ExistenciaController::class, 'historico'])->name('historico');
         Route::get('/reporte/mermas', [ExistenciaController::class, 'reporteMermas'])->name('reporte-mermas');
         Route::get('/por-fecha', [ExistenciaController::class, 'porFecha'])->name('por-fecha');
+        Route::get('/exportar', [ExistenciaController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== INSTALACIONES ====================
@@ -174,6 +183,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/{id}/medidores', [InstalacionController::class, 'medidores'])->name('medidores');
         Route::get('/{id}/dispensarios', [InstalacionController::class, 'dispensarios'])->name('dispensarios');
         Route::get('/{id}/resumen-operativo', [InstalacionController::class, 'resumenOperativo'])->name('resumen-operativo');
+        Route::get('/exportar', [InstalacionController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== MANGUERAS ====================
@@ -187,6 +197,7 @@ Route::middleware('api.auth')->group(function () {
         Route::delete('/{id}', [MangueraController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/asignar-medidor', [MangueraController::class, 'asignarMedidor'])->name('asignar-medidor');
         Route::post('/{id}/quitar-medidor', [MangueraController::class, 'quitarMedidor'])->name('quitar-medidor');
+        Route::get('/exportar', [MangueraController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== MEDIDORES ====================
@@ -202,6 +213,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/{id}/probar-comunicacion', [MedidorController::class, 'probarComunicacion'])->name('probar-comunicacion');
         Route::get('/{id}/verificar-estado', [MedidorController::class, 'verificarEstado'])->name('verificar-estado');
         Route::get('/{id}/historial-calibraciones', [MedidorController::class, 'historialCalibraciones'])->name('historial-calibraciones');
+        Route::get('/exportar', [MedidorController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== PEDIMENTOS ====================
@@ -216,6 +228,7 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/cancelar', [PedimentoController::class, 'cancelar'])->name('cancelar');
         Route::post('/{id}/utilizado', [PedimentoController::class, 'marcarUtilizado'])->name('utilizado');
         Route::get('/resumen/comercio-exterior', [PedimentoController::class, 'resumenComercioExterior'])->name('resumen-comercio-exterior');
+        Route::get('/exportar', [PedimentoController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== PERMISOS ====================
@@ -229,6 +242,7 @@ Route::middleware('api.auth')->group(function () {
         Route::delete('/{id}', [PermissionController::class, 'destroy'])->name('destroy');
         Route::get('/por-modulo/list', [PermissionController::class, 'porModulo'])->name('por-modulo');
         Route::get('/verificar/permiso', [PermissionController::class, 'verificar'])->name('verificar');
+        Route::get('/exportar', [PermissionController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== PRODUCTOS ====================
@@ -243,6 +257,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/tipo/{tipo}', [ProductoController::class, 'porTipo'])->name('por-tipo');
         Route::get('/catalogo/list', [ProductoController::class, 'catalogo'])->name('catalogo');
         Route::get('/buscar/clave-sat/{claveSat}', [ProductoController::class, 'buscarPorClaveSat'])->name('buscar-clave-sat');
+        Route::get('/exportar', [ProductoController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== REGISTROS VOLUMÉTRICOS ====================
@@ -259,6 +274,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/resumen/diario', [RegistroVolumetricoController::class, 'resumenDiario'])->name('resumen-diario');
         Route::get('/estadisticas/mensuales', [RegistroVolumetricoController::class, 'estadisticasMensuales'])->name('estadisticas-mensuales');
         Route::post('/{id}/asociar-dictamen', [RegistroVolumetricoController::class, 'asociarDictamen'])->name('asociar-dictamen');
+        Route::get('/exportar', [RegistroVolumetricoController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== REPORTES SAT ====================
@@ -274,6 +290,7 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/firmar', [ReporteSatController::class, 'firmar'])->name('firmar');
         Route::post('/{id}/cancelar', [ReporteSatController::class, 'cancelar'])->name('cancelar');
         Route::get('/historial/envios/{instalacionId}', [ReporteSatController::class, 'historialEnvios'])->name('historial-envios');
+        Route::get('/exportar', [ReporteSatController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== ROLES ====================
@@ -288,6 +305,7 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/asignar-permisos', [RoleController::class, 'asignarPermisos'])->name('asignar-permisos');
         Route::post('/{id}/clonar', [RoleController::class, 'clonar'])->name('clonar');
         Route::get('/matriz/permisos', [RoleController::class, 'matrizPermisos'])->name('matriz-permisos');
+        Route::get('/exportar', [RoleController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== TANQUES ====================
@@ -304,6 +322,7 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/cambiar-producto', [TanqueController::class, 'cambiarProducto'])->name('cambiar-producto');
         Route::get('/{id}/curva-calibracion', [TanqueController::class, 'curvaCalibracion'])->name('curva-calibracion');
         Route::get('/{id}/historial-calibraciones', [TanqueController::class, 'historialCalibraciones'])->name('historial-calibraciones');
+        Route::get('/exportar', [TanqueController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== USUARIOS ====================
@@ -328,16 +347,19 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/dashboard/grafica-movimientos', [DashboardController::class, 'graficaMovimientos'])->name('dashboard.grafica-movimientos');
         Route::get('/dashboard/grafica-productos', [DashboardController::class, 'graficaProductos'])->name('dashboard.grafica-productos');
         Route::get('/notificaciones', [DashboardController::class, 'notificaciones'])->name('notificaciones');
+        Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->name('dashboard.exportar');
+        Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->name('dashboard.exportar'); // Para web
         Route::get('/catalogos', function () {
             return response()->json(['error' => 'Catálogo no implementado'], 501);
         })->name('catalogos');
     });
 });
 
-// Ruta raíz redirige a dashboard o login según autenticación
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-    return redirect()->route('login');
-});
+    // Ruta raíz redirige a dashboard o login según autenticación
+    Route::get('/', function () {
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
+        return redirect()->route('login');
+    });
+

@@ -219,7 +219,7 @@ class MangueraController extends BaseController
                     ->with('success', 'Manguera actualizada exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -310,7 +310,7 @@ class MangueraController extends BaseController
                     ->with('success', 'Medidor asignado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 return redirect()->back()
                     ->with('error', 'El medidor ya está asignado a otra manguera');
             }

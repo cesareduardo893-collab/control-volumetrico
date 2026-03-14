@@ -7,6 +7,14 @@
 <a href="{{ route('reportes-sat.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Reporte
 </a>
+<div class="btn-group">
+    <a href="{{ route('reportes-sat.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('reportes-sat.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 @if(request()->filled('instalacion_id'))
     <a href="{{ route('reportes-sat.historial-envios', request('instalacion_id')) }}?anio={{ now()->year }}" class="btn btn-sm btn-info">
         <i class="bi bi-clock-history"></i> Historial de Envíos

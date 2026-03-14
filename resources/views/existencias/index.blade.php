@@ -7,7 +7,15 @@
 <a href="{{ route('existencias.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Registro
 </a>
-<a href="{{ route('existencias.reporte-mermas') }}?instalacion_id={{ request('instalacion_id') }}&fecha_inicio={{ now()->startOfMonth()->toDateString() }}&fecha_fin={{ now()->toDateString() }}" class="btn btn-sm btn-info">
+<div class="btn-group">
+    <a href="{{ route('existencias.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('existencias.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
+<a href="{{ route('existencias.reporte-mermas', ['instalacion_id' => request('instalacion_id'), 'fecha_inicio' => now()->startOfMonth()->toDateString(), 'fecha_fin' => now()->toDateString()]) }}" class="btn btn-sm btn-info">
     <i class="bi bi-graph-up"></i> Reporte de Mermas
 </a>
 @endsection

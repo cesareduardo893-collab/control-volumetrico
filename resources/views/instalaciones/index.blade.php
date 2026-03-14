@@ -7,6 +7,14 @@
 <a href="{{ route('instalaciones.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nueva Instalación
 </a>
+<div class="btn-group">
+    <a href="{{ route('instalaciones.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
+        <i class="bi bi-file-excel"></i> Excel
+    </a>
+    <a href="{{ route('instalaciones.exportar', ['tipo' => 'pdf']) }}" class="btn btn-sm btn-danger" title="Exportar a PDF">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+</div>
 @endsection
 
 @section('content')
