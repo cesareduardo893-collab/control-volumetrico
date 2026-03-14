@@ -10,6 +10,7 @@ use Illuminate\Support\Arr;
 abstract class BaseController extends Controller
 {
     use Traits\ConsumesApi; // Solo mantenemos el trait para consumir APIs
+    use Traits\LogsActivity; // Registrar actividad en bitácora local
 
     protected $apiClient;
 
