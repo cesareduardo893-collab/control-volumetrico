@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -91,7 +92,7 @@ class RoleController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'ROL_CREADO',
                     'Roles',
                     "Rol creado: {$request->nombre}",
@@ -103,7 +104,7 @@ class RoleController extends BaseController
                     ->with('success', 'Rol creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -231,7 +232,7 @@ class RoleController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'ROL_ACTUALIZADO',
                     'Roles',
                     "Rol actualizado ID: {$id}",
@@ -243,7 +244,7 @@ class RoleController extends BaseController
                     ->with('success', 'Rol actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -279,7 +280,7 @@ class RoleController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'ROL_ELIMINADO',
                     'Roles',
                     "Rol eliminado ID: {$id}",
@@ -291,7 +292,7 @@ class RoleController extends BaseController
                     ->with('success', 'Rol eliminado exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 return redirect()->back()
                     ->with('error', $this->apiResponseData($response, 'No se puede eliminar el rol'));
             }
@@ -328,7 +329,7 @@ class RoleController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PERMISOS_ASIGNADOS',
                     'Roles',
                     "Permisos asignados a rol ID: {$id}",
@@ -373,7 +374,7 @@ class RoleController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'ROL_CLONADO',
                     'Roles',
                     "Rol clonado desde ID: {$id} a nuevo ID: {$newRoleId}",

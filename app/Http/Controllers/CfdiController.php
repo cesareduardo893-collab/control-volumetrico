@@ -228,12 +228,12 @@ class CfdiController extends BaseController
                     ->with('success', 'CFDI cancelado exitosamente');
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'El CFDI ya está cancelado');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()

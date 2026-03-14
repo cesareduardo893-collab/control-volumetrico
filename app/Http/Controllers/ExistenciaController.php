@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -113,7 +114,7 @@ class ExistenciaController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'operaciones_cotidianas',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'EXISTENCIA_CREADA',
                     'Existencias',
                     "Existencia creada: {$request->numero_registro}",
@@ -125,7 +126,7 @@ class ExistenciaController extends BaseController
                     ->with('success', 'Existencia creada exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -196,7 +197,7 @@ class ExistenciaController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'operaciones_cotidianas',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'EXISTENCIA_VALIDADA',
                     'Existencias',
                     "Existencia validada ID: {$id}",
@@ -208,7 +209,7 @@ class ExistenciaController extends BaseController
                     ->with('success', 'Existencia validada exitosamente');
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'La existencia ya está validada');
             }

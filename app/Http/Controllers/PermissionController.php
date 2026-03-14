@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -63,7 +64,7 @@ class PermissionController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PERMISO_CREADO',
                     'Permisos',
                     "Permiso creado: {$request->slug}",
@@ -75,7 +76,7 @@ class PermissionController extends BaseController
                     ->with('success', 'Permiso creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -183,7 +184,7 @@ class PermissionController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PERMISO_ACTUALIZADO',
                     'Permisos',
                     "Permiso actualizado ID: {$id}",
@@ -195,7 +196,7 @@ class PermissionController extends BaseController
                     ->with('success', 'Permiso actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -231,7 +232,7 @@ class PermissionController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'PERMISO_ELIMINADO',
                     'Permisos',
                     "Permiso eliminado ID: {$id}",
@@ -243,7 +244,7 @@ class PermissionController extends BaseController
                     ->with('success', 'Permiso eliminado exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 return redirect()->back()
                     ->with('error', $this->apiResponseData($response, 'No se puede eliminar el permiso'));
             }

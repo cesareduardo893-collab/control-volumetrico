@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +44,48 @@ class ContribuyenteController extends BaseController
     }
 
     /**
+     * Exportar contribuyentes
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'rfc', 'razon_social', 'nombre_comercial', 'regimen_fiscal', 'status'
+            ]);
+
+            $modulo = 'contribuyentes';
+            $response = $this->apiGet('/api/exportar/' . $modulo, $params);
+
+            if ($response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            $json = $response->json();
+            return $this->jsonError(
+                $json['message'] ?? 'Error al exportar contribuyentes',
+                $response->status(),
+                $json['errors'] ?? null
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al exportar contribuyentes', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar contribuyentes');
+        }
+    }
+
+    /**
      * Crear contribuyente
      */
     public function store(Request $request)
@@ -74,7 +117,7 @@ class ContribuyenteController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'CONTRIBUYENTE_CREADO',
                     'Contribuyentes',
                     "Contribuyente creado: {$request->rfc}",
@@ -86,7 +129,7 @@ class ContribuyenteController extends BaseController
                     ->with('success', 'Contribuyente creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -203,7 +246,7 @@ class ContribuyenteController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'CONTRIBUYENTE_ACTUALIZADO',
                     'Contribuyentes',
                     "Contribuyente actualizado ID: {$id}",
@@ -215,7 +258,7 @@ class ContribuyenteController extends BaseController
                     ->with('success', 'Contribuyente actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -251,7 +294,7 @@ class ContribuyenteController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'CONTRIBUYENTE_ELIMINADO',
                     'Contribuyentes',
                     "Contribuyente eliminado ID: {$id}",
@@ -263,7 +306,7 @@ class ContribuyenteController extends BaseController
                     ->with('success', 'Contribuyente eliminado exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 return redirect()->back()
                     ->with('error', $this->apiResponseData($response, 'No se puede eliminar el contribuyente'));
             }

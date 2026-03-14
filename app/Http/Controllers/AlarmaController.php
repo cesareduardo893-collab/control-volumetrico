@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -32,6 +33,50 @@ class AlarmaController extends BaseController
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar alarmas');
+        }
+    }
+
+    /**
+     * Exportar alarmas
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'componente_tipo', 'componente_id', 'tipo_alarma_id', 'gravedad',
+                'atendida', 'estado_atencion', 'requiere_atencion_inmediata',
+                'fecha_inicio', 'fecha_fin', 'numero_registro'
+            ]);
+
+            $modulo = 'alarmas';
+            $response = $this->apiGet('/api/exportar/' . $modulo, $params);
+
+            if ($response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            $json = $response->json();
+            return $this->jsonError(
+                $json['message'] ?? 'Error al exportar alarmas',
+                $response->status(),
+                $json['errors'] ?? null
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al exportar alarmas', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar alarmas');
         }
     }
 
@@ -87,7 +132,7 @@ class AlarmaController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'seguridad',
+                    Bitacora::TIPO_EVENTO_SEGURIDAD,
                     'ALARMA_CREADA',
                     'Alarmas',
                     "Alarma creada: {$request->numero_registro}",
@@ -99,7 +144,7 @@ class AlarmaController extends BaseController
                     ->with('success', 'Alarma creada exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -172,7 +217,7 @@ class AlarmaController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'seguridad',
+                    Bitacora::TIPO_EVENTO_SEGURIDAD,
                     'ALARMA_ATENDIDA',
                     'Alarmas',
                     "Alarma atendida ID: {$id}",
@@ -184,12 +229,12 @@ class AlarmaController extends BaseController
                     ->with('success', 'Alarma atendida exitosamente');
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'La alarma ya ha sido atendida');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -230,7 +275,7 @@ class AlarmaController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'seguridad',
+                    Bitacora::TIPO_EVENTO_SEGURIDAD,
                     'ESTADO_ALARMA_ACTUALIZADO',
                     'Alarmas',
                     "Estado de alarma actualizado ID: {$id}",
@@ -453,7 +498,7 @@ class AlarmaController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'seguridad',
+                    Bitacora::TIPO_EVENTO_SEGURIDAD,
                     'ALARMA_ACTUALIZADA',
                     'Alarmas',
                     "Alarma actualizada ID: {$id}",
@@ -465,7 +510,7 @@ class AlarmaController extends BaseController
                     ->with('success', 'Alarma actualizada exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -501,7 +546,7 @@ class AlarmaController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'seguridad',
+                    Bitacora::TIPO_EVENTO_SEGURIDAD,
                     'ALARMA_ELIMINADA',
                     'Alarmas',
                     "Alarma eliminada ID: {$id}",

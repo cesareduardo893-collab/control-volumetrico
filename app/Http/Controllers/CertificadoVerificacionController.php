@@ -144,7 +144,7 @@ class CertificadoVerificacionController extends BaseController
                     ->with('success', 'Certificado de verificación creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -262,7 +262,7 @@ class CertificadoVerificacionController extends BaseController
                     ->with('success', 'Certificado actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -99,7 +100,7 @@ class UserController extends BaseController
                     ->with('success', 'Usuario creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -228,7 +229,7 @@ class UserController extends BaseController
                     ->with('success', 'Usuario actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -306,7 +307,7 @@ class UserController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'seguridad',
+                    Bitacora::TIPO_EVENTO_SEGURIDAD,
                     'USUARIO_BLOQUEADO',
                     'Seguridad',
                     "Usuario bloqueado ID: {$id} - Motivo: {$request->motivo}",
@@ -347,7 +348,7 @@ class UserController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'seguridad',
+                    Bitacora::TIPO_EVENTO_SEGURIDAD,
                     'USUARIO_DESBLOQUEADO',
                     'Seguridad',
                     "Usuario desbloqueado ID: {$id} - Motivo: {$request->motivo}",
@@ -402,7 +403,7 @@ class UserController extends BaseController
                     ->with('success', 'Rol asignado exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 return redirect()->back()
                     ->with('error', 'El usuario ya tiene este rol asignado');
             }
@@ -451,7 +452,7 @@ class UserController extends BaseController
                     ->with('success', 'Rol revocado exitosamente');
             }
 
-            if ($response->status === 404) {
+            if ($response['status'] === 404) {
                 return redirect()->back()
                     ->with('error', 'El usuario no tiene este rol asignado');
             }
@@ -512,8 +513,63 @@ class UserController extends BaseController
 
             if ($this->apiResponseSuccessful($response)) {
                 $actividad = $this->apiResponseData($response, []);
-                return view('users.actividad', compact('actividad', 'id'));
+                return view('users.actividad', compact('actividad', $id));
             }
+
+            return redirect()->route('users.show', $id)
+                ->with('error', $this->apiResponseMessage($response, 'Error al cargar actividad'));
+        } catch (\Exception $e) {
+            Log::error('Error al cargar actividad', [
+                'error' => $e->getMessage(),
+                'user_id' => $id
+            ]);
+
+            return redirect()->route('users.show', $id)
+                ->with('error', 'Error al cargar actividad');
+        }
+    }
+
+    /**
+     * Exportar usuarios
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'name', 'email', 'role_id', 'status'
+            ]);
+
+            $response = $this->apiGet('/api/users/exportar', $params);
+
+            if ($response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            $json = $response->json();
+            return $this->jsonError(
+                $json['message'] ?? 'Error al exportar usuarios',
+                $response->status(),
+                $json['errors'] ?? null
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al exportar usuarios', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar usuarios');
+        }
+    }
+}
 
             return redirect()->route('users.show', $id)
                 ->with('error', $this->apiResponseMessage($response, 'Error al cargar actividad'));

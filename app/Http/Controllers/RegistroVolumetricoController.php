@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -103,7 +104,7 @@ class RegistroVolumetricoController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'operaciones_cotidianas',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'REGISTRO_VOLUMETRICO_CREADO',
                     'Registros Volumétricos',
                     "Registro volumétrico creado: {$request->numero_registro}",
@@ -115,7 +116,7 @@ class RegistroVolumetricoController extends BaseController
                     ->with('success', 'Registro volumétrico creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -186,7 +187,7 @@ class RegistroVolumetricoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'operaciones_cotidianas',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'REGISTRO_VOLUMETRICO_VALIDADO',
                     'Registros Volumétricos',
                     "Registro volumétrico validado ID: {$id}",
@@ -198,7 +199,7 @@ class RegistroVolumetricoController extends BaseController
                     ->with('success', 'Registro validado exitosamente');
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'El registro ya está validado');
             }
@@ -236,7 +237,7 @@ class RegistroVolumetricoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'operaciones_cotidianas',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'REGISTRO_VOLUMETRICO_CANCELADO',
                     'Registros Volumétricos',
                     "Registro volumétrico cancelado ID: {$id}",
@@ -248,7 +249,7 @@ class RegistroVolumetricoController extends BaseController
                     ->with('success', 'Registro cancelado exitosamente');
             }
 
-            if ($response->status === 403) {
+            if ($response['status'] === 403) {
                 return redirect()->back()
                     ->with('error', 'El registro ya está cancelado');
             }
@@ -357,7 +358,7 @@ class RegistroVolumetricoController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'operaciones_cotidianas',
+                    Bitacora::TIPO_EVENTO_OPERACIONES,
                     'DICTAMEN_ASOCIADO_REGISTRO',
                     'Registros Volumétricos',
                     "Dictamen asociado a registro ID: {$id}",
