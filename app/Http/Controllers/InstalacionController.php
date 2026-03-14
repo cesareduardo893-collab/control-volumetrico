@@ -75,6 +75,10 @@ class InstalacionController extends BaseController
             'municipio' => 'required|string|max:255',
             'estado' => 'required|string|max:255',
             'estatus' => 'required|in:OPERACION,SUSPENDIDA,CANCELADA',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'fecha_apertura' => 'nullable|date',
+            'fecha_cierre' => 'nullable|date',
         ]);
 
         try {
@@ -100,7 +104,7 @@ class InstalacionController extends BaseController
                     ->with('success', 'Instalación creada exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -223,7 +227,7 @@ class InstalacionController extends BaseController
                     ->with('success', 'Instalación actualizada exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -271,7 +275,7 @@ class InstalacionController extends BaseController
                     ->with('success', 'Instalación eliminada exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 $error = $this->apiResponseData($response, 'No se puede eliminar la instalación');
                 return redirect()->back()
                     ->with('error', $error);

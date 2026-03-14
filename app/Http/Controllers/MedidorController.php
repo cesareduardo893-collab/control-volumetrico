@@ -81,6 +81,15 @@ class MedidorController extends BaseController
             'precision' => 'required|numeric|min:0',
             'capacidad_maxima' => 'required|numeric|min:0',
             'estado' => 'required|in:OPERATIVO,CALIBRACION,MANTENIMIENTO,FUERA_SERVICIO,FALLA_COMUNICACION',
+            'tecnologia_id' => 'nullable|string|max:255',
+            'protocolo_comunicacion' => 'nullable|string|max:255',
+            'presion_maxima' => 'nullable|numeric|min:0',
+            'temperatura_maxima' => 'nullable|numeric',
+            'fecha_instalacion' => 'nullable|date',
+            'fecha_ultima_calibracion' => 'nullable|date',
+            'fecha_proxima_calibracion' => 'nullable|date',
+            'certificado_calibracion' => 'nullable|string|max:255',
+            'observaciones' => 'nullable|string',
         ]);
 
         try {
@@ -106,7 +115,7 @@ class MedidorController extends BaseController
                     ->with('success', 'Medidor creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -240,14 +249,14 @@ class MedidorController extends BaseController
                     ->with('success', 'Medidor actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', $this->apiResponseData($response, 'El medidor no se puede actualizar'));
@@ -294,7 +303,7 @@ class MedidorController extends BaseController
                     ->with('success', 'Medidor eliminado exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 return redirect()->back()
                     ->with('error', $this->apiResponseData($response, 'No se puede eliminar el medidor'));
             }

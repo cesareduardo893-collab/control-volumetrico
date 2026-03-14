@@ -57,6 +57,11 @@ class ProductoController extends BaseController
             'unidad_medida' => 'required|string|max:50',
             'tipo_hidrocarburo' => 'required|in:petroleo,gas_natural,condensados,gasolina,diesel,turbosina,gas_lp,propano,otro',
             'activo' => 'sometimes|boolean',
+            'densidad_referencia' => 'nullable|numeric|min:0',
+            'temperatura_referencia' => 'nullable|numeric',
+            'factor_conversion' => 'nullable|numeric|min:0',
+            'octanaje' => 'nullable|numeric',
+            'numero_octano' => 'nullable|numeric',
         ]);
 
         try {
@@ -82,7 +87,7 @@ class ProductoController extends BaseController
                     ->with('success', 'Producto creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -205,7 +210,7 @@ class ProductoController extends BaseController
                     ->with('success', 'Producto actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -253,7 +258,7 @@ class ProductoController extends BaseController
                     ->with('success', 'Producto eliminado exitosamente');
             }
 
-            if ($response->status === 409) {
+            if ($response['status'] === 409) {
                 return redirect()->back()
                     ->with('error', $this->apiResponseData($response, 'No se puede eliminar el producto'));
             }

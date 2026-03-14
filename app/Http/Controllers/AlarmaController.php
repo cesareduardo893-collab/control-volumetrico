@@ -114,11 +114,13 @@ class AlarmaController extends BaseController
             'numero_registro' => 'required|string|max:255',
             'fecha_hora' => 'required|date',
             'componente_tipo' => 'required|string|max:255',
+            'componente_id' => 'required|integer',
             'componente_identificador' => 'required|string|max:255',
             'tipo_alarma_id' => 'required|integer',
             'gravedad' => 'required|in:BAJA,MEDIA,ALTA,CRITICA',
             'descripcion' => 'required|string',
             'estado_atencion' => 'required|in:PENDIENTE,EN_PROCESO,RESUELTA,IGNORADA',
+            'requiere_atencion_inmediata' => 'nullable|boolean',
         ]);
 
         try {

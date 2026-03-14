@@ -88,7 +88,7 @@ class UserController extends BaseController
 
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'USUARIO_CREADO',
                     'Usuarios',
                     "Usuario creado: {$request->email}",
@@ -217,7 +217,7 @@ class UserController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'USUARIO_ACTUALIZADO',
                     'Usuarios',
                     "Usuario actualizado: {$request->email}",
@@ -265,7 +265,7 @@ class UserController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'USUARIO_ELIMINADO',
                     'Usuarios',
                     "Usuario eliminado ID: {$id}",
@@ -391,7 +391,7 @@ class UserController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'ROL_ASIGNADO',
                     'Usuarios',
                     "Rol asignado a usuario ID: {$id}",
@@ -440,7 +440,7 @@ class UserController extends BaseController
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
-                    'administracion_sistema',
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'ROL_REVOCADO',
                     'Usuarios',
                     "Rol revocado de usuario ID: {$id}",

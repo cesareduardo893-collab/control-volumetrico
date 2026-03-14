@@ -95,6 +95,9 @@ class RegistroVolumetricoController extends BaseController
             'operacion' => 'required|in:recepcion,entrega,inventario_inicial,inventario_final,venta',
             'estado' => 'required|in:PENDIENTE,PROCESADO,VALIDADO,ERROR,CANCELADO,CON_ALARMA',
             'usuario_registro_id' => 'nullable|integer',
+            'documento_fiscal_uuid' => 'nullable|string|max:255',
+            'rfc_contraparte' => 'nullable|string|max:13',
+            'observaciones' => 'nullable|string',
         ]);
 
         try {

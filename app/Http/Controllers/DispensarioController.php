@@ -61,17 +61,22 @@ class DispensarioController extends BaseController
     }
 
     /**
-     * Crear dispensario
+     * Almacenar dispensario
      */
     public function store(Request $request)
     {
         $request->validate([
-            'instalacion_id' => 'required|integer',
             'clave' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'modelo' => 'nullable|string|max:255',
-            'fabricante' => 'nullable|string|max:255',
-            'estado' => 'required|in:OPERATIVO,MANTENIMIENTO,FUERA_SERVICIO',
+            'modelo' => 'required|string|max:255',
+            'fabricante' => 'required|string|max:255',
+            'instalacion_id' => 'required|integer',
+            'estado' => 'required|in:OPERATIVO,MANTENIMIENTO,INACTIVO',
+            'numero_serie' => 'nullable|string|max:255',
+            'fecha_instalacion' => 'nullable|date',
+            'fecha_ultimo_mantenimiento' => 'nullable|date',
+            'fecha_proximo_mantenimiento' => 'nullable|date',
+            'capacidad_maxima' => 'nullable|numeric|min:0',
+            'presion_operacion' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -97,7 +102,7 @@ class DispensarioController extends BaseController
                     ->with('success', 'Dispensario creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -167,9 +172,11 @@ class DispensarioController extends BaseController
             }
 
             $dispensario = $this->apiResponseData($response, []);
+            $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
 
             return view('dispensarios.edit', [
-                'dispensario' => $dispensario
+                'dispensario' => $dispensario,
+                'instalaciones' => $instalaciones
             ]);
 
         } catch (\Exception $e) {
@@ -189,12 +196,17 @@ class DispensarioController extends BaseController
     public function update(Request $request, $id)
     {
         $request->validate([
-            'clave' => "sometimes|string|max:255",
-            'descripcion' => 'nullable|string',
-            'modelo' => 'nullable|string|max:255',
-            'fabricante' => 'nullable|string|max:255',
-            'estado' => 'sometimes|in:OPERATIVO,MANTENIMIENTO,FUERA_SERVICIO',
-            'activo' => 'sometimes|boolean',
+            'clave' => 'required|string|max:255',
+            'modelo' => 'required|string|max:255',
+            'fabricante' => 'required|string|max:255',
+            'instalacion_id' => 'required|integer',
+            'estado' => 'required|in:OPERATIVO,MANTENIMIENTO,INACTIVO',
+            'numero_serie' => 'nullable|string|max:255',
+            'fecha_instalacion' => 'nullable|date',
+            'fecha_ultimo_mantenimiento' => 'nullable|date',
+            'fecha_proximo_mantenimiento' => 'nullable|date',
+            'capacidad_maxima' => 'nullable|numeric|min:0',
+            'presion_operacion' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -217,7 +229,7 @@ class DispensarioController extends BaseController
                     ->with('success', 'Dispensario actualizado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
@@ -265,12 +277,6 @@ class DispensarioController extends BaseController
                     ->with('success', 'Dispensario eliminado exitosamente');
             }
 
-            if ($response->status === 409) {
-                $error = $this->apiResponseData($response, 'No se puede eliminar el dispensario');
-                return redirect()->back()
-                    ->with('error', $error);
-            }
-
             return redirect()->back()
                 ->with('error', $this->apiResponseMessage($response, 'Error al eliminar dispensario'));
 
@@ -286,74 +292,45 @@ class DispensarioController extends BaseController
     }
 
     /**
-     * Obtener mangueras del dispensario
+     * Exportar dispensarios
      */
-    public function mangueras(Request $request, $id)
+    public function exportar(Request $request)
     {
         try {
             $this->setApiToken(Session::get('api_token'));
 
-            $params = $request->only(['medidor_id', 'estado', 'activas', 'per_page']);
-
-            $response = $this->apiGet("/api/dispensarios/{$id}/mangueras", $params);
-
-            if (!$this->apiResponseSuccessful($response)) {
-                return redirect()->route('dispensarios.show', $id)
-                    ->with('error', $this->apiResponseMessage($response, 'Error al cargar mangueras'));
-            }
-
-            $mangueras = $this->apiResponseData($response, []);
-
-            return view('dispensarios.mangueras', [
-                'mangueras' => $mangueras['data'] ?? $mangueras,
-                'dispensario_id' => $id
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'instalacion_id', 'clave', 'modelo', 'fabricante',
+                'estado', 'activo'
             ]);
 
+            $modulo = 'dispensarios';
+            $response = $this->apiGetRaw('/api/exportar/' . $modulo, $params);
+
+            if ($response && $response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            $json = $response->json();
+            return $this->jsonError(
+                $json['message'] ?? 'Error al exportar dispensarios',
+                $response->status(),
+                $json['errors'] ?? null
+            );
         } catch (\Exception $e) {
-            Log::error('Error al cargar mangueras del dispensario', [
-                'error' => $e->getMessage(),
-                'dispensario_id' => $id
+            Log::error('Error al exportar dispensarios', [
+                'error' => $e->getMessage()
             ]);
 
-            return redirect()->route('dispensarios.show', $id)
-                ->with('error', 'Error al cargar mangueras');
-        }
-    }
-
-    /**
-     * Verificar estado del dispensario
-     */
-    public function verificarEstado($id)
-    {
-        try {
-            $this->setApiToken(Session::get('api_token'));
-
-            $response = $this->apiGet("/api/dispensarios/{$id}/verificar-estado");
-
-            if (!$this->apiResponseSuccessful($response)) {
-                return redirect()->route('dispensarios.show', $id)
-                    ->with('error', $this->apiResponseMessage($response, 'Error al verificar estado'));
-            }
-
-            $estado = $this->apiResponseData($response, []);
-
-            if (request()->expectsJson()) {
-                return $this->jsonSuccess($estado, 'Estado verificado');
-            }
-
-            return view('dispensarios.estado', [
-                'estado' => $estado,
-                'dispensario_id' => $id
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error al verificar estado del dispensario', [
-                'error' => $e->getMessage(),
-                'dispensario_id' => $id
-            ]);
-
-            return redirect()->route('dispensarios.show', $id)
-                ->with('error', 'Error al verificar estado');
+            return redirect()->back()->with('error', 'Error al exportar dispensarios');
         }
     }
 }
