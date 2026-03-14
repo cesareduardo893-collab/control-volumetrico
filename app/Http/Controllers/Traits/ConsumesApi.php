@@ -48,6 +48,19 @@ trait ConsumesApi
         }
     }
 
+    public function apiGetRaw($endpoint, $params = [])
+    {
+        try {
+            return $this->withToken()->get($endpoint, $params);
+        } catch (\Exception $e) {
+            Log::error('API GET Raw Error', [
+                'endpoint' => $endpoint,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
     public function apiPost($endpoint, $data = [])
     {
         try {

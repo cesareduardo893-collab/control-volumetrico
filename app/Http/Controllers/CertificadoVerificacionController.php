@@ -51,9 +51,9 @@ class CertificadoVerificacionController extends BaseController
                 'requiere_verificacion_extraordinaria'
             ]);
 
-            $response = $this->apiGet('/api/certificados-verificacion/exportar', $params);
+            $response = $this->apiGetRaw('/api/certificados-verificacion/exportar', $params);
 
-            if ($response->successful()) {
+            if ($response && $response->successful()) {
                 // Si la API devuelve un archivo, lo enviamos directamente
                 $contentType = $response->headers->get('Content-Type');
                 $contentDisposition = $response->headers->get('Content-Disposition');

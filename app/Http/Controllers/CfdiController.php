@@ -37,6 +37,49 @@ class CfdiController extends BaseController
     }
 
     /**
+     * Exportar CFDI
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            // Obtener parámetros de filtro opcionales
+            $params = $request->only([
+                'uuid', 'rfc_emisor', 'rfc_receptor', 'tipo_operacion',
+                'producto_id', 'fecha_inicio', 'fecha_fin', 'estado',
+                'registro_volumetrico_id'
+            ]);
+
+            $response = $this->apiGetRaw('/api/cfdi/exportar', $params);
+
+            if ($response && $response->successful()) {
+                // Si la API devuelve un archivo, lo enviamos directamente
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            // Si no es exitoso, manejamos el error
+            $json = $response->json();
+            return $this->jsonError(
+                $json['message'] ?? 'Error al exportar CFDI',
+                $response->status(),
+                $json['errors'] ?? null
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al exportar CFDI', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar CFDI');
+        }
+    }
+
+    /**
      * Mostrar formulario de creación
      */
     public function create()
@@ -102,7 +145,7 @@ class CfdiController extends BaseController
                     ->with('success', 'CFDI creado exitosamente');
             }
 
-            if ($response->status === 422) {
+            if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
                 return redirect()->back()
                     ->withInput()
