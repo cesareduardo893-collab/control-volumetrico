@@ -52,7 +52,7 @@ trait LogsActivity
         // Generate hash values for SQLite
         $lastBitacora = Bitacora::orderBy('created_at', 'desc')->first();
         $bitacora->hash_anterior = $lastBitacora ? $lastBitacora->hash_actual : null;
-        $bitacora->hash_actual = hash('sha256', $bitacora->descripcion . $bitacora->created_at);
+        $bitacora->hash_actual = hash('sha256', $bitacora->descripcion . now());
         $bitacora->save();
 
         return $bitacora;
