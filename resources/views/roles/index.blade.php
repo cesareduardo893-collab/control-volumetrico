@@ -15,7 +15,7 @@
         <i class="bi bi-file-pdf"></i> PDF
     </a>
 </div>
-<a href="{{ route('roles.matriz-permisos) }}" class="btn btn-sm btn-info">
+<a href="{{ route('roles.matriz-permisos') }}" class="btn btn-sm btn-info">
     <i class="bi bi-grid-3x3-gap-fill"></i> Matriz de Permisos
 </a>
 @endsection
