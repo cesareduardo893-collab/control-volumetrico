@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class MedidorController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar medidores
      */
@@ -69,28 +71,10 @@ class MedidorController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'tanque_id' => 'nullable|integer',
-            'instalacion_id' => 'required|integer',
-            'numero_serie' => 'required|string|max:255',
-            'clave' => 'required|string|max:255',
-            'modelo' => 'nullable|string|max:255',
-            'fabricante' => 'nullable|string|max:255',
-            'elemento_tipo' => 'required|in:primario,secundario,terciario',
-            'tipo_medicion' => 'required|in:estatica,dinamica',
-            'precision' => 'required|numeric|min:0',
-            'capacidad_maxima' => 'required|numeric|min:0',
-            'estado' => 'required|in:OPERATIVO,CALIBRACION,MANTENIMIENTO,FUERA_SERVICIO,FALLA_COMUNICACION',
-            'tecnologia_id' => 'nullable|string|max:255',
-            'protocolo_comunicacion' => 'nullable|string|max:255',
-            'presion_maxima' => 'nullable|numeric|min:0',
-            'temperatura_maxima' => 'nullable|numeric',
-            'fecha_instalacion' => 'nullable|date',
-            'fecha_ultima_calibracion' => 'nullable|date',
-            'fecha_proxima_calibracion' => 'nullable|date',
-            'certificado_calibracion' => 'nullable|string|max:255',
-            'observaciones' => 'nullable|string',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasMedidor());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -214,20 +198,10 @@ class MedidorController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'tanque_id' => 'nullable|integer',
-            'instalacion_id' => 'sometimes|integer',
-            'numero_serie' => 'sometimes|string|max:255',
-            'clave' => 'sometimes|string|max:255',
-            'modelo' => 'nullable|string|max:255',
-            'fabricante' => 'nullable|string|max:255',
-            'elemento_tipo' => 'sometimes|in:primario,secundario,terciario',
-            'tipo_medicion' => 'sometimes|in:estatica,dinamica',
-            'precision' => 'sometimes|numeric|min:0',
-            'capacidad_maxima' => 'sometimes|numeric|min:0',
-            'estado' => 'sometimes|in:OPERATIVO,CALIBRACION,MANTENIMIENTO,FUERA_SERVICIO,FALLA_COMUNICACION',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasMedidor(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

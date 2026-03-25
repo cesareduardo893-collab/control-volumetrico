@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class UserController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar usuarios
      */
@@ -65,17 +67,10 @@ class UserController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'identificacion' => 'required|string|max:18',
-            'nombres' => 'required|string|max:255',
-            'apellidos' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'password' => 'required|min:8|confirmed',
-            'telefono' => 'nullable|string|max:20',
-            'direccion' => 'nullable|string|max:255',
-            'roles' => 'required|array|min:1',
-            'roles.*' => 'integer',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasUsuario());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -197,17 +192,10 @@ class UserController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'identificacion' => 'required|string|max:18',
-            'nombres' => 'required|string|max:255',
-            'apellidos' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'telefono' => 'nullable|string|max:20',
-            'direccion' => 'nullable|string|max:255',
-            'roles' => 'sometimes|array',
-            'roles.*' => 'integer',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasUsuario(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -542,9 +530,9 @@ class UserController extends BaseController
                 'name', 'email', 'role_id', 'status'
             ]);
 
-            $response = $this->apiGet('/api/users/exportar', $params);
+            $response = $this->apiGetRaw('/api/users/exportar', $params);
 
-            if ($response->successful()) {
+            if ($response && $response->successful()) {
                 // Si la API devuelve un archivo, lo enviamos directamente
                 $contentType = $response->headers->get('Content-Type');
                 $contentDisposition = $response->headers->get('Content-Disposition');
@@ -555,33 +543,22 @@ class UserController extends BaseController
             }
 
             // Si no es exitoso, manejamos el error
-            $json = $response->json();
-            return $this->jsonError(
-                $json['message'] ?? 'Error al exportar usuarios',
-                $response->status(),
-                $json['errors'] ?? null
-            );
+            if ($response) {
+                $json = $response->json();
+                return $this->jsonError(
+                    $json['message'] ?? 'Error al exportar usuarios',
+                    $response->status(),
+                    $json['errors'] ?? null
+                );
+            }
+
+            return $this->jsonError('Error al exportar usuarios', 500);
         } catch (\Exception $e) {
             Log::error('Error al exportar usuarios', [
                 'error' => $e->getMessage()
             ]);
 
             return redirect()->back()->with('error', 'Error al exportar usuarios');
-        }
-    }
-}
-
-            return redirect()->route('users.show', $id)
-                ->with('error', $this->apiResponseMessage($response, 'Error al cargar actividad'));
-
-        } catch (\Exception $e) {
-            Log::error('Error al cargar actividad', [
-                'error' => $e->getMessage(),
-                'user_id' => $id
-            ]);
-
-            return redirect()->route('users.show', $id)
-                ->with('error', 'Error al cargar actividad');
         }
     }
 }

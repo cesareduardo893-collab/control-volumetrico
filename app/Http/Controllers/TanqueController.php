@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class TanqueController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar tanques
      */
@@ -76,19 +78,10 @@ class TanqueController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'instalacion_id' => 'required|integer',
-            'identificador' => 'required|string|max:255',
-            'material' => 'required|string|max:100',
-            'capacidad_total' => 'required|numeric|min:0',
-            'capacidad_util' => 'required|numeric|min:0|lte:capacidad_total',
-            'capacidad_operativa' => 'required|numeric|min:0|lte:capacidad_util',
-            'capacidad_minima' => 'required|numeric|min:0',
-            'temperatura_referencia' => 'required|numeric',
-            'presion_referencia' => 'required|numeric',
-            'tipo_medicion' => 'required|in:estatica,dinamica',
-            'estado' => 'required|in:OPERATIVO,MANTENIMIENTO,FUERA_SERVICIO,CALIBRACION',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasTanque());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -208,17 +201,10 @@ class TanqueController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'producto_id' => 'nullable|integer',
-            'identificador' => "sometimes|string|max:255",
-            'material' => 'sometimes|string|max:100',
-            'capacidad_total' => 'sometimes|numeric|min:0',
-            'capacidad_util' => 'sometimes|numeric|min:0|lte:capacidad_total',
-            'capacidad_operativa' => 'sometimes|numeric|min:0|lte:capacidad_util',
-            'capacidad_minima' => 'sometimes|numeric|min:0',
-            'estado' => 'sometimes|in:OPERATIVO,MANTENIMIENTO,FUERA_SERVICIO,CALIBRACION',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasTanque(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

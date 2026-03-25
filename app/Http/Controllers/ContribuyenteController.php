@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class ContribuyenteController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar contribuyentes
      */
@@ -90,21 +92,10 @@ class ContribuyenteController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'rfc' => 'required|string|size:13',
-            'razon_social' => 'required|string|max:255',
-            'nombre_comercial' => 'nullable|string|max:255',
-            'regimen_fiscal' => 'required|string|max:255',
-            'domicilio_fiscal' => 'required|string|max:255',
-            'codigo_postal' => 'required|string|size:5',
-            'telefono' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'representante_legal' => 'nullable|string|max:255',
-            'representante_rfc' => 'nullable|string|size:13',
-            'numero_permiso' => 'nullable|string|max:255',
-            'tipo_permiso' => 'nullable|string|max:255',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasContribuyente());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -221,22 +212,10 @@ class ContribuyenteController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'rfc' => 'sometimes|string|size:13',
-            'razon_social' => 'sometimes|string|max:255',
-            'nombre_comercial' => 'nullable|string|max:255',
-            'regimen_fiscal' => 'sometimes|string|max:255',
-            'domicilio_fiscal' => 'sometimes|string|max:255',
-            'codigo_postal' => 'sometimes|string|size:5',
-            'telefono' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'representante_legal' => 'nullable|string|max:255',
-            'representante_rfc' => 'nullable|string|size:13',
-            'numero_permiso' => 'nullable|string|max:255',
-            'tipo_permiso' => 'nullable|string|max:255',
-            'estatus_verificacion' => 'nullable|string|max:50',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasContribuyente(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

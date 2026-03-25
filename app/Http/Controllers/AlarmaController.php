@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class AlarmaController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar alarmas
      */
@@ -52,9 +54,9 @@ class AlarmaController extends BaseController
             ]);
 
             $modulo = 'alarmas';
-            $response = $this->apiGet('/api/exportar/' . $modulo, $params);
+            $response = $this->apiGetRaw('/api/exportar/' . $modulo, $params);
 
-            if ($response->successful()) {
+            if ($response && $response->successful()) {
                 // Si la API devuelve un archivo, lo enviamos directamente
                 $contentType = $response->headers->get('Content-Type');
                 $contentDisposition = $response->headers->get('Content-Disposition');
@@ -65,12 +67,16 @@ class AlarmaController extends BaseController
             }
 
             // Si no es exitoso, manejamos el error
-            $json = $response->json();
-            return $this->jsonError(
-                $json['message'] ?? 'Error al exportar alarmas',
-                $response->status(),
-                $json['errors'] ?? null
-            );
+            if ($response) {
+                $json = $response->json();
+                return $this->jsonError(
+                    $json['message'] ?? 'Error al exportar alarmas',
+                    $response->status(),
+                    $json['errors'] ?? null
+                );
+            }
+
+            return $this->jsonError('Error al exportar alarmas', 500);
         } catch (\Exception $e) {
             Log::error('Error al exportar alarmas', [
                 'error' => $e->getMessage()
@@ -90,6 +96,22 @@ class AlarmaController extends BaseController
 
             // Obtener tipos de alarma del catálogo
             $tiposAlarma = $this->getCatalog('/api/catalogos', ['tipo' => 'tipo_alarma']);
+            
+            // Si el catálogo no devuelve datos, usar valores predeterminados
+            if (empty($tiposAlarma)) {
+                $tiposAlarma = [
+                    ['id' => 1, 'nombre' => 'Nivel Alto'],
+                    ['id' => 2, 'nombre' => 'Nivel Bajo'],
+                    ['id' => 3, 'nombre' => 'Presión Alta'],
+                    ['id' => 4, 'nombre' => 'Presión Baja'],
+                    ['id' => 5, 'nombre' => 'Temperatura Alta'],
+                    ['id' => 6, 'nombre' => 'Temperatura Baja'],
+                    ['id' => 7, 'nombre' => 'Fuga Detectada'],
+                    ['id' => 8, 'nombre' => 'Válvula Abierta'],
+                    ['id' => 9, 'nombre' => 'Válvula Cerrada'],
+                    ['id' => 10, 'nombre' => 'Fallo de Sensor']
+                ];
+            }
 
             return view('alarmas.create', [
                 'tiposAlarma' => $tiposAlarma
@@ -110,18 +132,10 @@ class AlarmaController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'numero_registro' => 'required|string|max:255',
-            'fecha_hora' => 'required|date',
-            'componente_tipo' => 'required|string|max:255',
-            'componente_id' => 'required|integer',
-            'componente_identificador' => 'required|string|max:255',
-            'tipo_alarma_id' => 'required|integer',
-            'gravedad' => 'required|in:BAJA,MEDIA,ALTA,CRITICA',
-            'descripcion' => 'required|string',
-            'estado_atencion' => 'required|in:PENDIENTE,EN_PROCESO,RESUELTA,IGNORADA',
-            'requiere_atencion_inmediata' => 'nullable|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasAlarma());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -481,16 +495,10 @@ class AlarmaController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'numero_registro' => 'sometimes|string|max:255',
-            'fecha_hora' => 'sometimes|date',
-            'componente_tipo' => 'sometimes|string|max:255',
-            'componente_identificador' => 'sometimes|string|max:255',
-            'tipo_alarma_id' => 'sometimes|integer',
-            'gravedad' => 'sometimes|in:BAJA,MEDIA,ALTA,CRITICA',
-            'descripcion' => 'sometimes|string',
-            'estado_atencion' => 'sometimes|in:PENDIENTE,EN_PROCESO,RESUELTA,IGNORADA',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasAlarma(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

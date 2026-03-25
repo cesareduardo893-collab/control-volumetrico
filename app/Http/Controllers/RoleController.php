@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class RoleController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar roles
      */
@@ -72,14 +74,10 @@ class RoleController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string|max:500',
-            'nivel_jerarquico' => 'required|integer|min:1|max:100',
-            'es_administrador' => 'sometimes|boolean',
-            'permisos' => 'nullable|array',
-            'permisos.*' => 'integer',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasRol());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -214,15 +212,10 @@ class RoleController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'nombre' => 'sometimes|string|max:255',
-            'descripcion' => 'nullable|string|max:500',
-            'nivel_jerarquico' => 'sometimes|integer|min:1|max:100',
-            'es_administrador' => 'sometimes|boolean',
-            'permisos' => 'nullable|array',
-            'permisos.*' => 'integer',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasRol(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

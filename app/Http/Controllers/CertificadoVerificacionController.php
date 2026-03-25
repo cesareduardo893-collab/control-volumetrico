@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class CertificadoVerificacionController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar certificados de verificación
      */
@@ -109,17 +111,10 @@ class CertificadoVerificacionController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'folio' => 'required|string|max:255',
-            'contribuyente_id' => 'required|integer',
-            'proveedor_rfc' => 'required|string|size:13',
-            'proveedor_nombre' => 'required|string|max:255',
-            'fecha_emision' => 'required|date',
-            'fecha_inicio_verificacion' => 'required|date',
-            'fecha_fin_verificacion' => 'required|date',
-            'resultado' => 'required|in:acreditado,no_acreditado',
-            'tabla_cumplimiento' => 'required|array',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasCertificadoVerificacion());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -235,12 +230,10 @@ class CertificadoVerificacionController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'observaciones' => 'nullable|string',
-            'vigente' => 'sometimes|boolean',
-            'fecha_caducidad' => 'nullable|date',
-            'requiere_verificacion_extraordinaria' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasCertificadoVerificacion(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

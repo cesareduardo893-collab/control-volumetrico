@@ -5,20 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends BaseController
 {
     /**
-     * Muestra el dashboard principal con datos de la API.
+     * Muestra el dashboard principal con datos de la base de datos.
      */
     public function index(Request $request)
     {
         try {
-            $this->setApiToken(Session::get('api_token'));
-
-            // Obtener resumen del dashboard
-            $resumenResponse = $this->apiGet('/api/dashboard/resumen');
-            
             $resumen = [
                 'contribuyentes_activos' => 0,
                 'instalaciones_activas' => 0,
@@ -27,27 +24,18 @@ class DashboardController extends BaseController
                 'ultimos_movimientos' => [],
             ];
 
-            if ($this->apiResponseSuccessful($resumenResponse)) {
-                $resumen = $this->apiResponseData($resumenResponse, $resumen);
+            // Obtener usuarios activos (usando la tabla users que sí existe)
+            if (Schema::hasTable('users')) {
+                $resumen['contribuyentes_activos'] = DB::table('users')
+                    ->where('active', true)
+                    ->count();
             }
-
-            // Obtener datos en tiempo real
-            $tiempoRealResponse = $this->apiGet('/api/dashboard/tiempo-real');
             
-            $tiempoReal = [
-                'volumen_actual' => 0,
-                'flujo' => 0,
-                'temperatura' => 0,
-                'presion' => 0,
-            ];
-
-            if ($this->apiResponseSuccessful($tiempoRealResponse)) {
-                $tiempoReal = $this->apiResponseData($tiempoRealResponse, $tiempoReal);
-            }
-
+            // Las demás tablas no existen aún, se mantienen en 0
+            // Cuando se creen las migraciones, se pueden habilitar estas consultas
+            
             return view('dashboard.index', [
                 'resumen' => $resumen,
-                'tiempoReal' => $tiempoReal,
             ]);
 
         } catch (\Exception $e) {
@@ -62,12 +50,6 @@ class DashboardController extends BaseController
                     'alarmas_activas' => 0,
                     'volumen_total' => 0,
                     'ultimos_movimientos' => [],
-                ],
-                'tiempoReal' => [
-                    'volumen_actual' => 0,
-                    'flujo' => 0,
-                    'temperatura' => 0,
-                    'presion' => 0,
                 ],
             ]);
         }

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Roles')
+
 @section('header', 'Administración de Roles')
 
 @section('actions')

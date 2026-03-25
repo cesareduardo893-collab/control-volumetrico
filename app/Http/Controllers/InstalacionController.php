@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class InstalacionController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar instalaciones
      */
@@ -65,21 +67,10 @@ class InstalacionController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'contribuyente_id' => 'required|integer',
-            'clave_instalacion' => 'required|string|max:255',
-            'nombre' => 'required|string|max:255',
-            'tipo_instalacion' => 'required|string|max:255',
-            'domicilio' => 'required|string|max:255',
-            'codigo_postal' => 'required|string|size:5',
-            'municipio' => 'required|string|max:255',
-            'estado' => 'required|string|max:255',
-            'estatus' => 'required|in:OPERACION,SUSPENDIDA,CANCELADA',
-            'telefono' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'fecha_apertura' => 'nullable|date',
-            'fecha_cierre' => 'nullable|date',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasInstalacion());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -195,17 +186,10 @@ class InstalacionController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'clave_instalacion' => "sometimes|string|max:255",
-            'nombre' => 'sometimes|string|max:255',
-            'tipo_instalacion' => 'sometimes|string|max:255',
-            'domicilio' => 'sometimes|string|max:255',
-            'codigo_postal' => 'sometimes|string|size:5',
-            'municipio' => 'sometimes|string|max:255',
-            'estado' => 'sometimes|string|max:255',
-            'estatus' => 'sometimes|in:OPERACION,SUSPENDIDA,CANCELADA',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasInstalacion(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

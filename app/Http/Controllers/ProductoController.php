@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class ProductoController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Listar productos
      */
@@ -48,21 +50,10 @@ class ProductoController extends BaseController
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'clave_sat' => 'required|string|size:10',
-            'codigo' => 'required|string|max:20',
-            'clave_identificacion' => 'required|string|size:10',
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'unidad_medida' => 'required|string|max:50',
-            'tipo_hidrocarburo' => 'required|in:petroleo,gas_natural,condensados,gasolina,diesel,turbosina,gas_lp,propano,otro',
-            'activo' => 'sometimes|boolean',
-            'densidad_referencia' => 'nullable|numeric|min:0',
-            'temperatura_referencia' => 'nullable|numeric',
-            'factor_conversion' => 'nullable|numeric|min:0',
-            'octanaje' => 'nullable|numeric',
-            'numero_octano' => 'nullable|numeric',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasProducto());
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
@@ -179,16 +170,10 @@ class ProductoController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'clave_sat' => 'sometimes|string|size:10',
-            'codigo' => 'sometimes|string|max:20',
-            'clave_identificacion' => 'sometimes|string|size:10',
-            'nombre' => 'sometimes|string|max:255',
-            'descripcion' => 'nullable|string',
-            'unidad_medida' => 'sometimes|string|max:50',
-            'tipo_hidrocarburo' => 'sometimes|in:petroleo,gas_natural,condensados,gasolina,diesel,turbosina,gas_lp,propano,otro',
-            'activo' => 'sometimes|boolean',
-        ]);
+        $resultadoValidacion = $this->validar($request, $this->reglasProducto(true));
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));

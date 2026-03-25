@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ValidacionEspanol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 
 class AuthController extends BaseController
 {
+    use ValidacionEspanol;
     /**
      * Mostrar formulario de login
      */
@@ -21,10 +23,13 @@ class AuthController extends BaseController
      */
     public function login(Request $request)
     {
-        $request->validate([
+        $resultadoValidacion = $this->validar($request, [
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             Log::info('Paso 1: Validación OK');
@@ -144,7 +149,7 @@ class AuthController extends BaseController
      */
     public function register(Request $request)
     {
-        $request->validate([
+        $resultadoValidacion = $this->validar($request, [
             'identificacion' => 'required|string|max:18',
             'nombres' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
@@ -153,6 +158,9 @@ class AuthController extends BaseController
             'telefono' => 'nullable|string|max:20',
             'direccion' => 'nullable|string|max:255',
         ]);
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->initApiClient(false); // Sin token aún
@@ -201,10 +209,13 @@ class AuthController extends BaseController
      */
     public function changePassword(Request $request)
     {
-        $request->validate([
+        $resultadoValidacion = $this->validar($request, [
             'password_actual' => 'required|string',
             'password' => 'required|min:8|confirmed',
         ]);
+        if ($resultadoValidacion) {
+            return $resultadoValidacion;
+        }
 
         try {
             $this->setApiToken(Session::get('api_token'));
