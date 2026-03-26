@@ -7,8 +7,8 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Información del Producto</h5>
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #F7C331 0%, #FF6B35 100%);">
+                <h5 class="card-title mb-0"><i class="bi bi-droplet-fill me-2"></i>Información del Combustible</h5>
             </div>
             <div class="card-body">
                 @if($errors->any())

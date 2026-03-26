@@ -5,35 +5,42 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends BaseController
 {
     /**
-     * Muestra el dashboard principal con datos de la base de datos.
+     * Muestra el dashboard principal con datos de la API.
      */
     public function index(Request $request)
     {
         try {
-            $resumen = [
-                'contribuyentes_activos' => 0,
-                'instalaciones_activas' => 0,
-                'alarmas_activas' => 0,
-                'volumen_total' => 0,
-                'ultimos_movimientos' => [],
-            ];
+            $this->setApiToken(Session::get('api_token'));
 
-            // Obtener usuarios activos (usando la tabla users que sí existe)
-            if (Schema::hasTable('users')) {
-                $resumen['contribuyentes_activos'] = DB::table('users')
-                    ->where('active', true)
-                    ->count();
+            // Obtener resumen desde la API
+            $response = $this->apiGet('/api/dashboard/resumen');
+            
+            if ($this->apiResponseSuccessful($response)) {
+                $resumen = $this->apiResponseData($response, []);
+                
+                // Si el endpoint de resumen no devuelve alarmas_activas, obtenerlo directamente
+                if (!isset($resumen['alarmas_activas'])) {
+                    $alarmasResponse = $this->apiGet('/api/alarmas/activas');
+                    if ($this->apiResponseSuccessful($alarmasResponse)) {
+                        $alarmas = $this->apiResponseData($alarmasResponse, []);
+                        $resumen['alarmas_activas'] = is_array($alarmas) ? count($alarmas) : 0;
+                    }
+                }
+            } else {
+                $resumen = $this->getDefaultResumen();
+                
+                // Intentar obtener alarmas activas directamente como fallback
+                $alarmasResponse = $this->apiGet('/api/alarmas/activas');
+                if ($this->apiResponseSuccessful($alarmasResponse)) {
+                    $alarmas = $this->apiResponseData($alarmasResponse, []);
+                    $resumen['alarmas_activas'] = is_array($alarmas) ? count($alarmas) : 0;
+                }
             }
-            
-            // Las demás tablas no existen aún, se mantienen en 0
-            // Cuando se creen las migraciones, se pueden habilitar estas consultas
-            
+
             return view('dashboard.index', [
                 'resumen' => $resumen,
             ]);
@@ -43,16 +50,45 @@ class DashboardController extends BaseController
                 'error' => $e->getMessage()
             ]);
 
+            $resumen = $this->getDefaultResumen();
+            
+            // Intentar obtener alarmas activas directamente como fallback
+            try {
+                $this->setApiToken(Session::get('api_token'));
+                $alarmasResponse = $this->apiGet('/api/alarmas/activas');
+                if ($this->apiResponseSuccessful($alarmasResponse)) {
+                    $alarmas = $this->apiResponseData($alarmasResponse, []);
+                    $resumen['alarmas_activas'] = is_array($alarmas) ? count($alarmas) : 0;
+                }
+            } catch (\Exception $ex) {
+                // Ignorar error al obtener alarmas activas
+            }
+
             return view('dashboard.index', [
-                'resumen' => [
-                    'contribuyentes_activos' => 0,
-                    'instalaciones_activas' => 0,
-                    'alarmas_activas' => 0,
-                    'volumen_total' => 0,
-                    'ultimos_movimientos' => [],
-                ],
+                'resumen' => $resumen,
             ]);
         }
+    }
+
+    /**
+     * Obtener datos por defecto del resumen
+     */
+    private function getDefaultResumen(): array
+    {
+        return [
+            'contribuyentes_activos' => 0,
+            'contribuyentes_total' => 0,
+            'instalaciones_activas' => 0,
+            'instalaciones_total' => 0,
+            'alarmas_activas' => 0,
+            'volumen_total' => 0,
+            'tanques_total' => 0,
+            'medidores_total' => 0,
+            'dispensarios_total' => 0,
+            'mangueras_total' => 0,
+            'registros_hoy' => 0,
+            'ultimos_movimientos' => [],
+        ];
     }
 
     /**
@@ -138,7 +174,6 @@ class DashboardController extends BaseController
         try {
             $this->setApiToken(Session::get('api_token'));
 
-            // Obtener parámetros de filtro opcionales
             $params = $request->only([
                 'fecha_inicio', 'fecha_fin', 'tipo_reporte'
             ]);
@@ -147,7 +182,6 @@ class DashboardController extends BaseController
             $response = $this->apiGetRaw('/api/exportar/' . $modulo, $params);
 
             if ($response && $response->successful()) {
-                // Si la API devuelve un archivo, lo enviamos directamente
                 $contentType = $response->headers->get('Content-Type');
                 $contentDisposition = $response->headers->get('Content-Disposition');
 
@@ -156,7 +190,6 @@ class DashboardController extends BaseController
                     ->header('Content-Disposition', $contentDisposition);
             }
 
-            // Si no es exitoso, manejamos el error
             if ($response) {
                 $json = $response->json();
                 return $this->jsonError(

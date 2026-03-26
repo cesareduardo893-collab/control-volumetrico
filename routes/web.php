@@ -35,6 +35,7 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
 Route::post('/register', [AuthController::class, 'register'])->name('register');
+Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->name('google.callback');
 
 // Rutas protegidas (requieren token en sesión)
 Route::middleware('api.auth')->group(function () {
@@ -231,7 +232,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/exportar', [PedimentoController::class, 'exportar'])->name('exportar');
     });
 
-    // ==================== PERMISOS ====================
+    // ==================== PERMISOS (Solo Administradores) ====================
     Route::prefix('permissions')->name('permissions.')->group(function () {
         Route::get('/', [PermissionController::class, 'index'])->name('index');
         Route::get('/create', [PermissionController::class, 'create'])->name('create');
@@ -293,7 +294,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/exportar', [ReporteSatController::class, 'exportar'])->name('exportar');
     });
 
-    // ==================== ROLES ====================
+    // ==================== ROLES (Solo Administradores) ====================
     Route::prefix('roles')->name('roles.')->group(function () {
         Route::get('/', [RoleController::class, 'index'])->name('index');
         Route::get('/create', [RoleController::class, 'create'])->name('create');
@@ -325,7 +326,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/exportar', [TanqueController::class, 'exportar'])->name('exportar');
     });
 
-    // ==================== USUARIOS ====================
+    // ==================== USUARIOS (Solo Administradores) ====================
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');

@@ -16,6 +16,12 @@ class UserController extends BaseController
      */
     public function index(Request $request)
     {
+        // Verificar permisos
+        if (!canManageUsers()) {
+            return redirect()->route('dashboard')
+                ->with('error', 'No tiene permisos para gestionar usuarios');
+        }
+
         try {
             $this->setApiToken(Session::get('api_token'));
 
@@ -42,6 +48,12 @@ class UserController extends BaseController
      */
     public function create()
     {
+        // Verificar permisos
+        if (!canManageUsers()) {
+            return redirect()->route('users.index')
+                ->with('error', 'No tiene permisos para crear usuarios');
+        }
+
         try {
             $this->setApiToken(Session::get('api_token'));
 
@@ -67,6 +79,12 @@ class UserController extends BaseController
      */
     public function store(Request $request)
     {
+        // Verificar permisos
+        if (!canManageUsers()) {
+            return redirect()->route('users.index')
+                ->with('error', 'No tiene permisos para crear usuarios');
+        }
+
         $resultadoValidacion = $this->validar($request, $this->reglasUsuario());
         if ($resultadoValidacion) {
             return $resultadoValidacion;
@@ -155,6 +173,12 @@ class UserController extends BaseController
      */
     public function edit($id)
     {
+        // Verificar permisos
+        if (!canManageUsers()) {
+            return redirect()->route('users.index')
+                ->with('error', 'No tiene permisos para editar usuarios');
+        }
+
         try {
             $this->setApiToken(Session::get('api_token'));
 
@@ -192,6 +216,12 @@ class UserController extends BaseController
      */
     public function update(Request $request, $id)
     {
+        // Verificar permisos
+        if (!canManageUsers()) {
+            return redirect()->route('users.index')
+                ->with('error', 'No tiene permisos para actualizar usuarios');
+        }
+
         $resultadoValidacion = $this->validar($request, $this->reglasUsuario(true));
         if ($resultadoValidacion) {
             return $resultadoValidacion;
@@ -245,6 +275,12 @@ class UserController extends BaseController
      */
     public function destroy($id)
     {
+        // Verificar permisos
+        if (!canManageUsers()) {
+            return redirect()->route('users.index')
+                ->with('error', 'No tiene permisos para eliminar usuarios');
+        }
+
         try {
             $this->setApiToken(Session::get('api_token'));
 

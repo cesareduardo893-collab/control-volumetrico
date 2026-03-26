@@ -4,9 +4,11 @@
 @section('header', 'Dispensarios de Combustible')
 
 @section('actions')
+@if(canManageInfrastructure())
 <a href="{{ route('dispensarios.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Dispensario
 </a>
+@endif
 <div class="btn-group">
     <a href="{{ route('dispensarios.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
         <i class="bi bi-file-excel"></i> Excel

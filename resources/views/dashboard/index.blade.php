@@ -22,11 +22,11 @@
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="stats-label mb-1">Contribuyentes Activos</div>
+                        <div class="stats-label mb-1">Gasolineras Activas</div>
                         <div class="stats-number">{{ $resumen['contribuyentes_activos'] ?? 0 }}</div>
                     </div>
                     <div class="stats-icon">
-                        <i class="bi bi-building"></i>
+                        <i class="bi bi-fuel-pump"></i>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -44,11 +44,11 @@
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="stats-label mb-1">Instalaciones</div>
+                        <div class="stats-label mb-1">Estaciones de Servicio</div>
                         <div class="stats-number">{{ $resumen['instalaciones_activas'] ?? 0 }}</div>
                     </div>
-                    <div class="stats-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <i class="bi bi-geo-alt"></i>
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #006847 0%, #004E98 100%);">
+                        <i class="bi bi-geo-alt-fill"></i>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -69,8 +69,8 @@
                         <div class="stats-label mb-1">Alarmas Activas</div>
                         <div class="stats-number">{{ $resumen['alarmas_activas'] ?? 0 }}</div>
                     </div>
-                    <div class="stats-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <i class="bi bi-exclamation-triangle"></i>
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #F7C331 0%, #FF6B35 100%);">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -91,8 +91,8 @@
                         <div class="stats-label mb-1">Volumen Total (L)</div>
                         <div class="stats-number">{{ number_format($resumen['volumen_total'] ?? 0, 0) }}</div>
                     </div>
-                    <div class="stats-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
-                        <i class="bi bi-droplet-half"></i>
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #CE1126 0%, #FF6B35 100%);">
+                        <i class="bi bi-droplet-fill"></i>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -117,11 +117,11 @@
                 </h5>
             </div>
             <div class="card-body">
-                <!-- Área 1: Control Volumétrico -->
+                <!-- Área 1: Control de Gasolinera -->
                 <div class="mb-4">
-                    <h6 class="text-primary mb-3">
-                        <i class="bi bi-shield-check me-2"></i>
-                        Control Volumétrico
+                    <h6 class="text-primary mb-3" style="color: #CE1126 !important;">
+                        <i class="bi bi-fuel-pump me-2"></i>
+                        Control de Gasolinera
                     </h6>
                     
                     <!-- 1.1 Control volumétrico -->
@@ -133,9 +133,9 @@
                         <div class="row mt-2">
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
                                 <a href="{{ route('registros-volumetricos.index') }}" class="module-card">
-                                    <div class="card h-100 border-success">
+                                    <div class="card h-100 border-danger">
                                         <div class="card-body">
-                                            <div class="module-icon text-success">
+                                            <div class="module-icon text-danger" style="background: linear-gradient(135deg, rgba(206, 17, 38, 0.1) 0%, rgba(255, 107, 53, 0.1) 100%);">
                                                 <i class="bi bi-graph-up-arrow"></i>
                                             </div>
                                             <h6 class="module-title">Reg. Volumétricos</h6>
@@ -145,9 +145,9 @@
                             </div>
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
                                 <a href="{{ route('existencias.index') }}" class="module-card">
-                                    <div class="card h-100 border-success">
+                                    <div class="card h-100 border-warning">
                                         <div class="card-body">
-                                            <div class="module-icon text-success">
+                                            <div class="module-icon text-warning" style="background: linear-gradient(135deg, rgba(247, 195, 49, 0.1) 0%, rgba(255, 107, 53, 0.1) 100%);">
                                                 <i class="bi bi-bar-chart-fill"></i>
                                             </div>
                                             <h6 class="module-title">Existencias</h6>
@@ -158,18 +158,18 @@
                         </div>
                     </div>
 
-                    <!-- 1.2 Gestión de sistemas de medición y equipos -->
+                    <!-- 1.2 Gestión de Equipos de Gasolinera -->
                     <div class="mb-3">
                         <small class="text-muted fw-semibold">
                             <i class="bi bi-gear me-1"></i>
-                            1.2 Gestión de Sistemas de Medición y Equipos
+                            1.2 Gestión de Equipos de Gasolinera
                         </small>
                         <div class="row mt-2">
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
                                 <a href="{{ route('tanques.index') }}" class="module-card">
-                                    <div class="card h-100 border-warning">
+                                    <div class="card h-100 border-success">
                                         <div class="card-body">
-                                            <div class="module-icon text-warning">
+                                            <div class="module-icon text-success" style="background: linear-gradient(135deg, rgba(0, 104, 71, 0.1) 0%, rgba(0, 78, 152, 0.1) 100%);">
                                                 <i class="bi bi-droplet-half"></i>
                                             </div>
                                             <h6 class="module-title">Tanques</h6>
@@ -181,7 +181,7 @@
                                 <a href="{{ route('medidores.index') }}" class="module-card">
                                     <div class="card h-100 border-danger">
                                         <div class="card-body">
-                                            <div class="module-icon text-danger">
+                                            <div class="module-icon text-danger" style="background: linear-gradient(135deg, rgba(206, 17, 38, 0.1) 0%, rgba(255, 107, 53, 0.1) 100%);">
                                                 <i class="bi bi-speedometer2"></i>
                                             </div>
                                             <h6 class="module-title">Medidores</h6>
@@ -193,7 +193,7 @@
                                 <a href="{{ route('dispensarios.index') }}" class="module-card">
                                     <div class="card h-100 border-primary">
                                         <div class="card-body">
-                                            <div class="module-icon text-primary">
+                                            <div class="module-icon text-primary" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(0, 78, 152, 0.1) 100%);">
                                                 <i class="bi bi-fuel-pump-fill"></i>
                                             </div>
                                             <h6 class="module-title">Dispensarios</h6>
@@ -205,7 +205,7 @@
                                 <a href="{{ route('mangueras.index') }}" class="module-card">
                                     <div class="card h-100 border-info">
                                         <div class="card-body">
-                                            <div class="module-icon text-info">
+                                            <div class="module-icon text-info" style="background: linear-gradient(135deg, rgba(13, 202, 240, 0.1) 0%, rgba(0, 78, 152, 0.1) 100%);">
                                                 <i class="bi bi-droplet-fill"></i>
                                             </div>
                                             <h6 class="module-title">Mangueras</h6>
@@ -216,11 +216,11 @@
                         </div>
                     </div>
 
-                    <!-- 1.3 Gestión de la calidad del producto -->
+                    <!-- 1.3 Calidad de Combustible -->
                     <div class="mb-3">
                         <small class="text-muted fw-semibold">
                             <i class="bi bi-award me-1"></i>
-                            1.3 Gestión de la Calidad del Producto
+                            1.3 Calidad de Combustible
                         </small>
                         <div class="row mt-2">
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
@@ -250,7 +250,7 @@
                         </div>
                     </div>
 
-                    <!-- 1.4 Verificación y certificación -->
+                    <!-- 1.4 Verificación y Certificación -->
                     <div class="mb-3">
                         <small class="text-muted fw-semibold">
                             <i class="bi bi-patch-check me-1"></i>
@@ -272,11 +272,11 @@
                         </div>
                     </div>
 
-                    <!-- 1.5 Integración fiscal y envío de reportes al SAT -->
+                    <!-- 1.5 Integración Fiscal y SAT -->
                     <div class="mb-3">
                         <small class="text-muted fw-semibold">
                             <i class="bi bi-cloud-upload me-1"></i>
-                            1.5 Integración Fiscal y Envío de Reportes al SAT
+                            1.5 Integración Fiscal y SAT
                         </small>
                         <div class="row mt-2">
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
@@ -321,16 +321,16 @@
 
                 <!-- Área 2: Gestión de Datos -->
                 <div class="mb-4">
-                    <h6 class="text-purple mb-3">
+                    <h6 class="text-purple mb-3" style="color: #006847 !important;">
                         <i class="bi bi-cpu me-2"></i>
                         Gestión de Datos
                     </h6>
                     
-                    <!-- 2.1 Arquitectura y componentes -->
+                    <!-- 2.1 Propietarios y Ubicaciones -->
                     <div class="mb-3">
                         <small class="text-muted fw-semibold">
                             <i class="bi bi-diagram-3 me-1"></i>
-                            2.1 Arquitectura y Componentes
+                            2.1 Propietarios y Ubicaciones
                         </small>
                         <div class="row mt-2">
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
@@ -360,11 +360,11 @@
                         </div>
                     </div>
 
-                    <!-- 2.2 Funcionalidades específicas -->
+                    <!-- 2.2 Monitoreo y Alertas -->
                     <div class="mb-3">
                         <small class="text-muted fw-semibold">
                             <i class="bi bi-lightning me-1"></i>
-                            2.2 Funcionalidades Específicas
+                            2.2 Monitoreo y Alertas
                         </small>
                         <div class="row mt-2">
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
@@ -394,11 +394,11 @@
                         </div>
                     </div>
 
-                    <!-- 2.3 Seguridad informática -->
+                    <!-- 2.3 Seguridad y Usuarios -->
                     <div class="mb-3">
                         <small class="text-muted fw-semibold">
                             <i class="bi bi-shield-lock me-1"></i>
-                            2.3 Seguridad Informática
+                            2.3 Seguridad y Usuarios
                         </small>
                         <div class="row mt-2">
                             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
@@ -566,7 +566,7 @@
     }
     
     .table tbody tr:hover {
-        background: rgba(102, 126, 234, 0.05);
+        background: rgba(255, 107, 53, 0.05);
         transform: translateX(5px);
     }
     
@@ -576,7 +576,7 @@
     }
 
     .text-purple {
-        color: #764ba2 !important;
+        color: #006847 !important;
     }
 
     .module-card .card {

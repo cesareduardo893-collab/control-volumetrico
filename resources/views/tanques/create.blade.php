@@ -1,10 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Nuevo Tanque')
-@section('header', 'Nuevo Tanque')
+@section('title', 'Nuevo Tanque de Almacenamiento')
+@section('header', 'Registrar Nuevo Tanque de Almacenamiento')
 
 @section('content')
 <div class="card">
+  <div class="card-header text-white" style="background: linear-gradient(135deg, #006847 0%, #004E98 100%);">
+    <h5 class="card-title mb-0"><i class="bi bi-droplet-half me-2"></i>Información del Tanque</h5>
+  </div>
   <div class="card-body">
     <form action="{{ route('tanques.store') }}" method="POST">
       @csrf

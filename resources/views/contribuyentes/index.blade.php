@@ -4,9 +4,11 @@
 @section('header', 'Administración de Contribuyentes')
 
 @section('actions')
+@if(hasPermission('contribuyentes.manage'))
 <a href="{{ route('contribuyentes.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Contribuyente
 </a>
+@endif
 <div class="btn-group">
     <a href="{{ route('contribuyentes.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
         <i class="bi bi-file-excel"></i> Excel

@@ -4,9 +4,11 @@
 @section('header', 'Administración de Usuarios')
 
 @section('actions')
+@if(canManageUsers())
 <a href="{{ route('users.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Usuario
 </a>
+@endif
 @endsection
 
 @section('content')
@@ -133,16 +135,18 @@
                                     <a href="{{ route('users.show', $user['id']) }}" class="btn btn-sm btn-info" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
+                                    @if(canManageUsers())
                                     <a href="{{ route('users.edit', $user['id']) }}" class="btn btn-sm btn-warning" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <a href="{{ route('users.permisos', $user['id']) }}" class="btn btn-sm btn-secondary" title="Permisos">
                                         <i class="bi bi-key"></i>
                                     </a>
+                                    @endif
                                     <a href="{{ route('users.actividad', $user['id']) }}" class="btn btn-sm btn-primary" title="Actividad">
                                         <i class="bi bi-clock-history"></i>
                                     </a>
-                                    @if($user['activo'] && !$user['locked_until'])
+                                    @if(canManageUsers() && $user['activo'] && !$user['locked_until'])
                                         <button type="button" class="btn btn-sm btn-danger" 
                                                 onclick="confirmarBloqueo({{ $user['id'] }})" title="Bloquear">
                                             <i class="bi bi-lock"></i>

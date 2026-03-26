@@ -205,6 +205,44 @@ class AuthController extends BaseController
     }
 
     /**
+     * Procesar callback de Google OAuth
+     */
+    public function googleCallback(Request $request)
+    {
+        try {
+            // Recibir datos del redirect de la API
+            $token = $request->input('token');
+            $userId = $request->input('user_id');
+            $userName = $request->input('user_name');
+            $userEmail = $request->input('user_email');
+            $userRoles = $request->input('user_roles');
+
+            if (!$token) {
+                return redirect()->route('login')
+                    ->with('error', 'Error en la autenticación con Google');
+            }
+
+            // Guardar datos en sesión
+            Session::put('api_token', $token);
+            Session::put('user_id', $userId);
+            Session::put('user_name', $userName);
+            Session::put('user_email', $userEmail);
+            Session::put('user_roles', explode(',', $userRoles ?? ''));
+
+            return redirect()->route('dashboard')
+                ->with('success', 'Bienvenido ' . ($userName ?? ''));
+
+        } catch (\Throwable $e) {
+            Log::error('Error en callback de Google', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('login')
+                ->with('error', 'Error al procesar autenticación con Google');
+        }
+    }
+
+    /**
      * Cambiar contraseña
      */
     public function changePassword(Request $request)

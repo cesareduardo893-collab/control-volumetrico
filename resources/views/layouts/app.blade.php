@@ -24,15 +24,24 @@
         :root {
             --sidebar-width: 280px;
             --sidebar-collapsed: 70px;
-            --navbar-height: 65px;
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --dark-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --glass-bg: rgba(255, 255, 255, 0.95);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --shadow-soft: 0 8px 32px rgba(31, 38, 135, 0.15);
-            --shadow-medium: 0 15px 35px rgba(31, 38, 135, 0.2);
+            --navbar-height: 70px;
+            /* Colores de Gasolinera */
+            --pemex-red: #CE1126;
+            --pemex-green: #006847;
+            --pemex-white: #FFFFFF;
+            --pemex-dark: #1a1a2e;
+            --fuel-orange: #FF6B35;
+            --fuel-yellow: #F7C331;
+            --fuel-blue: #004E98;
+            --primary-gradient: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%);
+            --secondary-gradient: linear-gradient(135deg, #006847 0%, #004E98 100%);
+            --success-gradient: linear-gradient(135deg, #006847 0%, #28a745 100%);
+            --warning-gradient: linear-gradient(135deg, #F7C331 0%, #FF6B35 100%);
+            --dark-gradient: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            --glass-bg: rgba(255, 255, 255, 0.98);
+            --glass-border: rgba(255, 107, 53, 0.2);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 15px 35px rgba(0, 0, 0, 0.15);
             --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -45,42 +54,87 @@
         body {
             font-family: 'Inter', sans-serif;
             font-size: 0.9rem;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FF6B35' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* Navbar Moderno */
+        /* Navbar Estilo Gasolinera */
         .navbar {
             height: var(--navbar-height);
-            background: var(--glass-bg);
+            background: linear-gradient(90deg, #FF6B35 0%, #F7C331 50%, #FF6B35 100%);
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
             transition: var(--transition-smooth);
             z-index: 1000;
         }
 
         .navbar:hover {
-            box-shadow: var(--shadow-medium);
+            box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
         }
 
         .navbar-brand {
             font-weight: 700;
-            font-size: 1.3rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            transition: var(--transition-smooth);
+            font-size: 1.4rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .navbar-brand:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
 
-        /* Sidebar Moderno */
+        .navbar-brand .brand-icon {
+            width: 45px;
+            height: 45px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .navbar-brand .brand-icon i {
+            font-size: 1.5rem;
+            color: #FF6B35;
+        }
+
+        .navbar-brand .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-brand .brand-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .navbar-brand .brand-subtitle {
+            font-size: 0.7rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .navbar .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        .navbar .nav-link:hover {
+            background: rgba(255,255,255,0.2);
+            color: white !important;
+        }
+
+        /* Sidebar Estilo Gasolinera */
         .sidebar {
             position: fixed;
             top: var(--navbar-height);
@@ -88,9 +142,8 @@
             left: 0;
             z-index: 999;
             width: var(--sidebar-width);
-            background: var(--dark-gradient);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-right: 3px solid #FF6B35;
             transition: var(--transition-smooth);
             overflow: hidden;
         }
@@ -163,10 +216,11 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%);
             opacity: 0;
             transition: var(--transition-smooth);
             border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(255, 107, 53, 0.3);
         }
 
         .sidebar .nav-link:hover::before,
@@ -178,7 +232,7 @@
         .sidebar .nav-link.active {
             color: white;
             transform: translateX(5px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
         }
 
         .sidebar .nav-link i {
@@ -220,7 +274,7 @@
             z-index: 1001;
             width: 30px;
             height: 30px;
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%);
             border: none;
             border-radius: 50%;
             color: white;
@@ -229,12 +283,12 @@
             justify-content: center;
             cursor: pointer;
             transition: var(--transition-smooth);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
         }
 
         .sidebar-toggle:hover {
             transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
         }
 
         .sidebar.collapsed ~ .sidebar-toggle {
@@ -287,8 +341,20 @@
             border-radius: 20px;
             box-shadow: var(--shadow-soft);
             margin-bottom: 2rem;
-            border: 1px solid var(--glass-border);
+            border: 1px solid rgba(255, 107, 53, 0.2);
             transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF6B35 0%, #F7C331 100%);
         }
 
         .page-header:hover {
@@ -453,23 +519,23 @@
         }
 
         .btn-primary {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
         }
 
         .btn-success {
-            background: var(--success-gradient);
+            background: linear-gradient(135deg, #006847 0%, #004E98 100%);
             color: white;
         }
 
         .btn-success:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 104, 71, 0.4);
         }
 
         /* Tables Modernas */
@@ -498,7 +564,7 @@
         }
 
         .table tbody tr:hover {
-            background: rgba(102, 126, 234, 0.05);
+            background: rgba(255, 107, 53, 0.05);
             transform: scale(1.01);
         }
 
@@ -512,9 +578,84 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            border-color: #FF6B35;
+            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
             transform: translateY(-1px);
+        }
+
+        /* Autocomplete Styles */
+        .autocomplete-wrapper {
+            position: relative;
+        }
+        
+        .autocomplete-results {
+            position: absolute;
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            box-shadow: var(--shadow-medium);
+            z-index: 1050;
+            margin-top: 4px;
+        }
+        
+        .autocomplete-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        
+        .autocomplete-item:hover,
+        .autocomplete-item.active {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%);
+            color: white;
+        }
+        
+        .autocomplete-item small {
+            opacity: 0.8;
+        }
+
+        /* Form validation states */
+        .is-valid {
+            border-color: #28a745 !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+            padding-right: calc(1.5em + 0.75rem);
+        }
+        
+        .is-invalid {
+            border-color: #dc3545 !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+            padding-right: calc(1.5em + 0.75rem);
+        }
+        
+        .invalid-feedback {
+            display: none;
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+        }
+        
+        .is-invalid ~ .invalid-feedback {
+            display: block;
+        }
+
+        /* Auto-fill highlight animation */
+        .bg-success-subtle {
+            animation: highlightFade 1s ease;
+        }
+        
+        @keyframes highlightFade {
+            0% { background-color: rgba(40, 167, 69, 0.3); }
+            100% { background-color: transparent; }
         }
 
         /* Badges Modernos */
@@ -1078,6 +1219,9 @@
         `;
         document.head.appendChild(style);
     </script>
+    
+    <!-- Form Enhancements Library -->
+    <script src="{{ asset('js/form-enhancements.js') }}"></script>
     
     @stack('scripts')
 </body>

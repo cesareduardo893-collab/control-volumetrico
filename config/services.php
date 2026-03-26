@@ -1,8 +1,8 @@
 <?php
 
 return [
- 'api' => [
-        'url' => env('API_URL', 'http://localhost:8000/api'),
+  'api' => [
+        'url' => env('API_URL', 'http://localhost:8000'),
         'timeout' => env('API_TIMEOUT', 30),
         'token_key' => env('SESSION_TOKEN_KEY', 'api_auth_token'),
     ],

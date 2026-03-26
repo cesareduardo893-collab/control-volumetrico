@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Nueva Instalación')
-@section('header', 'Registrar Nueva Instalación')
+@section('title', 'Nueva Estación de Servicio')
+@section('header', 'Registrar Nueva Estación de Servicio')
 
 @section('content')
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Información de la Instalación</h5>
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #006847 0%, #004E98 100%);">
+                <h5 class="card-title mb-0"><i class="bi bi-geo-alt-fill me-2"></i>Información de la Estación</h5>
             </div>
             <div class="card-body">
                 @if($errors->any())
@@ -26,32 +26,24 @@
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="contribuyente_id" class="form-label">Contribuyente *</label>
-                            <select class="form-select select2" id="contribuyente_id" name="contribuyente_id" required>
-                                <option value="">Seleccione...</option>
-                                @foreach ($contribuyentes as $contribuyente)
-                                    @php
-                                        // Soporte para diferentes shapes de datos: array / object / valor simple
-                                        $cid = is_array($contribuyente) ? ($contribuyente['id'] ?? $contribuyente['ID'] ?? null)
-                                            : (is_object($contribuyente) ? ($contribuyente->id ?? $contribuyente->ID ?? null) : $contribuyente);
-                                        $crazon = is_array($contribuyente) ? ($contribuyente['razon_social'] ?? $contribuyente['razon'] ?? '')
-                                            : (is_object($contribuyente) ? ($contribuyente->razon_social ?? $contribuyente->razon ?? '') : '');
-                                        $crfc = is_array($contribuyente) ? ($contribuyente['rfc'] ?? '')
-                                            : (is_object($contribuyente) ? ($contribuyente->rfc ?? '') : '');
-                                    @endphp
-                                    @if ($cid !== null)
-                                        <option value="{{ $cid }}" {{ old('contribuyente_id') == $cid ? 'selected' : '' }}>
-                                            {{ $crazon ?: $cid }} ({{ $crfc }})
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
+                            <label for="contribuyente_search" class="form-label">Buscar Contribuyente *</label>
+                            <input type="text" class="form-control" id="contribuyente_search" 
+                                   placeholder="Escriba para buscar por razón social o RFC..." autocomplete="off">
+                            <input type="hidden" id="contribuyente_id" name="contribuyente_id" 
+                                   value="{{ old('contribuyente_id') }}" required>
+                            <small class="text-muted">Escriba al menos 2 caracteres para buscar</small>
                         </div>
                         
                         <div class="col-md-6 mb-3">
                             <label for="clave_instalacion" class="form-label">Clave de Instalación *</label>
-                            <input type="text" class="form-control" id="clave_instalacion" name="clave_instalacion" 
-                                   value="{{ old('clave_instalacion') }}" required>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="clave_instalacion" name="clave_instalacion" 
+                                       value="{{ old('clave_instalacion') }}" required>
+                                <button type="button" class="btn btn-outline-secondary" onclick="generarClaveAleatoria()" title="Generar clave">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Se genera automáticamente al seleccionar tipo</small>
                         </div>
                     </div>
                     
@@ -165,17 +157,57 @@
 
 @push('scripts')
 <script>
+// Función para generar clave aleatoria
+function generarClaveAleatoria() {
+    const prefijos = ['EST', 'TER', 'PLA', 'ALM', 'INS'];
+    const prefijo = prefijos[Math.floor(Math.random() * prefijos.length)];
+    const numero = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+    document.getElementById('clave_instalacion').value = `${prefijo}-${numero}`;
+}
+
 $(document).ready(function() {
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd',
-        language: 'es',
-        autoclose: true
+    // Inicializar mejoras de formulario
+    FormEnhancements.init();
+    
+    // Inicializar autocompletado para contribuyentes
+    FormEnhancements.createAutoComplete('contribuyente_search', {
+        url: '/api/contribuyentes/search',
+        displayField: 'razon_social',
+        valueField: 'id',
+        searchFields: ['razon_social', 'rfc'],
+        onSelect: (item) => {
+            // Establecer el ID del contribuyente seleccionado
+            document.getElementById('contribuyente_id').value = item.id;
+            
+            // Auto-rellenar campos si están vacíos
+            if (!document.getElementById('telefono').value && item.telefono) {
+                document.getElementById('telefono').value = item.telefono;
+            }
+            if (!document.getElementById('email').value && item.email) {
+                document.getElementById('email').value = item.email;
+            }
+        }
     });
     
-    $('.select2').select2({
-        theme: 'bootstrap-5',
-        width: '100%'
-    });
+    // Generar clave de instalación automáticamente
+    const claveInput = document.getElementById('clave_instalacion');
+    const tipoSelect = document.getElementById('tipo_instalacion');
+    
+    if (tipoSelect && claveInput) {
+        tipoSelect.addEventListener('change', function() {
+            if (!claveInput.value) {
+                const prefijos = {
+                    'estacion_servicio': 'EST',
+                    'terminal': 'TER',
+                    'planta': 'PLA',
+                    'almacen': 'ALM'
+                };
+                const prefijo = prefijos[this.value] || 'INS';
+                const numero = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+                claveInput.value = `${prefijo}-${numero}`;
+            }
+        });
+    }
 });
 </script>
 @endpush

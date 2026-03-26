@@ -4,9 +4,11 @@
 @section('header', 'Mangueras')
 
 @section('actions')
+@if(canManageInfrastructure())
 <a href="{{ route('mangueras.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nueva Manguera
 </a>
+@endif
 <div class="btn-group">
     <a href="{{ route('mangueras.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
         <i class="bi bi-file-excel"></i> Excel

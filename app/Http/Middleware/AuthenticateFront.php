@@ -19,7 +19,7 @@ class AuthenticateFront
     public function handle(Request $request, Closure $next): Response
     {
         // Permitir acceso a rutas específicas sin autenticación
-        if ($request->is('login') || $request->is('register') || $request->is('/')) {
+        if ($request->is('login') || $request->is('register') || $request->is('/') || $request->is('auth/google/callback')) {
             return $next($request);
         }
         

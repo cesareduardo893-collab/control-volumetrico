@@ -1,22 +1,29 @@
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-fluid px-3">
-        <!-- Logo y marca -->
-        <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('dashboard') }}">
-            <div class="brand-icon me-2">
+        <!-- Logo y marca estilo Gasolinera -->
+        <a class="navbar-brand" href="{{ route('dashboard') }}">
+            <div class="brand-icon">
                 <i class="bi bi-fuel-pump-fill"></i>
             </div>
-            <span class="d-none d-sm-inline">Control Volumétrico</span>
-            <span class="d-sm-none">C.V.</span>
+            <div class="brand-text">
+                <span class="brand-title">GasControl</span>
+                <span class="brand-subtitle">Sistema de Gestión de Gasolinera</span>
+            </div>
         </a>
         
         <!-- Botón toggle para móviles -->
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <i class="bi bi-list fs-4"></i>
+            <i class="bi bi-list fs-4 text-white"></i>
         </button>
         
         <div class="collapse navbar-collapse" id="navbarNav">
-            <!-- Menú izquierdo (vacío por ahora) -->
+            <!-- Menú izquierdo -->
             <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('dashboard') }}">
+                        <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                    </a>
+                </li>
             </ul>
             
             <!-- Menú derecho -->
@@ -39,8 +46,8 @@
                     </a>
                     <div class="dropdown-menu dropdown-menu-end notifications-dropdown" aria-labelledby="notificationsDropdown">
                         <div class="dropdown-header">
-                            <span class="fw-semibold">Notificaciones</span>
-                            <small class="text-muted" id="notifTime"></small>
+                            <span class="fw-semibold text-white">Notificaciones</span>
+                            <small class="text-white-50" id="notifTime"></small>
                         </div>
                         <div id="notificationsList">
                             <div class="dropdown-item text-center text-muted py-4">
@@ -61,8 +68,8 @@
                         <div class="user-avatar">
                             <i class="bi bi-person-fill"></i>
                         </div>
-                        <span class="d-none d-md-inline user-name">{{ session('user_name', 'Usuario') }}</span>
-                        <i class="bi bi-chevron-down ms-1 dropdown-arrow"></i>
+                        <span class="d-none d-md-inline user-name text-white">{{ session('user_name', 'Usuario') }}</span>
+                        <i class="bi bi-chevron-down ms-1 dropdown-arrow text-white"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end user-menu" aria-labelledby="userDropdown">
                         <li>
@@ -74,6 +81,11 @@
                                     <div>
                                         <div class="fw-semibold">{{ session('user_name', 'Usuario') }}</div>
                                         <small class="text-muted">{{ session('user_email', 'N/A') }}</small>
+                                        <div class="mt-1">
+                                            @foreach(session('user_roles', []) as $role)
+                                                <span class="badge bg-danger me-1" style="background: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%) !important;">{{ $role }}</span>
+                                            @endforeach
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -103,49 +115,101 @@
 
 <style>
 .navbar {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    background: linear-gradient(90deg, #FF6B35 0%, #F7C331 50%, #FF6B35 100%);
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
+    padding: 0.5rem 0;
 }
 
 .navbar:hover {
-    box-shadow: 0 15px 35px rgba(31, 38, 135, 0.2);
+    box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
 }
 
 .navbar-brand {
     font-weight: 700;
-    font-size: 1.3rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    color: white !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     text-decoration: none;
 }
 
 .navbar-brand:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
 .brand-icon {
-    width: 35px;
-    height: 35px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 10px;
+    width: 50px;
+    height: 50px;
+    background: white;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.1rem;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.brand-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
 }
 
 .navbar-brand:hover .brand-icon {
-    transform: rotate(10deg) scale(1.1);
+    transform: rotate(-5deg) scale(1.05);
+}
+
+.brand-icon i {
+    font-size: 1.6rem;
+    color: #FF6B35;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.brand-subtitle {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.95;
+    color: rgba(255,255,255,0.95);
+}
+
+.navbar .nav-link {
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.navbar .nav-link:hover {
+    background: rgba(255,255,255,0.15);
+    color: white !important;
 }
 
 .navbar-toggler {
@@ -155,7 +219,7 @@
 }
 
 .navbar-toggler:hover {
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(255,255,255,0.1);
 }
 
 .navbar-toggler:focus {
@@ -167,27 +231,28 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
-    border: 1px solid rgba(79, 172, 254, 0.2);
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
-    color: #0dcaf0;
+    color: white;
     transition: all 0.3s ease;
 }
 
 .connection-badge:hover {
-    background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+    background: rgba(255,255,255,0.25);
     transform: translateY(-1px);
 }
 
 .connection-dot {
     width: 8px;
     height: 8px;
-    background: #0dcaf0;
+    background: #28a745;
     border-radius: 50%;
     animation: pulse 2s infinite;
+    box-shadow: 0 0 8px #28a745;
 }
 
 @keyframes pulse {
@@ -204,20 +269,20 @@
 /* Notification Trigger */
 .notification-trigger {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c757d;
+    color: white !important;
     transition: all 0.3s ease;
     text-decoration: none;
+    background: rgba(255,255,255,0.1);
 }
 
 .notification-trigger:hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
+    background: rgba(255,255,255,0.2);
     transform: translateY(-2px);
 }
 
@@ -229,86 +294,60 @@
     position: absolute;
     top: 2px;
     right: 2px;
-    min-width: 18px;
-    height: 18px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 600;
+    min-width: 20px;
+    height: 20px;
+    background: #F7C331;
+    color: #1a1a2e;
+    font-size: 0.7rem;
+    font-weight: 700;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     animation: bounceIn 0.5s ease-out;
+    box-shadow: 0 2px 8px rgba(247, 195, 49, 0.4);
 }
 
 @keyframes bounceIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.3);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.1);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 /* Notifications Dropdown */
 .notifications-dropdown {
-    width: 320px;
+    width: 350px;
     max-height: 400px;
     overflow-y: auto;
     border: none;
     border-radius: 16px;
-    box-shadow: 0 15px 35px rgba(31, 38, 135, 0.2);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
     background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px);
     animation: slideDown 0.3s ease-out;
 }
 
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.notifications-dropdown::-webkit-scrollbar {
-    width: 6px;
-}
-
-.notifications-dropdown::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.notifications-dropdown::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-header {
     padding: 1rem 1.25rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    background: rgba(102, 126, 234, 0.05);
+    background: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 2px 10px rgba(255, 107, 53, 0.2);
 }
 
 .view-all-link {
-    color: #667eea;
+    color: #CE1126;
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .view-all-link:hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: #764ba2;
+    background: rgba(206, 17, 38, 0.1);
+    color: #a50d1f;
 }
 
 /* User Dropdown */
@@ -318,26 +357,26 @@
     gap: 8px;
     padding: 8px 12px;
     border-radius: 12px;
-    color: #495057;
+    color: white !important;
     text-decoration: none;
     transition: all 0.3s ease;
+    background: rgba(255,255,255,0.1);
 }
 
 .user-dropdown:hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
+    background: rgba(255,255,255,0.2);
 }
 
 .user-avatar {
-    width: 35px;
-    height: 35px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 38px;
+    height: 38px;
+    background: white;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1rem;
+    color: #CE1126;
+    font-size: 1.1rem;
     transition: all 0.3s ease;
 }
 
@@ -361,30 +400,30 @@
 
 /* User Menu */
 .user-menu {
-    width: 280px;
+    width: 300px;
     border: none;
     border-radius: 16px;
-    box-shadow: 0 15px 35px rgba(31, 38, 135, 0.2);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
     background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px);
     animation: slideDown 0.3s ease-out;
 }
 
 .user-info {
     padding: 1.25rem;
-    background: rgba(102, 126, 234, 0.05);
+    background: linear-gradient(135deg, rgba(206, 17, 38, 0.05) 0%, rgba(255, 107, 53, 0.05) 100%);
 }
 
 .user-avatar-large {
-    width: 45px;
-    height: 45px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #FF6B35 0%, #F7C331 100%);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
 }
 
 .menu-item {
@@ -397,13 +436,13 @@
 }
 
 .menu-item:hover {
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(206, 17, 38, 0.1);
     transform: translateX(5px);
 }
 
 .menu-item.text-danger:hover {
-    background: rgba(220, 53, 69, 0.1);
-    color: #dc3545 !important;
+    background: rgba(206, 17, 38, 0.1);
+    color: #CE1126 !important;
 }
 
 /* Responsive */
@@ -413,9 +452,16 @@
     }
     
     .brand-icon {
-        width: 30px;
-        height: 30px;
-        font-size: 0.9rem;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .brand-icon i {
+        font-size: 1.2rem;
+    }
+    
+    .brand-subtitle {
+        display: none;
     }
     
     .connection-badge {
@@ -450,10 +496,10 @@ function loadNotifications() {
                     html += `
                         <a class="dropdown-item border-bottom" href="${notif.url || '#'}">
                             <div class="d-flex w-100 justify-content-between">
-                                <small class="text-primary">${notif.tipo || 'Notificación'}</small>
+                                <small class="text-danger fw-bold">${notif.tipo || 'Notificación'}</small>
                                 <small class="text-muted">${notif.fecha || ''}</small>
                             </div>
-                            <p class="mb-1 text-truncate" style="max-width: 280px;">${notif.mensaje || ''}</p>
+                            <p class="mb-1 text-truncate" style="max-width: 300px;">${notif.mensaje || ''}</p>
                         </a>`;
                 });
                 list.html(html);

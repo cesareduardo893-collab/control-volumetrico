@@ -4,9 +4,11 @@
 @section('header', 'Medidores de Flujo')
 
 @section('actions')
+@if(canManageInfrastructure())
 <a href="{{ route('medidores.create') }}" class="btn btn-sm btn-primary">
     <i class="bi bi-plus-circle"></i> Nuevo Medidor
 </a>
+@endif
 <div class="btn-group">
     <a href="{{ route('medidores.exportar', ['tipo' => 'excel']) }}" class="btn btn-sm btn-success" title="Exportar a Excel">
         <i class="bi bi-file-excel"></i> Excel
