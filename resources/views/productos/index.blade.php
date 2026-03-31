@@ -104,21 +104,21 @@
                 <tbody>
                     @forelse($productos as $producto)
                         <tr>
-                            <td><strong>{{ $producto['clave_sat'] }}</strong></td>
-                            <td>{{ $producto['codigo'] }}</td>
+                            <td><strong>{{ ($producto['clave_sat'] ?? '') }}</strong></td>
+                            <td>{{ ($producto['codigo'] ?? '') }}</td>
                             <td>
                                 {{ $producto['nombre'] }}
                                 @if(!empty($producto['descripcion']))
                                     <br><small class="text-muted">{{ Str::limit($producto['descripcion'], 50) }}</small>
                                 @endif
                             </td>
-                            <td>{{ $producto['clave_identificacion'] }}</td>
-                            <td>{{ $producto['unidad_medida'] }}</td>
+                            <td>{{ ($producto['clave_identificacion'] ?? '') }}</td>
+                            <td>{{ ($producto['unidad_medida'] ?? '') }}</td>
                             <td>
                                 <span class="badge bg-info">{{ ucfirst(str_replace('_', ' ', $producto['tipo_hidrocarburo'])) }}</span>
                             </td>
                             <td>
-                                @if($producto['activo'])
+                                @if(($producto['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>

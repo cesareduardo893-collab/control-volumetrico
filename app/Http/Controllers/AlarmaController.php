@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bitacora;
 use App\Http\Controllers\Traits\ValidacionEspanol;
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class AlarmaController extends BaseController
 {
     use ValidacionEspanol;
+
     /**
      * Listar alarmas
      */
@@ -22,7 +23,7 @@ class AlarmaController extends BaseController
             $params = $request->only([
                 'componente_tipo', 'componente_id', 'tipo_alarma_id', 'gravedad',
                 'atendida', 'estado_atencion', 'requiere_atencion_inmediata',
-                'fecha_inicio', 'fecha_fin', 'numero_registro', 'per_page', 'page'
+                'fecha_inicio', 'fecha_fin', 'numero_registro', 'per_page', 'page',
             ]);
 
             $response = $this->apiGet('/api/alarmas', $params);
@@ -31,7 +32,7 @@ class AlarmaController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al listar alarmas', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar alarmas');
@@ -50,16 +51,16 @@ class AlarmaController extends BaseController
             $params = $request->only([
                 'componente_tipo', 'componente_id', 'tipo_alarma_id', 'gravedad',
                 'atendida', 'estado_atencion', 'requiere_atencion_inmediata',
-                'fecha_inicio', 'fecha_fin', 'numero_registro'
+                'fecha_inicio', 'fecha_fin', 'numero_registro',
             ]);
 
             $modulo = 'alarmas';
-            $response = $this->apiGetRaw('/api/exportar/' . $modulo, $params);
+            $response = $this->apiGetRaw('/api/exportar/'.$modulo, $params);
 
             if ($response && $response->successful()) {
                 // Si la API devuelve un archivo, lo enviamos directamente
-                $contentType = $response->headers->get('Content-Type');
-                $contentDisposition = $response->headers->get('Content-Disposition');
+                $contentType = $response->header('Content-Type');
+                $contentDisposition = $response->header('Content-Disposition');
 
                 return response($response->body(), $response->status())
                     ->header('Content-Type', $contentType)
@@ -69,6 +70,7 @@ class AlarmaController extends BaseController
             // Si no es exitoso, manejamos el error
             if ($response) {
                 $json = $response->json();
+
                 return $this->jsonError(
                     $json['message'] ?? 'Error al exportar alarmas',
                     $response->status(),
@@ -79,8 +81,10 @@ class AlarmaController extends BaseController
             return $this->jsonError('Error al exportar alarmas', 500);
         } catch (\Exception $e) {
             Log::error('Error al exportar alarmas', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(), 'trace' => $e->getTraceAsString(),
             ]);
+
+            throw $e;
 
             return redirect()->back()->with('error', 'Error al exportar alarmas');
         }
@@ -96,7 +100,7 @@ class AlarmaController extends BaseController
 
             // Obtener tipos de alarma del catálogo
             $tiposAlarma = $this->getCatalog('/api/catalogos', ['tipo' => 'tipo_alarma']);
-            
+
             // Si el catálogo no devuelve datos, usar valores predeterminados
             if (empty($tiposAlarma)) {
                 $tiposAlarma = [
@@ -109,17 +113,17 @@ class AlarmaController extends BaseController
                     ['id' => 7, 'nombre' => 'Fuga Detectada'],
                     ['id' => 8, 'nombre' => 'Válvula Abierta'],
                     ['id' => 9, 'nombre' => 'Válvula Cerrada'],
-                    ['id' => 10, 'nombre' => 'Fallo de Sensor']
+                    ['id' => 10, 'nombre' => 'Fallo de Sensor'],
                 ];
             }
 
             return view('alarmas.create', [
-                'tiposAlarma' => $tiposAlarma
+                'tiposAlarma' => $tiposAlarma,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de creación', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('alarmas.index')
@@ -162,6 +166,7 @@ class AlarmaController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -173,7 +178,7 @@ class AlarmaController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al crear alarma', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()
@@ -192,7 +197,7 @@ class AlarmaController extends BaseController
 
             $response = $this->apiGet("/api/alarmas/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('alarmas.index')
                     ->with('error', $this->apiResponseMessage($response, 'Alarma no encontrada'));
             }
@@ -200,13 +205,13 @@ class AlarmaController extends BaseController
             $alarma = $this->apiResponseData($response, []);
 
             return view('alarmas.show', [
-                'alarma' => $alarma
+                'alarma' => $alarma,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al mostrar alarma', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
+                'alarma_id' => $id,
             ]);
 
             return redirect()->route('alarmas.index')
@@ -252,6 +257,7 @@ class AlarmaController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -264,7 +270,7 @@ class AlarmaController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al atender alarma', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
+                'alarma_id' => $id,
             ]);
 
             return redirect()->back()
@@ -310,7 +316,7 @@ class AlarmaController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al actualizar estado de alarma', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
+                'alarma_id' => $id,
             ]);
 
             return redirect()->back()
@@ -335,7 +341,7 @@ class AlarmaController extends BaseController
 
             $response = $this->apiGet('/api/alarmas/estadisticas', $request->all());
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar estadísticas'));
             }
 
@@ -343,12 +349,12 @@ class AlarmaController extends BaseController
 
             return view('alarmas.estadisticas', [
                 'estadisticas' => $estadisticas,
-                'filters' => $request->all()
+                'filters' => $request->all(),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al obtener estadísticas de alarmas', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar estadísticas');
@@ -367,7 +373,7 @@ class AlarmaController extends BaseController
 
             $response = $this->apiGet('/api/alarmas/activas', $params);
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar alarmas activas'));
             }
 
@@ -378,12 +384,12 @@ class AlarmaController extends BaseController
             }
 
             return view('alarmas.activas', [
-                'alarmas' => $alarmas
+                'alarmas' => $alarmas,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al obtener alarmas activas', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar alarmas activas');
@@ -400,7 +406,7 @@ class AlarmaController extends BaseController
 
             $response = $this->apiGet("/api/alarmas/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('alarmas.index')
                     ->with('error', $this->apiResponseMessage($response, 'Alarma no encontrada'));
             }
@@ -408,13 +414,13 @@ class AlarmaController extends BaseController
             $alarma = $this->apiResponseData($response, []);
 
             return view('alarmas.atender', [
-                'alarma' => $alarma
+                'alarma' => $alarma,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de atención', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
+                'alarma_id' => $id,
             ]);
 
             return redirect()->route('alarmas.index')
@@ -432,7 +438,7 @@ class AlarmaController extends BaseController
 
             $response = $this->apiGet("/api/alarmas/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('alarmas.index')
                     ->with('error', $this->apiResponseMessage($response, 'Alarma no encontrada'));
             }
@@ -440,13 +446,13 @@ class AlarmaController extends BaseController
             $alarma = $this->apiResponseData($response, []);
 
             return view('alarmas.actualizar-estado', [
-                'alarma' => $alarma
+                'alarma' => $alarma,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de actualización', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
+                'alarma_id' => $id,
             ]);
 
             return redirect()->route('alarmas.index')
@@ -464,7 +470,7 @@ class AlarmaController extends BaseController
 
             $response = $this->apiGet("/api/alarmas/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('alarmas.index')
                     ->with('error', $this->apiResponseMessage($response, 'Alarma no encontrada'));
             }
@@ -476,13 +482,13 @@ class AlarmaController extends BaseController
 
             return view('alarmas.edit', [
                 'alarma' => $alarma,
-                'tiposAlarma' => $tiposAlarma
+                'tiposAlarma' => $tiposAlarma,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de edición', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
+                'alarma_id' => $id,
             ]);
 
             return redirect()->route('alarmas.index')
@@ -522,6 +528,7 @@ class AlarmaController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -534,7 +541,7 @@ class AlarmaController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al actualizar alarma', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
+                'alarma_id' => $id,
             ]);
 
             return redirect()->back()
@@ -571,12 +578,11 @@ class AlarmaController extends BaseController
             return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al eliminar alarma'));
 
         } catch (\Exception $e) {
-            Log::error('Error al eliminar alarma', [
+            Log::error('Error al exportar alarmas', [
                 'error' => $e->getMessage(),
-                'alarma_id' => $id
             ]);
 
-            return redirect()->back()->with('error', 'Error al eliminar alarma');
+            return redirect()->back()->with('error', 'Error al exportar alarmas');
         }
     }
 }

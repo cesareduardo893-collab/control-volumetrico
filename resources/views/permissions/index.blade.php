@@ -91,13 +91,13 @@
                         <tr>
                             <td>{{ $permiso['id'] }}</td>
                             <td><strong>{{ $permiso['name'] }}</strong></td>
-                            <td><code>{{ $permiso['slug'] }}</code></td>
+                            <td><code>{{ ($permiso['slug'] ?? '') }}</code></td>
                             <td>
                                 <span class="badge bg-info">{{ $permiso['modulo'] ?? 'General' }}</span>
                             </td>
                             <td>{{ $permiso['description'] ?? '-' }}</td>
                             <td>
-                                @if($permiso['activo'])
+                                @if(($permiso['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>

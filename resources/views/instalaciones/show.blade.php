@@ -61,7 +61,7 @@
                     <tr>
                         <th>Activo:</th>
                         <td>
-                            @if($instalacion['activo'])
+                            @if(($instalacion['activo'] ?? true))
                                 <span class="badge bg-success">Sí</span>
                             @else
                                 <span class="badge bg-secondary">No</span>
@@ -227,20 +227,20 @@
                         <tbody>
                             @foreach($instalacion['ultimos_registros'] as $registro)
                                 <tr>
-                                    <td>{{ $registro['fecha'] }} {{ $registro['hora'] }}</td>
-                                    <td>{{ $registro['numero_registro'] }}</td>
-                                    <td>{{ $registro['tanque']['identificador'] ?? $registro['tanque_id'] }}</td>
-                                    <td>{{ $registro['producto']['nombre'] ?? $registro['producto_id'] }}</td>
-                                    <td>{{ number_format($registro['volumen_operacion'], 3) }} L</td>
+                                    <td>{{ ($registro['fecha'] ?? '') }} {{ $registro['hora'] }}</td>
+                                    <td>{{ ($registro['numero_registro'] ?? '') }}</td>
+                                    <td>{{ $registro['tanque']['identificador'] ?? ($registro['tanque_id'] ?? 0) }}</td>
+                                    <td>{{ $registro['producto']['nombre'] ?? ($registro['producto_id'] ?? 0) }}</td>
+                                    <td>{{ number_format(($registro['volumen_operacion'] ?? 0), 3) }} L</td>
                                     <td>
                                         @php
                                             $estadoClass = [
                                                 'VALIDADO' => 'success',
                                                 'PENDIENTE' => 'warning',
                                                 'ERROR' => 'danger'
-                                            ][$registro['estado']] ?? 'secondary';
+                                            ][($registro['estado'] ?? '')] ?? 'secondary';
                                         @endphp
-                                        <span class="badge bg-{{ $estadoClass }}">{{ $registro['estado'] }}</span>
+                                        <span class="badge bg-{{ $estadoClass }}">{{ ($registro['estado'] ?? '') }}</span>
                                     </td>
                                 </tr>
                             @endforeach

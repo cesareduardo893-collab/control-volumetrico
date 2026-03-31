@@ -55,15 +55,15 @@
                                     'OPERATIVO' => 'success',
                                     'MANTENIMIENTO' => 'warning',
                                     'FUERA_SERVICIO' => 'danger'
-                                ][$dispensario['estado']] ?? 'secondary';
+                                ][($dispensario['estado'] ?? '')] ?? 'secondary';
                             @endphp
-                            <span class="badge bg-{{ $estadoClass }}">{{ $dispensario['estado'] }}</span>
+                            <span class="badge bg-{{ $estadoClass }}">{{ ($dispensario['estado'] ?? '') }}</span>
                         </td>
                     </tr>
                     <tr>
                         <th>Activo:</th>
                         <td>
-                            @if($dispensario['activo'])
+                            @if((($dispensario['activo'] ?? true) ?? true))
                                 <span class="badge bg-success">Sí</span>
                             @else
                                 <span class="badge bg-secondary">No</span>
@@ -177,6 +177,98 @@
     </div>
 </div>
 
+<!-- Tanques conectados -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-fuel-pump me-2"></i>
+                    Tanques Conectados
+                </h5>
+                <span class="badge bg-light text-dark">{{ count($dispensario['tanques'] ?? []) }} tanques</span>
+            </div>
+            <div class="card-body">
+                @if(!empty($dispensario['tanques']))
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Conexión Regulatoria:</strong> Este dispensario está conectado a los siguientes tanques 
+                        según lo requerido por el Anexo 21 de la Resolución Miscelánea Fiscal.
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Identificador</th>
+                                    <th>Producto</th>
+                                    <th>Capacidad Total</th>
+                                    <th>Estado del Tanque</th>
+                                    <th>Estado Conexión</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($dispensario['tanques'] as $tanque)
+                                    <tr>
+                                        <td>
+                                            <strong class="text-primary">{{ $tanque['identificador'] }}</strong>
+                                        </td>
+                                        <td>
+                                            @if(isset($tanque['producto']))
+                                                {{ $tanque['producto']['nombre'] }}
+                                            @else
+                                                <span class="text-muted">Sin producto</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ number_format($tanque['capacidad_total'], 0) }} L</td>
+                                        <td>
+                                            @php
+                                                $estadoTanqueClass = [
+                                                    'OPERATIVO' => 'success',
+                                                    'MANTENIMIENTO' => 'warning',
+                                                    'FUERA_SERVICIO' => 'danger',
+                                                    'CALIBRACION' => 'info'
+                                                ][$tanque['estado']] ?? 'secondary';
+                                            @endphp
+                                            <span class="badge bg-{{ $estadoTanqueClass }}">{{ $tanque['estado'] }}</span>
+                                        </td>
+                                        <td>
+                                            @php
+                                                $pivotActivo = $tanque['pivot']['activo'] ?? true;
+                                            @endphp
+                                            <span class="badge bg-{{ $pivotActivo ? 'success' : 'secondary' }}">
+                                                {{ $pivotActivo ? 'Conectado' : 'Desconectado' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ route('tanques.show', $tanque['id']) }}" class="btn btn-sm btn-info">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Advertencia:</strong> Este dispensario no tiene tanques conectados. 
+                        Según el Anexo 21, debe estar conectado a al menos un tanque para realizar 
+                        la conciliación diaria de existencias.
+                    </div>
+                    <p class="text-muted mb-0">
+                        <a href="{{ route('dispensarios.edit', $dispensario['id']) }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Conectar Tanques
+                        </a>
+                    </p>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Mangueras asociadas -->
 <div class="row">
     <div class="col-12">
@@ -223,14 +315,14 @@
                                             <span class="badge bg-{{ $estadoClass }}">{{ $manguera['estado'] }}</span>
                                         </td>
                                         <td>
-                                            @if($manguera['activo'])
+                                            @if(($manguera['activo'] ?? true))
                                                 <span class="badge bg-success">Activo</span>
                                             @else
                                                 <span class="badge bg-secondary">Inactivo</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="{{ route('mangueras.show', $manguera['id']) }}" class="btn btn-sm btn-info">
+                                            <a href="{{ route('mangueras.show', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-info">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                         </td>

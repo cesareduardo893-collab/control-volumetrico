@@ -76,7 +76,7 @@
                                                        {{ in_array($permiso['id'], old('permisos', [])) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="permiso_{{ $permiso['id'] }}">
                                                     {{ $permiso['name'] }}
-                                                    <small class="text-muted d-block">{{ $permiso['slug'] }}</small>
+                                                    <small class="text-muted d-block">{{ ($permiso['slug'] ?? '') }}</small>
                                                 </label>
                                             </div>
                                         @endforeach

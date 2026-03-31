@@ -40,7 +40,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="border rounded p-3 bg-light" style="max-height: 600px; overflow: auto;">
-                            <pre id="logContent" class="mb-0" style="font-size: 12px;">{{ $logs }}</pre>
+                            <pre id="logContent" class="mb-0" style="font-size: 12px;">{{ $logs ?? '' }}</pre>
                         </div>
                     </div>
                 </div>
@@ -50,13 +50,13 @@
                     <div class="col-md-6">
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
-                            <strong>Tamaño:</strong> <span id="logSize">{{ number_format(strlen($logs) / 1024, 2) }} KB</span>
+                            <strong>Tamaño:</strong> <span id="logSize">{{ number_format(strlen($logs ?? '') / 1024, 2) }} KB</span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Líneas:</strong> <span id="logLines">{{ substr_count($logs, "\n") + 1 }}</span>
+                            <strong>Líneas:</strong> <span id="logLines">{{ substr_count($logs ?? '', "\n") + 1 }}</span>
                         </div>
                     </div>
                 </div>
@@ -126,7 +126,7 @@ $(document).ready(function() {
         var logFile = $('#logFile').val();
         
         $.ajax({
-            url: '{{ route("configuracion.logs.clear") }}',
+            url: '{{ url("configuracion/logs/clear") }}',
             method: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',

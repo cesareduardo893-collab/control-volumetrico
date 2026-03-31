@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 
 abstract class BaseController extends Controller
@@ -41,7 +39,7 @@ abstract class BaseController extends Controller
             'message' => $message,
         ];
 
-        if (!is_null($errors)) {
+        if (! is_null($errors)) {
             $response['errors'] = $errors;
         }
 
@@ -53,7 +51,7 @@ abstract class BaseController extends Controller
      */
     protected function renderView($view, $apiResponse, $defaultData = [], $filters = [])
     {
-        if (!$this->apiResponseSuccessful($apiResponse)) {
+        if (! $this->apiResponseSuccessful($apiResponse)) {
             return redirect()->back()->with('error', $this->apiResponseMessage($apiResponse, 'Error al cargar datos'));
         }
 
@@ -64,7 +62,7 @@ abstract class BaseController extends Controller
         if (Arr::accessible($responseData) && Arr::exists($responseData, 'data') && Arr::accessible($responseData['data'])) {
             $metaKeys = [
                 'current_page', 'from', 'to', 'per_page',
-                'last_page', 'total', 'path', 'next_page_url', 'prev_page_url'
+                'last_page', 'total', 'path', 'next_page_url', 'prev_page_url',
             ];
 
             foreach ($metaKeys as $key) {
@@ -81,14 +79,14 @@ abstract class BaseController extends Controller
         }
 
         $viewData = array_merge($defaultData, [
-            'filters' => $filters
+            'filters' => $filters,
         ]);
 
-        if (!empty($meta)) {
+        if (! empty($meta)) {
             $viewData['meta'] = $meta;
         }
 
-        if (!empty($links)) {
+        if (! empty($links)) {
             $viewData['links'] = $links;
         }
 
@@ -109,24 +107,27 @@ abstract class BaseController extends Controller
         try {
             $this->setApiToken(session('api_token'));
             $response = $this->apiGet($endpoint, array_merge(['per_page' => 500], $params));
-            
+
+            \Log::debug("getCatalog[$endpoint]", ['response' => $response]);
+
             if ($this->apiResponseSuccessful($response)) {
                 $data = $this->apiResponseData($response, []);
-                
+
                 // Si la respuesta tiene estructura de paginación (data es array con 'data' dentro)
                 if (is_array($data) && isset($data['data'])) {
                     return $data['data'];
                 }
-                
+
                 return $data;
             }
-            
+
             return [];
         } catch (\Exception $e) {
-            Log::error('Error al obtener catálogo', [
+            \Log::error('Error al obtener catálogo', [
                 'endpoint' => $endpoint,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -136,7 +137,7 @@ abstract class BaseController extends Controller
      */
     protected function parseUserAgent(?string $userAgent): ?string
     {
-        if (!$userAgent) {
+        if (! $userAgent) {
             return null;
         }
 

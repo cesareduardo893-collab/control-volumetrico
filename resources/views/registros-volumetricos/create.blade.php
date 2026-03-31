@@ -1,14 +1,17 @@
 @extends('layouts.app')
 
 @section('title', 'Nuevo Registro Volumétrico')
-@section('header', 'Registrar Nuevo Registro Volumétrico')
+@section('header', 'Registrar Nuevo Registro Volumétrico (Emulador)')
 
 @section('content')
 <div class="row justify-content-center">
-    <div class="col-md-10">
+    <div class="col-md-12">
         <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Información del Registro Volumétrico</h5>
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-cpu-fill"></i> Registro Volumétrico Automático
+                </h5>
+                <span class="badge bg-light text-dark">Emulador Activo</span>
             </div>
             <div class="card-body">
                 @if($errors->any())
@@ -21,223 +24,184 @@
                     </div>
                 @endif
                 
-                <form method="POST" action="{{ route('registros-volumetricos.store') }}" id="registroForm">
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-lightning-charge"></i> 
+                    <strong>¡Modo automático!</strong> Selecciona el tanque y los datos se cargarán automáticamente.
+                </div>
+                
+                <form method="POST" action="{{ route('registros-volumetricos.emulador') }}" id="registroForm">
                     @csrf
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="numero_registro" class="form-label">Número de Registro *</label>
-                            <input type="text" class="form-control" id="numero_registro" name="numero_registro" 
-                                   value="{{ old('numero_registro') }}" required>
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <label for="fecha" class="form-label">Fecha *</label>
-                            <input type="date" class="form-control datepicker" id="fecha" name="fecha" 
-                                   value="{{ old('fecha', now()->toDateString()) }}" required>
-                        </div>
-                    </div>
                     
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="instalacion_id" class="form-label">Instalación *</label>
                             <select class="form-select select2" id="instalacion_id" name="instalacion_id" required>
                                 <option value="">Seleccione...</option>
-                                @foreach($instalaciones as $instalacion)
-                                    @php
-                                        if (is_array($instalacion)) {
-                                            $id = $instalacion['id'] ?? '';
-                                            $nombre = $instalacion['nombre'] ?? '';
-                                        } elseif (is_object($instalacion)) {
-                                            $id = $instalacion->id ?? '';
-                                            $nombre = $instalacion->nombre ?? '';
-                                        } else {
-                                            $id = (string) $instalacion;
-                                            $nombre = (string) $instalacion;
-                                        }
-                                    @endphp
-                                    <option value="{{ $id }}" {{ old('instalacion_id') == $id ? 'selected' : '' }}>
-                                        {{ $nombre }}
+                                @forelse($instalaciones as $instalacion)
+                                    <option value="{{ $instalacion['id'] ?? $instalacion->id }}">
+                                        {{ $instalacion['nombre'] ?? $instalacion->nombre ?? 'Instalación' }}
                                     </option>
-                                @endforeach
+                                @empty
+                                    <option value="">No hay instalaciones</option>
+                                @endforelse
                             </select>
                         </div>
                         
                         <div class="col-md-4 mb-3">
                             <label for="tanque_id" class="form-label">Tanque *</label>
-                            <select class="form-select select2" id="tanque_id" name="tanque_id" required>
-                                <option value="">Seleccione...</option>
-                                @foreach($tanques as $tanque)
-                                    @php
-                                        if (is_array($tanque)) {
-                                            $tid = $tanque['id'] ?? '';
-                                            $identificador = $tanque['identificador'] ?? '';
-                                            $instNombre = $tanque['instalacion']['nombre'] ?? '';
-                                        } elseif (is_object($tanque)) {
-                                            $tid = $tanque->id ?? '';
-                                            $identificador = $tanque->identificador ?? '';
-                                            $instNombre = !empty($tanque->instalacion->nombre) ? $tanque->instalacion->nombre : '';
-                                        } else {
-                                            $tid = (string) $tanque;
-                                            $identificador = $tid;
-                                            $instNombre = '';
-                                        }
-                                        $textoTanque = trim($identificador . (!empty($instNombre) ? ' - ' . $instNombre : ''));
-                                    @endphp
-                                    <option value="{{ $tid }}" {{ old('tanque_id') == $tid ? 'selected' : '' }}>
-                                        {{ $textoTanque ?? '' }}
-                                    </option>
-                                @endforeach
+                            <select class="form-select select2" id="tanque_id" name="tanque_id" required disabled>
+                                <option value="">Seleccione una instalación primero...</option>
                             </select>
                         </div>
                         
                         <div class="col-md-4 mb-3">
-                            <label for="producto_id" class="form-label">Producto *</label>
-                            <select class="form-select select2" id="producto_id" name="producto_id" required>
-                                <option value="">Seleccione...</option>
-                                @foreach($productos as $producto)
-                                    @php
-                                        if (is_array($producto)) {
-                                            $pid = $producto['id'] ?? '';
-                                            $nombreP = $producto['nombre'] ?? '';
-                                        } elseif (is_object($producto)) {
-                                            $pid = $producto->id ?? '';
-                                            $nombreP = $producto->nombre ?? '';
-                                        } else {
-                                            $pid = (string)$producto;
-                                            $nombreP = (string)$producto;
-                                        }
-                                    @endphp
-                                    <option value="{{ $pid }}" {{ old('producto_id') == $pid ? 'selected' : '' }}>
-                                        {{ $nombreP }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <label for="producto_id" class="form-label">Producto</label>
+                            <input type="text" class="form-control bg-light" id="producto_id" readonly placeholder="Se cargará del tanque">
                         </div>
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-info" role="alert" id="alertaEmulador">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" id="spinnerEmulador" style="display: none;">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    <div id="textoEmulador">
+                                        <i class="bi bi-info-circle"></i> 
+                                        Selecciona un tanque para cargar los datos automáticamente
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3 text-primary">
+                        <i class="bi bi-speedometer2"></i> Datos de Operación (Emulador)
+                    </h6>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <label for="volumen_inicial" class="form-label">Volumen Inicial (L)</label>
+                            <input type="number" step="0.001" min="0" class="form-control fw-bold text-primary" 
+                                   id="volumen_inicial" name="volumen_inicial" readonly required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-2">
+                            <label for="volumen_final" class="form-label">Volumen Final (L)</label>
+                            <input type="number" step="0.001" min="0" class="form-control fw-bold text-primary" 
+                                   id="volumen_final" name="volumen_final" readonly required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-2">
+                            <label for="volumen_operacion" class="form-label">Volumen Operación (L)</label>
+                            <input type="number" step="0.001" min="0" class="form-control fw-bold text-info" 
+                                   id="volumen_operacion" name="volumen_operacion" readonly required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-2">
+                            <label for="volumen_corregido" class="form-label">Volumen Corregido (L)</label>
+                            <input type="number" step="0.001" min="0" class="form-control fw-bold bg-success text-white" 
+                                   id="volumen_corregido" name="volumen_corregido" readonly required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-2 mb-2">
+                            <label for="temperatura" class="form-label">Temperatura (°C)</label>
+                            <input type="number" step="0.1" class="form-control" id="temperatura" name="temperatura" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="presion" class="form-label">Presión (bar)</label>
+                            <input type="number" step="0.001" class="form-control" id="presion" name="presion" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="densidad" class="form-label">Densidad</label>
+                            <input type="number" step="0.0001" class="form-control" id="densidad" name="densidad" readonly>
+                            <input type="hidden" id="densidad_hidden" name="densidad">
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="factor_correccion" class="form-label">Factor Corrección</label>
+                            <input type="number" step="0.0001" class="form-control" id="factor_correccion" name="factor_correccion" readonly>
+                            <input type="hidden" id="factor_correccion_hidden" name="factor_correccion">
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="nivel_porcentaje" class="form-label">Nivel Tanque (%)</label>
+                            <input type="number" step="0.1" class="form-control bg-warning fw-bold" id="nivel_porcentaje" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="tipo_operacion" class="form-label">Tipo Operación</label>
+                            <input type="text" class="form-control bg-success text-white fw-bold" id="tipo_operacion" readonly>
+                        </div>
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="bi bi-speedometer2"></i> Características del Tanque (Solo Lectura)
+                    </h6>
+                    
+                    <div class="row">
+                        <div class="col-md-2 mb-2">
+                            <label for="capacidad_total" class="form-label">Capacidad Total (L)</label>
+                            <input type="number" step="0.001" class="form-control bg-secondary text-white" id="capacidad_total" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="capacidad_util" class="form-label">Capacidad Util (L)</label>
+                            <input type="number" step="0.001" class="form-control bg-secondary text-white" id="capacidad_util" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="capacidad_operativa" class="form-label">Capacidad Operativa (L)</label>
+                            <input type="number" step="0.001" class="form-control bg-secondary text-white" id="capacidad_operativa" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="capacidad_minima" class="form-label">Capacidad Mínima (L)</label>
+                            <input type="number" step="0.001" class="form-control bg-secondary text-white" id="capacidad_minima" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="temperatura_referencia" class="form-label">Temp. Referencia (°C)</label>
+                            <input type="number" step="0.1" class="form-control bg-secondary text-white" id="temperatura_referencia" readonly>
+                        </div>
+                        
+                        <div class="col-md-2 mb-2">
+                            <label for="presion_referencia" class="form-label">Presión Ref. (bar)</label>
+                            <input type="number" step="0.001" class="form-control bg-secondary text-white" id="presion_referencia" readonly>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
                             <label for="hora_inicio" class="form-label">Hora Inicio *</label>
                             <input type="time" class="form-control" id="hora_inicio" name="hora_inicio" 
-                                   value="{{ old('hora_inicio', '00:00:00') }}" required>
+                                   value="{{ date('H:i:s') }}" required>
                         </div>
                         
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="hora_fin" class="form-label">Hora Fin *</label>
                             <input type="time" class="form-control" id="hora_fin" name="hora_fin" 
-                                   value="{{ old('hora_fin', '23:59:59') }}" required>
+                                   value="{{ date('H:i:s') }}" required>
                         </div>
                         
-                        <div class="col-md-4 mb-3">
-                            <label for="medidor_id" class="form-label">Medidor</label>
-                            <select class="form-select select2" id="medidor_id" name="medidor_id">
-                                <option value="">Seleccione (opcional)</option>
-                                @foreach($medidores as $medidor)
-                                    @php
-                                        if (is_array($medidor)) {
-                                            $mid = $medidor['id'] ?? '';
-                                            $clave = $medidor['clave'] ?? '';
-                                            $ns = $medidor['numero_serie'] ?? '';
-                                        } elseif (is_object($medidor)) {
-                                            $mid = $medidor->id ?? '';
-                                            $clave = $medidor->clave ?? '';
-                                            $ns = $medidor->numero_serie ?? '';
-                                        } else {
-                                            $mid = (string)$medidor;
-                                            $clave = $mid;
-                                            $ns = '';
-                                        }
-                                    @endphp
-                                    <option value="{{ $mid }}" {{ old('medidor_id') == $mid ? 'selected' : '' }}>
-                                        {{ $clave }} - {{ $ns }}
-                                    </option>
-                                @endforeach
+                        <div class="col-md-3 mb-3">
+                            <label for="fecha" class="form-label">Fecha *</label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" 
+                                   value="{{ now()->toDateString() }}" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="medidor_id" class="form-label">Medidor (opcional)</label>
+                            <select class="form-select" id="medidor_id" name="medidor_id">
+                                <option value="">Sin medidor</option>
                             </select>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label for="volumen_inicial" class="form-label">Volumen Inicial (L) *</label>
-                            <input type="number" step="0.001" min="0" class="form-control" 
-                                   id="volumen_inicial" name="volumen_inicial" value="{{ old('volumen_inicial') }}" required>
-                        </div>
-                        
-                        <div class="col-md-3 mb-3">
-                            <label for="volumen_final" class="form-label">Volumen Final (L) *</label>
-                            <input type="number" step="0.001" min="0" class="form-control" 
-                                   id="volumen_final" name="volumen_final" value="{{ old('volumen_final') }}" required>
-                        </div>
-                        
-                        <div class="col-md-3 mb-3">
-                            <label for="volumen_operacion" class="form-label">Volumen Operación (L) *</label>
-                            <input type="number" step="0.001" min="0" class="form-control" 
-                                   id="volumen_operacion" name="volumen_operacion" value="{{ old('volumen_operacion') }}" required>
-                        </div>
-                        
-                        <div class="col-md-3 mb-3">
-                            <label for="volumen_corregido" class="form-label">Volumen Corregido (L) *</label>
-                            <input type="number" step="0.001" min="0" class="form-control" 
-                                   id="volumen_corregido" name="volumen_corregido" value="{{ old('volumen_corregido') }}" required>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="factor_correccion" class="form-label">Factor Corrección *</label>
-                            <input type="number" step="0.0001" min="0" class="form-control" 
-                                   id="factor_correccion" name="factor_correccion" value="{{ old('factor_correccion', 1) }}" required>
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <label for="usuario_registro_id" class="form-label">Usuario Registro</label>
-                            <select class="form-select" id="usuario_registro_id" name="usuario_registro_id">
-                                <option value="">Automático (usuario autenticado)</option>
-                                @foreach($usuarios as $usuario)
-                                    @php
-                                        if (is_array($usuario)) {
-                                            $uid = $usuario['id'] ?? '';
-                                            $nombre = $usuario['name'] ?? '';
-                                        } elseif (is_object($usuario)) {
-                                            $uid = $usuario->id ?? '';
-                                            $nombre = $usuario->name ?? '';
-                                        } else {
-                                            $uid = (string) $usuario;
-                                            $nombre = (string) $usuario;
-                                        }
-                                        $selected = '';
-                                        if (old('usuario_registro_id')) {
-                                            $selected = old('usuario_registro_id') == $uid ? 'selected' : '';
-                                        } elseif (Session::get('user_id') == $uid) {
-                                            $selected = 'selected';
-                                        }
-                                    @endphp
-                                    <option value="{{ $uid }}" {{ $selected }}>
-                                        {{ $nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="temperatura_inicial" class="form-label">Temperatura Inicial (°C) *</label>
-                            <input type="number" step="0.1" class="form-control" 
-                                   id="temperatura_inicial" name="temperatura_inicial" value="{{ old('temperatura_inicial', 15) }}" required>
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <label for="temperatura_final" class="form-label">Temperatura Final (°C) *</label>
-                            <input type="number" step="0.1" class="form-control" 
-                                   id="temperatura_final" name="temperatura_final" value="{{ old('temperatura_final', 15) }}" required>
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <label for="densidad" class="form-label">Densidad (kg/L) *</label>
-                            <input type="number" step="0.0001" min="0" class="form-control" 
-                                   id="densidad" name="densidad" value="{{ old('densidad', 0.85) }}" required>
                         </div>
                     </div>
                     
@@ -245,56 +209,38 @@
                         <div class="col-md-4 mb-3">
                             <label for="tipo_registro" class="form-label">Tipo de Registro *</label>
                             <select class="form-select" id="tipo_registro" name="tipo_registro" required>
-                                <option value="">Seleccione...</option>
-                                <option value="operacion" {{ old('tipo_registro', 'operacion') == 'operacion' ? 'selected' : '' }}>Operación</option>
-                                <option value="acumulado" {{ old('tipo_registro') == 'acumulado' ? 'selected' : '' }}>Acumulado</option>
-                                <option value="existencias" {{ old('tipo_registro') == 'existencias' ? 'selected' : '' }}>Existencias</option>
+                                <option value="operacion" selected>Operación</option>
+                                <option value="acumulado">Acumulado</option>
+                                <option value="existencias">Existencias</option>
                             </select>
                         </div>
                         
                         <div class="col-md-4 mb-3">
                             <label for="operacion" class="form-label">Operación *</label>
                             <select class="form-select" id="operacion" name="operacion" required>
-                                <option value="">Seleccione...</option>
-                                <option value="recepcion" {{ old('operacion') == 'recepcion' ? 'selected' : '' }}>Recepción</option>
-                                <option value="entrega" {{ old('operacion') == 'entrega' ? 'selected' : '' }}>Entrega</option>
-                                <option value="inventario_inicial" {{ old('operacion') == 'inventario_inicial' ? 'selected' : '' }}>Inventario Inicial</option>
-                                <option value="inventario_final" {{ old('operacion') == 'inventario_final' ? 'selected' : '' }}>Inventario Final</option>
-                                <option value="venta" {{ old('operacion') == 'venta' ? 'selected' : '' }}>Venta</option>
+                                <option value="entrega" selected>Entrega</option>
+                                <option value="recepcion">Recepción</option>
+                                <option value="inventario_inicial">Inventario Inicial</option>
+                                <option value="inventario_final">Inventario Final</option>
+                                <option value="venta">Venta</option>
                             </select>
                         </div>
                         
                         <div class="col-md-4 mb-3">
                             <label for="estado" class="form-label">Estado *</label>
                             <select class="form-select" id="estado" name="estado" required>
-                                <option value="">Seleccione...</option>
-                                <option value="PENDIENTE" {{ old('estado', 'PENDIENTE') == 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
-                                <option value="PROCESADO" {{ old('estado') == 'PROCESADO' ? 'selected' : '' }}>Procesado</option>
-                                <option value="VALIDADO" {{ old('estado') == 'VALIDADO' ? 'selected' : '' }}>Validado</option>
-                                <option value="ERROR" {{ old('estado') == 'ERROR' ? 'selected' : '' }}>Error</option>
-                                <option value="CON_ALARMA" {{ old('estado') == 'CON_ALARMA' ? 'selected' : '' }}>Con Alarma</option>
+                                <option value="PENDIENTE" selected>Pendiente</option>
+                                <option value="PROCESADO">Procesado</option>
+                                <option value="VALIDADO">Validado</option>
+                                <option value="CON_ALARMA">Con Alarma</option>
                             </select>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="documento_fiscal_uuid" class="form-label">UUID Documento Fiscal</label>
-                            <input type="text" class="form-control" id="documento_fiscal_uuid" name="documento_fiscal_uuid" 
-                                   value="{{ old('documento_fiscal_uuid') }}" placeholder="Opcional">
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="rfc_contraparte" class="form-label">RFC Contraparte</label>
-                            <input type="text" class="form-control" id="rfc_contraparte" name="rfc_contraparte" 
-                                   value="{{ old('rfc_contraparte') }}" placeholder="Opcional">
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="observaciones" class="form-label">Observaciones</label>
-                        <textarea class="form-control" id="observaciones" name="observaciones" 
-                                  rows="3">{{ old('observaciones') }}</textarea>
+                        <textarea class="form-control" id="observaciones" name="observaciones" rows="2" 
+                                  placeholder="Registro generado automáticamente">{{ old('observations', 'Emulador automático') }}</textarea>
                     </div>
                     
                     <hr>
@@ -303,7 +249,7 @@
                         <a href="{{ route('registros-volumetricos.index') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Cancelar
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-success btn-lg" id="btnGuardar" disabled>
                             <i class="bi bi-save"></i> Guardar Registro
                         </button>
                     </div>
@@ -317,35 +263,164 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd',
-        language: 'es',
-        autoclose: true
-    });
-    
     $('.select2').select2({
         theme: 'bootstrap-5',
         width: '100%'
     });
     
-    // Calcular volumen de operación
-    function calcularVolumenOperacion() {
-        let inicial = parseFloat($('#volumen_inicial').val()) || 0;
-        let final = parseFloat($('#volumen_final').val()) || 0;
-        let operacion = final - inicial;
-        $('#volumen_operacion').val(operacion.toFixed(3));
+    let tanqueSeleccionado = false;
+    
+    function mostrarCarga(mensaje) {
+        $('#spinnerEmulador').show();
+        $('#textoEmulador').html('<i class="bi bi-hourglass-split"></i> ' + mensaje);
+        $('#alertaEmulador').removeClass('alert-success alert-danger').addClass('alert-info');
     }
     
-    $('#volumen_inicial, #volumen_final').on('input', calcularVolumenOperacion);
+    function mostrarExito(mensaje) {
+        $('#spinnerEmulador').hide();
+        $('#textoEmulador').html('<i class="bi bi-check-circle"></i> ' + mensaje);
+        $('#alertaEmulador').removeClass('alert-info alert-danger').addClass('alert-success');
+    }
     
-    // Validar horas
-    $('#hora_inicio, #hora_fin').change(function() {
-        let inicio = $('#hora_inicio').val();
-        let fin = $('#hora_fin').val();
+    function mostrarError(mensaje) {
+        $('#spinnerEmulador').hide();
+        $('#textoEmulador').html('<i class="bi bi-x-circle"></i> ' + mensaje);
+        $('#alertaEmulador').removeClass('alert-info alert-success').addClass('alert-danger');
+    }
+    
+    function limpiarCampos() {
+        $('#volumen_inicial, #volumen_final, #volumen_operacion, #volumen_corregido').val('');
+        $('#temperatura, #presion, #densidad, #factor_correccion, #nivel_porcentaje').val('');
+        $('#tipo_operacion').val('');
+        $('#capacidad_total, #capacidad_util, #capacidad_operativa, #capacidad_minima').val('');
+        $('#temperatura_referencia, #presion_referencia').val('');
+        $('#producto_id').val('');
+        $('#btnGuardar').prop('disabled', true);
+    }
+    
+    function cargarDatosEmulador(tanqueId) {
+        if (!tanqueId) {
+            limpiarCampos();
+            $('#alertaEmulador').removeClass('alert-success').addClass('alert-warning');
+            $('#textoEmulador').html('<i class="bi bi-info-circle"></i> Selecciona un tanque para cargar los datos');
+            return;
+        }
         
-        if (inicio && fin && inicio >= fin) {
-            alert('La hora de fin debe ser posterior a la hora de inicio');
-            $('#hora_fin').val('');
+        mostrarCarga('Cargando datos del emulador...');
+        
+        $.ajax({
+            url: '{{ route("api.emulador.lectura", ["tanqueId" => "__TANQUE_ID__"]) }}'.replace('__TANQUE_ID__', tanqueId),
+            type: 'GET',
+            dataType: 'json',
+            timeout: 10000,
+            success: function(response) {
+                if (response.success && response.data) {
+                    let data = response.data;
+                    
+                    $('#volumen_inicial').val(parseFloat(data.volumen_anterior || 0).toFixed(3));
+                    $('#volumen_final').val(parseFloat(data.volumen || 0).toFixed(3));
+                    $('#volumen_operacion').val(Math.abs(parseFloat(data.volumen_cambio || 0)).toFixed(3));
+                    $('#factor_correccion').val(parseFloat(data.factor_correccion || 1).toFixed(6));
+                    $('#factor_correccion_hidden').val(parseFloat(data.factor_correccion || 1).toFixed(6));
+                    
+                    let volOp = parseFloat($('#volumen_operacion').val()) || 0;
+                    let fc = parseFloat($('#factor_correccion').val()) || 1;
+                    $('#volumen_corregido').val((volOp * fc).toFixed(3));
+                    
+                    $('#temperatura').val(data.temperatura ? data.temperatura.toFixed(1) : 20);
+                    $('#presion').val(data.presion ? data.presion.toFixed(3) : 1);
+                    $('#densidad').val(data.densidad ? data.densidad.toFixed(4) : 0.8);
+                    $('#densidad_hidden').val(data.densidad ? data.densidad.toFixed(4) : 0.8);
+                    $('#nivel_porcentaje').val(data.nivel_porcentaje ? data.nivel_porcentaje.toFixed(1) : 0);
+                    $('#tipo_operacion').val(data.tipo_operacion || 'ENTREGA');
+                    
+                    if (data.tanque) {
+                        $('#producto_id').val(data.tanque.producto || '');
+                    }
+                    
+                    if (data.datos_tanque) {
+                        let dt = data.datos_tanque;
+                        $('#capacidad_total').val(dt.capacidad_total || 0);
+                        $('#capacidad_util').val(dt.capacidad_util || 0);
+                        $('#capacidad_operativa').val(dt.capacidad_operativa || 0);
+                        $('#capacidad_minima').val(dt.capacidad_minima || 0);
+                        $('#temperatura_referencia').val(dt.temperatura_referencia || 20);
+                        $('#presion_referencia').val(dt.presion_referencia || 1.01325);
+                    }
+                    
+                    let mensaje = '¡Datos cargados! Vol.Inicial=' + $('#volumen_inicial').val() + 
+                                  'L, Vol.Final=' + $('#volumen_final').val() + 
+                                  'L, Operación=' + $('#tipo_operacion').val();
+                    mostrarExito(mensaje);
+                    
+                    $('#btnGuardar').prop('disabled', false);
+                    tanqueSeleccionado = true;
+                } else {
+                    mostrarError('No se recibieron datos del emulador');
+                    tanqueSeleccionado = false;
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                mostrarError('Error al conectar con el emulador. ¿API corriendo en puerto 8000?');
+                tanqueSeleccionado = false;
+            }
+        });
+    }
+    
+    function cargarTanques(instalacionId) {
+        if (!instalacionId) {
+            $('#tanque_id').empty().append('<option value="">Seleccione una instalación primero...</option>');
+            $('#tanque_id').prop('disabled', true);
+            limpiarCampos();
+            return;
+        }
+        
+        $('#tanque_id').prop('disabled', true);
+        $('#tanque_id').empty().append('<option value="">Cargando tanques...</option>');
+        
+        $.ajax({
+            url: '{{ route("api.emulador.tanques", ["instalacionId" => "__INSTALACION_ID__"]) }}'.replace('__INSTALACION_ID__', instalacionId),
+            type: 'GET',
+            dataType: 'json',
+            timeout: 10000,
+            success: function(response) {
+                let data = response.data || [];
+                let options = '<option value="">Seleccione...</option>';
+                
+                if (data.length === 0) {
+                    options = '<option value="">No hay tanques en esta instalación</option>';
+                } else {
+                    data.forEach(function(tanque) {
+                        let id = tanque.id;
+                        let nombre = tanque.identificador || tanque.numero_serie || ('Tanque ' + id);
+                        options += '<option value="' + id + '">' + nombre + '</option>';
+                    });
+                }
+                
+                $('#tanque_id').html(options).prop('disabled', false);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error cargando tanques:', error);
+                $('#tanque_id').empty().append('<option value="">Error al cargar tanques</option>');
+            }
+        });
+    }
+    
+    $('#instalacion_id').on('change', function() {
+        let instalacionId = $(this).val();
+        cargarTanques(instalacionId);
+    });
+    
+    $('#tanque_id').on('change', function() {
+        let tanqueId = $(this).val();
+        cargarDatosEmulador(tanqueId);
+    });
+    
+    $('#btnGuardar').on('click', function(e) {
+        if (!tanqueSeleccionado) {
+            e.preventDefault();
+            alert('Por favor seleccione un tanque y verifique que los datos se hayan cargado');
         }
     });
 });

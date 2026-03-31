@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 
 class UserTest extends TestCase
 {
@@ -24,7 +22,8 @@ class UserTest extends TestCase
                 'nombres' => 'Juan',
                 'apellidos' => 'Pérez',
                 'email' => 'juan@test.com',
-                'activo' => true
+                'activo' => true,
+                'locked_until' => null,
             ],
             [
                 'id' => 2,
@@ -32,8 +31,9 @@ class UserTest extends TestCase
                 'nombres' => 'María',
                 'apellidos' => 'López',
                 'email' => 'maria@test.com',
-                'activo' => true
-            ]
+                'activo' => true,
+                'locked_until' => null,
+            ],
         ];
 
         $this->mockPaginatedResponse('/api/users', $users, 2);
@@ -51,10 +51,10 @@ class UserTest extends TestCase
         $roles = [
             ['id' => 1, 'nombre' => 'Administrador'],
             ['id' => 2, 'nombre' => 'Operador'],
-            ['id' => 3, 'nombre' => 'Consultor']
+            ['id' => 3, 'nombre' => 'Consultor'],
         ];
 
-        $this->mockSuccessfulResponse('/api/roles?activo=true', $roles);
+        $this->mockSuccessfulResponse('/api/roles', $roles);
 
         $response = $this->get('/users/create');
 
@@ -75,7 +75,7 @@ class UserTest extends TestCase
             'password_confirmation' => 'password123',
             'telefono' => '1234567890',
             'direccion' => 'Calle Principal 123',
-            'roles' => [1, 2]
+            'roles' => [1, 2],
         ];
 
         $createdUser = [
@@ -83,7 +83,7 @@ class UserTest extends TestCase
             'identificacion' => 'TEST001',
             'nombres' => 'Juan',
             'apellidos' => 'Pérez',
-            'email' => 'juan@test.com'
+            'email' => 'juan@test.com',
         ];
 
         $this->mockSuccessfulResponse('/api/users', $createdUser, 'Usuario creado exitosamente', 201);
@@ -104,11 +104,11 @@ class UserTest extends TestCase
             'email' => 'existing@test.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-            'roles' => [1]
+            'roles' => [1],
         ];
 
         $this->mockValidationErrorResponse('/api/users', [
-            'email' => ['El email ya está registrado']
+            'email' => ['El email ya está registrado'],
         ]);
 
         $response = $this->post('/users', $userData);
@@ -129,9 +129,16 @@ class UserTest extends TestCase
             'telefono' => '1234567890',
             'direccion' => 'Calle Principal 123',
             'activo' => true,
+            'locked_until' => null,
+            'motivo_bloqueo' => null,
+            'ultimo_acceso' => '2024-01-15 10:00:00',
+            'ultima_ip' => '192.168.1.1',
+            'email_verified_at' => '2024-01-01 00:00:00',
+            'force_password_change' => false,
+            'password_changed_at' => '2024-01-01',
             'roles' => [
-                ['id' => 1, 'nombre' => 'Administrador']
-            ]
+                ['id' => 1, 'nombre' => 'Administrador', 'descripcion' => 'Acceso total', 'nivel_jerarquico' => 100],
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/users/1', $user);
@@ -151,16 +158,16 @@ class UserTest extends TestCase
             'identificacion' => 'TEST001',
             'nombres' => 'Juan',
             'apellidos' => 'Pérez',
-            'email' => 'juan@test.com'
+            'email' => 'juan@test.com',
         ];
 
         $roles = [
             ['id' => 1, 'nombre' => 'Administrador'],
-            ['id' => 2, 'nombre' => 'Operador']
+            ['id' => 2, 'nombre' => 'Operador'],
         ];
 
         $this->mockSuccessfulResponse('/api/users/1', $user);
-        $this->mockSuccessfulResponse('/api/roles?activo=true', $roles);
+        $this->mockSuccessfulResponse('/api/roles', $roles);
 
         $response = $this->get('/users/1/edit');
 
@@ -177,7 +184,7 @@ class UserTest extends TestCase
             'nombres' => 'Juan Carlos',
             'apellidos' => 'Pérez Gómez',
             'telefono' => '9876543210',
-            'activo' => true
+            'activo' => true,
         ];
 
         $this->mockSuccessfulResponse('/api/users/1', [], 'Usuario actualizado exitosamente');
@@ -193,7 +200,7 @@ class UserTest extends TestCase
     {
         $blockData = [
             'motivo' => 'Actividad sospechosa',
-            'minutos_bloqueo' => 30
+            'minutos_bloqueo' => 30,
         ];
 
         $this->mockSuccessfulResponse('/api/users/1/bloquear', [], 'Usuario bloqueado exitosamente');
@@ -208,7 +215,7 @@ class UserTest extends TestCase
     public function test_desbloquear_unblocks_user_successfully()
     {
         $unblockData = [
-            'motivo' => 'Revisión completada'
+            'motivo' => 'Revisión completada',
         ];
 
         $this->mockSuccessfulResponse('/api/users/1/desbloquear', [], 'Usuario desbloqueado exitosamente');
@@ -223,7 +230,7 @@ class UserTest extends TestCase
     public function test_asignar_rol_assigns_role_to_user()
     {
         $roleData = [
-            'rol_id' => 2
+            'rol_id' => 2,
         ];
 
         $this->mockSuccessfulResponse('/api/users/1/asignar-rol', [], 'Rol asignado exitosamente');
@@ -238,7 +245,7 @@ class UserTest extends TestCase
     public function test_asignar_rol_fails_if_role_already_assigned()
     {
         $roleData = [
-            'rol_id' => 1
+            'rol_id' => 1,
         ];
 
         $this->mockErrorResponse('/api/users/1/asignar-rol', 'El usuario ya tiene este rol asignado', 409);
@@ -253,7 +260,7 @@ class UserTest extends TestCase
     public function test_quitar_rol_removes_role_from_user()
     {
         $roleData = [
-            'rol_id' => 1
+            'rol_id' => 1,
         ];
 
         $this->mockSuccessfulResponse('/api/users/1/quitar-rol', [], 'Rol revocado exitosamente');
@@ -270,8 +277,8 @@ class UserTest extends TestCase
         $permisos = [
             'modulos' => [
                 'Alarmas' => ['crear', 'editar', 'ver'],
-                'Contribuyentes' => ['ver', 'exportar']
-            ]
+                'Contribuyentes' => ['ver', 'exportar'],
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/users/1/permisos', $permisos);
@@ -293,15 +300,15 @@ class UserTest extends TestCase
                     'fecha' => '2024-01-15',
                     'tipo_evento' => 'LOGIN',
                     'descripcion' => 'Inicio de sesión',
-                    'ip_address' => '192.168.1.1'
+                    'ip_address' => '192.168.1.1',
                 ],
                 [
                     'fecha' => '2024-01-14',
                     'tipo_evento' => 'ALARMA_ATENDIDA',
                     'descripcion' => 'Atendió alarma #123',
-                    'ip_address' => '192.168.1.1'
-                ]
-            ]
+                    'ip_address' => '192.168.1.1',
+                ],
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/users/1/actividad', $activity);
@@ -332,17 +339,17 @@ class UserTest extends TestCase
                 'id' => 1,
                 'email' => 'search@test.com',
                 'nombres' => 'Search',
-                'apellidos' => 'User'
-            ]
+                'apellidos' => 'User',
+            ],
         ];
 
-        $this->mockSuccessfulResponse('/api/users?email=search@test.com', ['data' => $users]);
+        $this->mockSuccessfulResponse('/api/users', ['data' => $users]);
 
         $response = $this->get('/users?email=search@test.com');
 
         $response->assertStatus(200);
         $response->assertViewHas('users');
-        
+
         $users = $response->viewData('users');
         $this->assertCount(1, $users);
         $this->assertEquals('search@test.com', $users[0]['email']);

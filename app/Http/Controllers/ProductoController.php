@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bitacora;
 use App\Http\Controllers\Traits\ValidacionEspanol;
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class ProductoController extends BaseController
 {
     use ValidacionEspanol;
+
     /**
      * Listar productos
      */
@@ -21,7 +22,7 @@ class ProductoController extends BaseController
 
             $params = $request->only([
                 'clave_sat', 'codigo', 'nombre', 'tipo_hidrocarburo',
-                'activo', 'per_page', 'page'
+                'activo', 'per_page', 'page',
             ]);
 
             $response = $this->apiGet('/api/productos', $params);
@@ -30,7 +31,7 @@ class ProductoController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al listar productos', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar productos');
@@ -80,6 +81,7 @@ class ProductoController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -92,7 +94,7 @@ class ProductoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al crear producto', [
                 'error' => $e->getMessage(),
-                'data' => $request->except('_token')
+                'data' => $request->except('_token'),
             ]);
 
             return redirect()->back()
@@ -111,7 +113,7 @@ class ProductoController extends BaseController
 
             $response = $this->apiGet("/api/productos/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('productos.index')
                     ->with('error', $this->apiResponseMessage($response, 'Producto no encontrado'));
             }
@@ -119,13 +121,13 @@ class ProductoController extends BaseController
             $producto = $this->apiResponseData($response, []);
 
             return view('productos.show', [
-                'producto' => $producto
+                'producto' => $producto,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al mostrar producto', [
                 'error' => $e->getMessage(),
-                'producto_id' => $id
+                'producto_id' => $id,
             ]);
 
             return redirect()->route('productos.index')
@@ -143,7 +145,7 @@ class ProductoController extends BaseController
 
             $response = $this->apiGet("/api/productos/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('productos.index')
                     ->with('error', $this->apiResponseMessage($response, 'Producto no encontrado'));
             }
@@ -151,13 +153,13 @@ class ProductoController extends BaseController
             $producto = $this->apiResponseData($response, []);
 
             return view('productos.edit', [
-                'producto' => $producto
+                'producto' => $producto,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de edición', [
                 'error' => $e->getMessage(),
-                'producto_id' => $id
+                'producto_id' => $id,
             ]);
 
             return redirect()->route('productos.index')
@@ -197,6 +199,7 @@ class ProductoController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -209,7 +212,7 @@ class ProductoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al actualizar producto', [
                 'error' => $e->getMessage(),
-                'producto_id' => $id
+                'producto_id' => $id,
             ]);
 
             return redirect()->back()
@@ -254,7 +257,7 @@ class ProductoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al eliminar producto', [
                 'error' => $e->getMessage(),
-                'producto_id' => $id
+                'producto_id' => $id,
             ]);
 
             return redirect()->route('productos.index')
@@ -272,7 +275,7 @@ class ProductoController extends BaseController
 
             $response = $this->apiGet("/api/productos/tipo/{$tipo}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar productos'));
             }
 
@@ -284,13 +287,13 @@ class ProductoController extends BaseController
 
             return view('productos.por-tipo', [
                 'productos' => $productos,
-                'tipo' => $tipo
+                'tipo' => $tipo,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar productos por tipo', [
                 'error' => $e->getMessage(),
-                'tipo' => $tipo
+                'tipo' => $tipo,
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar productos');
@@ -307,7 +310,7 @@ class ProductoController extends BaseController
 
             $response = $this->apiGet('/api/productos/catalogo');
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return $this->jsonError($this->apiResponseMessage($response, 'Error al cargar catálogo'), 400);
             }
 
@@ -315,10 +318,53 @@ class ProductoController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al cargar catálogo de productos', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return $this->jsonError('Error al cargar catálogo', 500);
+        }
+    }
+
+    /**
+     * Exportar productos
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $params = $request->only([
+                'clave_sat', 'codigo', 'nombre', 'tipo_hidrocarburo', 'activo',
+            ]);
+
+            $response = $this->apiGetRaw('/api/exportar/productos', $params);
+
+            if ($response && $response->successful()) {
+                $contentType = $response->headers->get('Content-Type');
+                $contentDisposition = $response->headers->get('Content-Disposition');
+
+                return response($response->body(), $response->status())
+                    ->header('Content-Type', $contentType)
+                    ->header('Content-Disposition', $contentDisposition);
+            }
+
+            if ($response) {
+                $json = $response->json();
+
+                return $this->jsonError(
+                    $json['message'] ?? 'Error al exportar productos',
+                    $response->status(),
+                    $json['errors'] ?? null
+                );
+            }
+
+            return $this->jsonError('Error al exportar productos', 500);
+        } catch (\Exception $e) {
+            Log::error('Error al exportar productos', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', 'Error al exportar productos');
         }
     }
 
@@ -332,7 +378,7 @@ class ProductoController extends BaseController
 
             $response = $this->apiGet("/api/productos/clave-sat/{$claveSat}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return $this->jsonError($this->apiResponseMessage($response, 'Producto no encontrado'), 404);
             }
 
@@ -341,7 +387,7 @@ class ProductoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al buscar producto por clave SAT', [
                 'error' => $e->getMessage(),
-                'clave_sat' => $claveSat
+                'clave_sat' => $claveSat,
             ]);
 
             return $this->jsonError('Error al buscar producto', 500);

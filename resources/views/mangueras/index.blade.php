@@ -41,7 +41,7 @@
                 <select class="form-select select2" id="medidor_id" name="medidor_id">
                     <option value="">Todos</option>
                     @foreach($medidores ?? [] as $medidor)
-                        <option value="{{ $medidor['id'] }}" {{ request('medidor_id') == $medidor['id'] ? 'selected' : '' }}>
+                        <option value="{{ ($medidor['id'] ?? 0) }}" {{ request('medidor_id') == ($medidor['id'] ?? 0) ? 'selected' : '' }}>
                             {{ $medidor['clave'] }}
                         </option>
                     @endforeach
@@ -131,7 +131,7 @@
                                     </span>
                                 @else
                                     <span class="text-muted">No asignado</span>
-                                    <a href="{{ route('mangueras.edit', $manguera['id']) }}" class="btn btn-sm btn-primary mt-1">
+                                    <a href="{{ route('mangueras.edit', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-primary mt-1">
                                         Asignar
                                     </a>
                                 @endif
@@ -147,7 +147,7 @@
                                 <span class="badge bg-{{ $estadoClass }}">{{ $manguera['estado'] }}</span>
                             </td>
                             <td>
-                                @if($manguera['activo'])
+                                @if(($manguera['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>
@@ -168,15 +168,15 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('mangueras.show', $manguera['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                    <a href="{{ route('mangueras.show', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-info" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('mangueras.edit', $manguera['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <a href="{{ route('mangueras.edit', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-warning" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     @if(isset($manguera['medidor']))
                                         <button type="button" class="btn btn-sm btn-danger" 
-                                                onclick="confirmarQuitarMedidor({{ $manguera['id'] }})" title="Quitar Medidor">
+                                                onclick="confirmarQuitarMedidor({{ ($manguera['id'] ?? 0) }})" title="Quitar Medidor">
                                             <i class="bi bi-x-circle"></i>
                                         </button>
                                     @endif

@@ -85,7 +85,7 @@
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1"
-                                       {{ old('activo', $user['activo']) ? 'checked' : '' }}>
+                                       {{ old('activo', (($user['activo'] ?? true) ?? true)) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="activo">Usuario Activo</label>
                             </div>
                         </div>

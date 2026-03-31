@@ -50,10 +50,19 @@ class MedidorController extends BaseController
             // Obtener instalaciones y tanques para los selects
             $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
             $tanques = $this->getCatalog('/api/tanques', ['activo' => true]);
+            
+            // Obtener tecnologías del catálogo
+            $tecnologias = [];
+            $responseTecnologias = $this->apiGet('/api/catalogos/MED_TECH');
+            if ($this->apiResponseSuccessful($responseTecnologias)) {
+                $dataTecnologias = $this->apiResponseData($responseTecnologias, []);
+                $tecnologias = $dataTecnologias['valores'] ?? [];
+            }
 
             return view('medidores.create', [
                 'instalaciones' => $instalaciones,
-                'tanques' => $tanques
+                'tanques' => $tanques,
+                'tecnologias' => $tecnologias
             ]);
 
         } catch (\Exception $e) {
@@ -130,6 +139,14 @@ class MedidorController extends BaseController
         try {
             $this->setApiToken(Session::get('api_token'));
 
+            // Obtener tecnologías del catálogo
+            $tecnologias = [];
+            $responseTecnologias = $this->apiGet('/api/catalogos/MED_TECH');
+            if ($this->apiResponseSuccessful($responseTecnologias)) {
+                $dataTecnologias = $this->apiResponseData($responseTecnologias, []);
+                $tecnologias = $dataTecnologias['valores'] ?? [];
+            }
+
             $response = $this->apiGet("/api/medidores/{$id}");
 
             if (!$this->apiResponseSuccessful($response)) {
@@ -140,7 +157,8 @@ class MedidorController extends BaseController
             $medidor = $this->apiResponseData($response, []);
 
             return view('medidores.show', [
-                'medidor' => $medidor
+                'medidor' => $medidor,
+                'tecnologias' => $tecnologias
             ]);
 
         } catch (\Exception $e) {
@@ -165,6 +183,14 @@ class MedidorController extends BaseController
             // Obtener instalaciones y tanques para los selects
             $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
             $tanques = $this->getCatalog('/api/tanques', ['activo' => true]);
+            
+            // Obtener tecnologías del catálogo
+            $tecnologias = [];
+            $responseTecnologias = $this->apiGet('/api/catalogos/MED_TECH');
+            if ($this->apiResponseSuccessful($responseTecnologias)) {
+                $dataTecnologias = $this->apiResponseData($responseTecnologias, []);
+                $tecnologias = $dataTecnologias['valores'] ?? [];
+            }
 
             // Obtener datos del medidor
             $response = $this->apiGet("/api/medidores/{$id}");
@@ -179,7 +205,8 @@ class MedidorController extends BaseController
             return view('medidores.edit', [
                 'medidor' => $medidor,
                 'instalaciones' => $instalaciones,
-                'tanques' => $tanques
+                'tanques' => $tanques,
+                'tecnologias' => $tecnologias
             ]);
 
         } catch (\Exception $e) {

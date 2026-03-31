@@ -4,8 +4,8 @@
 @section('header', 'Detalle del Comprobante Fiscal')
 
 @section('actions')
-@if($cfdi['estado'] == 'VIGENTE')
-    <button type="button" class="btn btn-sm btn-danger" onclick="confirmarCancelacion({{ $cfdi['id'] }})">
+@if(($cfdi['estado'] ?? '') == 'VIGENTE')
+    <button type="button" class="btn btn-sm btn-danger" onclick="confirmarCancelacion({{ $cfdi['id'] ?? 0 }})">
         <i class="bi bi-x-circle"></i> Cancelar CFDI
     </button>
 @endif
@@ -25,27 +25,27 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">UUID:</th>
-                        <td><small>{{ $cfdi['uuid'] }}</small></td>
+                        <td><small>{{ $cfdi['uuid'] ?? 'N/A' }}</small></td>
                     </tr>
                     <tr>
                         <th>Fecha de Emisión:</th>
-                        <td>{{ $cfdi['fecha_emision'] }}</td>
+                        <td>{{ $cfdi['fecha_emision'] ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Tipo de Operación:</th>
-                        <td>{{ ucfirst($cfdi['tipo_operacion']) }}</td>
+                        <td>{{ ucfirst($cfdi['tipo_operacion'] ?? 'N/A') }}</td>
                     </tr>
                     <tr>
                         <th>Estado:</th>
                         <td>
-                            @if($cfdi['estado'] == 'VIGENTE')
+                            @if(($cfdi['estado'] ?? '') == 'VIGENTE')
                                 <span class="badge bg-success">Vigente</span>
                             @else
                                 <span class="badge bg-secondary">Cancelado</span>
                             @endif
                         </td>
                     </tr>
-                    @if($cfdi['estado'] == 'CANCELADO' && !empty($cfdi['motivo_cancelacion']))
+                    @if(($cfdi['estado'] ?? '') == 'CANCELADO' && !empty($cfdi['motivo_cancelacion']))
                         <tr>
                             <th>Motivo Cancelación:</th>
                             <td>{{ $cfdi['motivo_cancelacion'] }}</td>

@@ -43,9 +43,9 @@
                                                 <br><small class="text-muted">{{ $permiso['description'] }}</small>
                                             @endif
                                         </td>
-                                        <td><code>{{ $permiso['slug'] }}</code></td>
+                                        <td><code>{{ ($permiso['slug'] ?? '') }}</code></td>
                                         <td>
-                                            @if($permiso['activo'])
+                                            @if(($permiso['activo'] ?? true))
                                                 <span class="badge bg-success">Activo</span>
                                             @else
                                                 <span class="badge bg-secondary">Inactivo</span>

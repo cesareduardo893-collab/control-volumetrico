@@ -10,28 +10,81 @@ use Illuminate\Support\Facades\Log;
 class DispensarioController extends BaseController
 {
     /**
-     * Listar dispensarios
+     * Mostrar listado de dispensarios
      */
     public function index(Request $request)
     {
         try {
             $this->setApiToken(Session::get('api_token'));
 
+            // Obtener parámetros de filtro
             $params = $request->only([
                 'instalacion_id', 'clave', 'modelo', 'fabricante',
-                'estado', 'activo', 'per_page', 'page'
+                'estado', 'activo', 'page', 'per_page'
             ]);
+
+            // Obtener instalaciones para el filtro
+            $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
 
             $response = $this->apiGet('/api/dispensarios', $params);
 
-            return $this->renderView('dispensarios.index', $response, ['key' => 'dispensarios'], $request->all());
+            if (!$this->apiResponseSuccessful($response)) {
+                return view('dispensarios.index', [
+                    'dispensarios' => collect(),
+                    'instalaciones' => $instalaciones,
+                    'filtros' => $params,
+                    'error' => $this->apiResponseMessage($response, 'Error al cargar dispensarios')
+                ]);
+            }
+
+            $responseData = $this->apiResponseData($response, []);
+            
+            // Manejar estructura de respuesta paginada
+            if (is_array($responseData) && isset($responseData['data'])) {
+                $dispensarios = $responseData['data'];
+                $meta = $responseData['meta'] ?? [];
+                $links = $responseData['links'] ?? [];
+            } else {
+                $dispensarios = $responseData;
+                $meta = [];
+                $links = [];
+            }
+
+            // Calcular resumen
+            $resumen = [
+                'total' => $meta['total'] ?? count($dispensarios),
+                'operativos' => collect($dispensarios)->where('estado', 'OPERATIVO')->count(),
+                'mantenimiento' => collect($dispensarios)->where('estado', 'MANTENIMIENTO')->count(),
+                'fuera_servicio' => collect($dispensarios)->where('estado', 'FUERA_SERVICIO')->count(),
+            ];
+
+            return view('dispensarios.index', [
+                'dispensarios' => $dispensarios,
+                'instalaciones' => $instalaciones,
+                'filtros' => $params,
+                'meta' => $meta,
+                'links' => $links,
+                'resumen' => $resumen
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Error al listar dispensarios', [
                 'error' => $e->getMessage()
             ]);
 
-            return redirect()->back()->with('error', 'Error al cargar dispensarios');
+            // Obtener instalaciones incluso en caso de error
+            try {
+                $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
+            } catch (\Exception $ex) {
+                $instalaciones = [];
+            }
+
+            return view('dispensarios.index', [
+                'dispensarios' => collect(),
+                'instalaciones' => $instalaciones,
+                'filtros' => $request->only(['instalacion_id', 'clave', 'modelo', 'fabricante', 'estado', 'activo']),
+                'error' => 'Error al cargar dispensarios'
+            ]);
         }
     }
 
@@ -45,9 +98,13 @@ class DispensarioController extends BaseController
 
             // Obtener instalaciones para el select
             $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
+            
+            // Obtener tanques para la conexión
+            $tanques = $this->getCatalog('/api/tanques', ['activo' => true, 'estado' => 'OPERATIVO']);
 
             return view('dispensarios.create', [
-                'instalaciones' => $instalaciones
+                'instalaciones' => $instalaciones,
+                'tanques' => $tanques
             ]);
 
         } catch (\Exception $e) {
@@ -173,10 +230,12 @@ class DispensarioController extends BaseController
 
             $dispensario = $this->apiResponseData($response, []);
             $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
+            $tanques = $this->getCatalog('/api/tanques', ['activo' => true, 'estado' => 'OPERATIVO']);
 
             return view('dispensarios.edit', [
                 'dispensario' => $dispensario,
-                'instalaciones' => $instalaciones
+                'instalaciones' => $instalaciones,
+                'tanques' => $tanques
             ]);
 
         } catch (\Exception $e) {

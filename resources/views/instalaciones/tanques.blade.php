@@ -77,7 +77,7 @@
                                 <span class="badge bg-{{ $estadoClass }}">{{ $tanque['estado'] }}</span>
                             </td>
                             <td>
-                                @if($tanque['activo'])
+                                @if(($tanque['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>

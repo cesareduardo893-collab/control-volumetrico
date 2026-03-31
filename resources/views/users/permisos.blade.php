@@ -73,7 +73,7 @@
                                                             <span class="badge bg-success">✓</span>
                                                             {{ $permiso['name'] }}
                                                         </td>
-                                                        <td><code>{{ $permiso['slug'] }}</code></td>
+                                                        <td><code>{{ ($permiso['slug'] ?? '') }}</code></td>
                                                         <td>{{ $permiso['description'] ?? '-' }}</td>
                                                     </tr>
                                                 @endforeach

@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
+use Tests\TestCase;
 
 class BitacoraTest extends TestCase
 {
@@ -24,7 +23,7 @@ class BitacoraTest extends TestCase
                 'tipo_evento' => 'LOGIN',
                 'descripcion' => 'Inicio de sesión',
                 'fecha_creacion' => '2024-01-20 10:00:00',
-                'ip_address' => '192.168.1.1'
+                'ip_address' => '192.168.1.1',
             ],
             [
                 'id' => 2,
@@ -32,8 +31,8 @@ class BitacoraTest extends TestCase
                 'tipo_evento' => 'ALARMA_ATENDIDA',
                 'descripcion' => 'Atendió alarma #123',
                 'fecha_creacion' => '2024-01-20 11:30:00',
-                'ip_address' => '192.168.1.2'
-            ]
+                'ip_address' => '192.168.1.2',
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/bitacora', [
@@ -44,7 +43,7 @@ class BitacoraTest extends TestCase
             'per_page' => 10,
             'last_page' => 1,
             'total' => 2,
-            'links' => []
+            'links' => [],
         ]);
 
         $response = $this->get('/bitacora');
@@ -72,7 +71,7 @@ class BitacoraTest extends TestCase
             'registro_id' => null,
             'datos_previos' => null,
             'datos_nuevos' => null,
-            'created_at' => '2024-01-20 10:00:00'
+            'created_at' => '2024-01-20 10:00:00',
         ];
 
         $this->mockSuccessfulResponse('/api/bitacora/1', $evento);
@@ -90,7 +89,7 @@ class BitacoraTest extends TestCase
     {
         $filters = [
             'fecha_inicio' => '2024-01-01',
-            'fecha_fin' => '2024-01-31'
+            'fecha_fin' => '2024-01-31',
         ];
 
         $resumen = [
@@ -99,7 +98,7 @@ class BitacoraTest extends TestCase
                 'LOGIN' => 50,
                 'ALARMA_ATENDIDA' => 30,
                 'CONTRIBUYENTE_CREADO' => 20,
-                'USUARIO_ACTUALIZADO' => 50
+                'USUARIO_ACTUALIZADO' => 50,
             ],
             'por_dia' => [
                 '2024-01-01' => 10,
@@ -108,13 +107,13 @@ class BitacoraTest extends TestCase
             ],
             'usuarios_activos' => [
                 ['usuario_id' => 1, 'nombre' => 'Juan Pérez', 'actividades' => 45],
-                ['usuario_id' => 2, 'nombre' => 'María López', 'actividades' => 30]
-            ]
+                ['usuario_id' => 2, 'nombre' => 'María López', 'actividades' => 30],
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/bitacora/resumen-actividad', $resumen);
 
-        $response = $this->getJson('/bitacora/resumen-actividad?' . http_build_query($filters));
+        $response = $this->getJson('/bitacora/resumen-actividad?'.http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -127,13 +126,13 @@ class BitacoraTest extends TestCase
         $usuarioId = 1;
         $filters = [
             'fecha_inicio' => '2024-01-01',
-            'fecha_fin' => '2024-01-31'
+            'fecha_fin' => '2024-01-31',
         ];
 
         $actividad = [
             'usuario' => [
                 'id' => 1,
-                'nombre' => 'Juan Pérez'
+                'nombre' => 'Juan Pérez',
             ],
             'total_actividades' => 45,
             'actividades' => [
@@ -141,14 +140,14 @@ class BitacoraTest extends TestCase
                     'fecha' => '2024-01-20',
                     'tipo_evento' => 'LOGIN',
                     'descripcion' => 'Inicio de sesión',
-                    'ip_address' => '192.168.1.1'
-                ]
-            ]
+                    'ip_address' => '192.168.1.1',
+                ],
+            ],
         ];
 
         $this->mockSuccessfulResponse("/api/bitacora/actividad-usuario/{$usuarioId}", $actividad);
 
-        $response = $this->getJson("/bitacora/actividad-usuario/{$usuarioId}?" . http_build_query($filters));
+        $response = $this->getJson("/bitacora/actividad-usuario/{$usuarioId}?".http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -162,7 +161,7 @@ class BitacoraTest extends TestCase
         $modulo = 'Alarmas';
         $filters = [
             'fecha_inicio' => '2024-01-01',
-            'fecha_fin' => '2024-01-31'
+            'fecha_fin' => '2024-01-31',
         ];
 
         $actividad = [
@@ -171,21 +170,21 @@ class BitacoraTest extends TestCase
             'por_tipo' => [
                 'ALARMA_CREADA' => 10,
                 'ALARMA_ATENDIDA' => 15,
-                'ALARMA_ACTUALIZADA' => 5
+                'ALARMA_ACTUALIZADA' => 5,
             ],
             'actividades' => [
                 [
                     'fecha' => '2024-01-20',
                     'tipo_evento' => 'ALARMA_ATENDIDA',
                     'usuario' => 'Juan Pérez',
-                    'descripcion' => 'Atendió alarma #123'
-                ]
-            ]
+                    'descripcion' => 'Atendió alarma #123',
+                ],
+            ],
         ];
 
         $this->mockSuccessfulResponse("/api/bitacora/actividad-modulo/{$modulo}", $actividad);
 
-        $response = $this->getJson("/bitacora/actividad-modulo/{$modulo}?" . http_build_query($filters));
+        $response = $this->getJson("/bitacora/actividad-modulo/{$modulo}?".http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -200,7 +199,7 @@ class BitacoraTest extends TestCase
         $registroId = 1;
         $filters = [
             'fecha_inicio' => '2024-01-01',
-            'fecha_fin' => '2024-01-31'
+            'fecha_fin' => '2024-01-31',
         ];
 
         $actividad = [
@@ -214,14 +213,14 @@ class BitacoraTest extends TestCase
                     'usuario' => 'Juan Pérez',
                     'descripcion' => 'Actualizó información del contribuyente',
                     'datos_previos' => ['rfc' => 'XAXX010101XXX'],
-                    'datos_nuevos' => ['rfc' => 'XAXX010101XXX', 'telefono' => '1234567890']
-                ]
-            ]
+                    'datos_nuevos' => ['rfc' => 'XAXX010101XXX', 'telefono' => '1234567890'],
+                ],
+            ],
         ];
 
         $this->mockSuccessfulResponse("/api/bitacora/actividad-tabla/{$tabla}/{$registroId}", $actividad);
 
-        $response = $this->getJson("/bitacora/actividad-tabla/{$tabla}/{$registroId}?" . http_build_query($filters));
+        $response = $this->getJson("/bitacora/actividad-tabla/{$tabla}/{$registroId}?".http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -235,7 +234,7 @@ class BitacoraTest extends TestCase
         $tabla = 'contribuyentes';
         $filters = [
             'fecha_inicio' => '2024-01-01',
-            'fecha_fin' => '2024-01-31'
+            'fecha_fin' => '2024-01-31',
         ];
 
         $actividad = [
@@ -246,20 +245,20 @@ class BitacoraTest extends TestCase
                     'registro_id' => 1,
                     'tipo_evento' => 'CONTRIBUYENTE_CREADO',
                     'fecha' => '2024-01-10',
-                    'usuario' => 'Juan Pérez'
+                    'usuario' => 'Juan Pérez',
                 ],
                 [
                     'registro_id' => 2,
                     'tipo_evento' => 'CONTRIBUYENTE_ACTUALIZADO',
                     'fecha' => '2024-01-15',
-                    'usuario' => 'María López'
-                ]
-            ]
+                    'usuario' => 'María López',
+                ],
+            ],
         ];
 
         $this->mockSuccessfulResponse("/api/bitacora/actividad-tabla/{$tabla}", $actividad);
 
-        $response = $this->getJson("/bitacora/actividad-tabla/{$tabla}?" . http_build_query($filters));
+        $response = $this->getJson("/bitacora/actividad-tabla/{$tabla}?".http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -273,24 +272,25 @@ class BitacoraTest extends TestCase
         $filters = [
             'formato' => 'CSV',
             'fecha_inicio' => '2024-01-01',
-            'fecha_fin' => '2024-01-31'
+            'fecha_fin' => '2024-01-31',
         ];
 
         Http::fake([
-            $this->baseApiUrl . '/api/bitacora/exportar*' => Http::response(
+            $this->baseApiUrl.'/api/bitacora/exportar*' => Http::response(
                 "fecha,tipo_evento,usuario,descripcion\n2024-01-20,LOGIN,Juan Pérez,Inicio de sesión",
                 200,
                 [
                     'Content-Type' => 'text/csv',
-                    'Content-Disposition' => 'attachment; filename="bitacora.csv"'
+                    'Content-Disposition' => 'attachment; filename="bitacora.csv"',
                 ]
-            )
+            ),
+            '*' => Http::response(['success' => true, 'data' => []], 200),
         ]);
 
-        $response = $this->get('/bitacora/exportar?' . http_build_query($filters));
+        $response = $this->get('/bitacora/exportar?'.http_build_query($filters));
 
         $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'text/csv');
+        $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
         $response->assertHeader('Content-Disposition', 'attachment; filename="bitacora.csv"');
     }
 
@@ -300,21 +300,21 @@ class BitacoraTest extends TestCase
         $filters = [
             'formato' => 'PDF',
             'fecha_inicio' => '2024-01-01',
-            'fecha_fin' => '2024-01-31'
+            'fecha_fin' => '2024-01-31',
         ];
 
         Http::fake([
-            $this->baseApiUrl . '/api/bitacora/exportar*' => Http::response(
+            $this->baseApiUrl.'/api/bitacora/exportar*' => Http::response(
                 '%PDF-1.4...',
                 200,
                 [
                     'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="bitacora.pdf"'
+                    'Content-Disposition' => 'attachment; filename="bitacora.pdf"',
                 ]
-            )
+            ),
         ]);
 
-        $response = $this->get('/bitacora/exportar?' . http_build_query($filters));
+        $response = $this->get('/bitacora/exportar?'.http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
@@ -339,20 +339,20 @@ class BitacoraTest extends TestCase
                 'id' => 1,
                 'tipo_evento' => 'LOGIN',
                 'descripcion' => 'Inicio de sesión',
-                'fecha_creacion' => '2024-01-20 10:00:00'
-            ]
+                'fecha_creacion' => '2024-01-20 10:00:00',
+            ],
         ];
 
-        $this->mockSuccessfulResponse('/api/bitacora?tipo_evento=LOGIN', [
+        $this->mockSuccessfulResponse('/api/bitacora', [
             'data' => $eventos,
-            'total' => 1
+            'total' => 1,
         ]);
 
         $response = $this->get('/bitacora?tipo_evento=LOGIN');
 
         $response->assertStatus(200);
         $response->assertViewHas('eventos');
-        
+
         $eventos = $response->viewData('eventos');
         $this->assertCount(1, $eventos);
         $this->assertEquals('LOGIN', $eventos[0]['tipo_evento']);
@@ -365,20 +365,20 @@ class BitacoraTest extends TestCase
             [
                 'id' => 1,
                 'fecha_creacion' => '2024-01-15',
-                'descripcion' => 'Evento en rango'
-            ]
+                'descripcion' => 'Evento en rango',
+            ],
         ];
 
-        $this->mockSuccessfulResponse('/api/bitacora?fecha_inicio=2024-01-01&fecha_fin=2024-01-31', [
+        $this->mockSuccessfulResponse('/api/bitacora', [
             'data' => $eventos,
-            'total' => 1
+            'total' => 1,
         ]);
 
         $response = $this->get('/bitacora?fecha_inicio=2024-01-01&fecha_fin=2024-01-31');
 
         $response->assertStatus(200);
         $response->assertViewHas('eventos');
-        
+
         $filters = $response->viewData('filters');
         $this->assertEquals('2024-01-01', $filters['fecha_inicio']);
         $this->assertEquals('2024-01-31', $filters['fecha_fin']);

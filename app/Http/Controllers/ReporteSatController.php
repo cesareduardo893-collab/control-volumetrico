@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class ReporteSatController extends BaseController
 {
@@ -20,7 +20,7 @@ class ReporteSatController extends BaseController
             $params = $request->only([
                 'instalacion_id', 'usuario_genera_id', 'folio', 'periodo',
                 'tipo_reporte', 'estado', 'fecha_generacion_inicio',
-                'fecha_generacion_fin', 'per_page', 'page'
+                'fecha_generacion_fin', 'per_page', 'page',
             ]);
 
             $response = $this->apiGet('/api/reportes-sat', $params);
@@ -29,7 +29,7 @@ class ReporteSatController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al listar reportes SAT', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar reportes');
@@ -48,12 +48,12 @@ class ReporteSatController extends BaseController
             $instalaciones = $this->getCatalog('/api/instalaciones', ['activo' => true]);
 
             return view('reportes-sat.create', [
-                'instalaciones' => $instalaciones
+                'instalaciones' => $instalaciones,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de creación', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('reportes-sat.index')
@@ -62,26 +62,26 @@ class ReporteSatController extends BaseController
     }
 
     /**
-     * Crear reporte SAT
+     * Crear reporte SAT (Generación automática)
      */
     public function store(Request $request)
     {
         $request->validate([
             'instalacion_id' => 'required|integer',
-            'folio' => 'required|string|max:255',
-            'periodo' => 'required|string|size:7',
-            'tipo_reporte' => 'required|in:MENSUAL,ANUAL,ESPECIAL',
-            'estado' => 'required|in:PENDIENTE,GENERADO,FIRMADO,ENVIADO,ACEPTADO,RECHAZADO,ERROR,REQUIERE_REENVIO',
+            'periodo' => 'required|string|regex:/^\d{4}-\d{2}$/',
+            'tipo_reporte' => 'nullable|in:MENSUAL,ANUAL,ESPECIAL',
         ]);
 
         try {
             $this->setApiToken(Session::get('api_token'));
 
-            $data = $request->all();
-            $data['usuario_genera_id'] = Session::get('user_id');
-            $data['fecha_generacion'] = now()->toDateString();
+            $data = [
+                'instalacion_id' => $request->instalacion_id,
+                'periodo' => $request->periodo,
+                'tipo_reporte' => $request->tipo_reporte ?? 'MENSUAL',
+            ];
 
-            $response = $this->apiPost('/api/reportes-sat', $data);
+            $response = $this->apiPost('/api/reportes-sat/generar', $data);
 
             if ($this->apiResponseSuccessful($response)) {
                 $reporteData = $this->apiResponseData($response, []);
@@ -92,17 +92,18 @@ class ReporteSatController extends BaseController
                     Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     'REPORTE_SAT_CREADO',
                     'Reportes SAT',
-                    "Reporte SAT creado: {$request->folio}",
+                    'Reporte SAT generado: '.($reporteData['folio'] ?? $reporteId),
                     Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     $reporteId
                 );
 
                 return redirect()->route('reportes-sat.show', $reporteId)
-                    ->with('success', 'Reporte SAT creado exitosamente');
+                    ->with('success', 'Reporte SAT generado exitosamente');
             }
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -110,16 +111,16 @@ class ReporteSatController extends BaseController
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', $this->apiResponseMessage($response, 'Error al crear reporte'));
+                ->with('error', $this->apiResponseMessage($response, 'Error al generar reporte'));
 
         } catch (\Exception $e) {
-            Log::error('Error al crear reporte SAT', [
-                'error' => $e->getMessage()
+            Log::error('Error al generar reporte SAT', [
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error al crear reporte');
+                ->with('error', 'Error al generar reporte: '.$e->getMessage());
         }
     }
 
@@ -133,7 +134,7 @@ class ReporteSatController extends BaseController
 
             $response = $this->apiGet("/api/reportes-sat/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('reportes-sat.index')
                     ->with('error', $this->apiResponseMessage($response, 'Reporte no encontrado'));
             }
@@ -141,13 +142,13 @@ class ReporteSatController extends BaseController
             $reporte = $this->apiResponseData($response, []);
 
             return view('reportes-sat.show', [
-                'reporte' => $reporte
+                'reporte' => $reporte,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al mostrar reporte SAT', [
                 'error' => $e->getMessage(),
-                'reporte_id' => $id
+                'reporte_id' => $id,
             ]);
 
             return redirect()->route('reportes-sat.index')
@@ -156,67 +157,14 @@ class ReporteSatController extends BaseController
     }
 
     /**
-     * Enviar reporte al SAT
-     */
-    public function enviar(Request $request, $id)
-    {
-        $request->validate([
-            'fecha_envio' => 'required|date',
-        ]);
-
-        try {
-            $this->setApiToken(Session::get('api_token'));
-
-            $response = $this->apiPost("/api/reportes-sat/{$id}/enviar", $request->all());
-
-            if ($this->apiResponseSuccessful($response)) {
-                $this->logActivity(
-                    Session::get('user_id'),
-                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
-                    'REPORTE_SAT_ENVIADO',
-                    'Reportes SAT',
-                    "Reporte SAT enviado ID: {$id}",
-                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
-                    $id
-                );
-
-                return redirect()->route('reportes-sat.show', $id)
-                    ->with('success', 'Reporte enviado exitosamente');
-            }
-
-            return redirect()->back()
-                ->withInput()
-                ->with('error', $this->apiResponseMessage($response, 'Error al enviar reporte'));
-
-        } catch (\Exception $e) {
-            Log::error('Error al enviar reporte SAT', [
-                'error' => $e->getMessage(),
-                'reporte_id' => $id
-            ]);
-
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Error al enviar reporte');
-        }
-    }
-
-    /**
-     * Firmar reporte
+     * Firmar reporte (automático)
      */
     public function firmar(Request $request, $id)
     {
-        $request->validate([
-            'cadena_original' => 'required|string',
-            'sello_digital' => 'required|string',
-            'certificado_sat' => 'required|string',
-            'fecha_firma' => 'required|date',
-            'folio_firma' => 'required|string|size:36',
-        ]);
-
         try {
             $this->setApiToken(Session::get('api_token'));
 
-            $response = $this->apiPost("/api/reportes-sat/{$id}/firmar", $request->all());
+            $response = $this->apiPost("/api/reportes-sat/{$id}/firmar", []);
 
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
@@ -234,99 +182,188 @@ class ReporteSatController extends BaseController
             }
 
             return redirect()->back()
-                ->withInput()
                 ->with('error', $this->apiResponseMessage($response, 'Error al firmar reporte'));
 
         } catch (\Exception $e) {
             Log::error('Error al firmar reporte SAT', [
                 'error' => $e->getMessage(),
-                'reporte_id' => $id
+                'reporte_id' => $id,
             ]);
 
             return redirect()->back()
-                ->withInput()
-                ->with('error', 'Error al firmar reporte');
+                ->with('error', 'Error al firmar reporte: '.$e->getMessage());
         }
     }
 
     /**
-     * Cancelar reporte
+     * Enviar reporte al SAT (automático)
      */
-    public function cancelar(Request $request, $id)
+    public function enviar(Request $request, $id)
     {
-        $request->validate([
-            'motivo_cancelacion' => 'required|string',
-        ]);
-
         try {
             $this->setApiToken(Session::get('api_token'));
 
-            $response = $this->apiPost("/api/reportes-sat/{$id}/cancelar", $request->all());
+            $response = $this->apiPost("/api/reportes-sat/{$id}/enviar-sat", []);
 
             if ($this->apiResponseSuccessful($response)) {
                 $this->logActivity(
                     Session::get('user_id'),
                     Bitacora::TIPO_EVENTO_ADMINISTRACION,
-                    'REPORTE_SAT_CANCELADO',
+                    'REPORTE_SAT_ENVIADO',
                     'Reportes SAT',
-                    "Reporte SAT cancelado ID: {$id}",
+                    "Reporte SAT enviado ID: {$id}",
                     Bitacora::TIPO_EVENTO_ADMINISTRACION,
                     $id
                 );
 
                 return redirect()->route('reportes-sat.show', $id)
-                    ->with('success', 'Reporte cancelado exitosamente');
+                    ->with('success', 'Reporte enviado al SAT exitosamente');
             }
 
             return redirect()->back()
-                ->withInput()
-                ->with('error', $this->apiResponseMessage($response, 'Error al cancelar reporte'));
+                ->with('error', $this->apiResponseMessage($response, 'Error al enviar reporte'));
 
         } catch (\Exception $e) {
-            Log::error('Error al cancelar reporte SAT', [
+            Log::error('Error al enviar reporte SAT', [
                 'error' => $e->getMessage(),
-                'reporte_id' => $id
+                'reporte_id' => $id,
             ]);
 
             return redirect()->back()
-                ->withInput()
-                ->with('error', 'Error al cancelar reporte');
+                ->with('error', 'Error al enviar reporte: '.$e->getMessage());
         }
     }
 
     /**
-     * Obtener historial de envíos
+     * Generar reporte anual
      */
-    public function historialEnvios(Request $request, $instalacionId)
+    public function generarAnual(Request $request)
     {
         $request->validate([
+            'instalacion_id' => 'required|integer',
             'anio' => 'required|integer|min:2020',
         ]);
 
         try {
             $this->setApiToken(Session::get('api_token'));
 
-            $response = $this->apiGet("/api/reportes-sat/historial-envios/{$instalacionId}", $request->all());
+            $response = $this->apiPost('/api/reportes-sat/generar-anual', $request->all());
 
-            if (!$this->apiResponseSuccessful($response)) {
-                return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar historial'));
+            if ($this->apiResponseSuccessful($response)) {
+                $data = $this->apiResponseData($response, []);
+
+                $this->logActivity(
+                    Session::get('user_id'),
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
+                    'REPORTE_ANUAL_GENERADO',
+                    'Reportes SAT',
+                    "Reportes anuales generados para año {$request->anio}",
+                    Bitacora::TIPO_EVENTO_ADMINISTRACION,
+                    null
+                );
+
+                return redirect()->route('reportes-sat.index')
+                    ->with('success', "Se generaron {$data['total_reportes']} reportes para el año {$request->anio}");
             }
 
-            $historial = $this->apiResponseData($response, []);
+            return redirect()->back()
+                ->with('error', $this->apiResponseMessage($response, 'Error al generar reportes anuales'));
 
-            return view('reportes-sat.historial', [
-                'historial' => $historial,
-                'instalacionId' => $instalacionId,
-                'filters' => $request->all()
+        } catch (\Exception $e) {
+            Log::error('Error al generar reportes anuales', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Error al generar reportes anuales: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Descargar XML del reporte
+     */
+    public function descargarXml($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet("/api/reportes-sat/{$id}/xml");
+
+            if (! $this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', 'Reporte no encontrado');
+            }
+
+            $contenido = $this->apiResponseData($response, []);
+
+            return response($contenido, 200, [
+                'Content-Type' => 'application/xml',
+                'Content-Disposition' => 'attachment; filename="reporte_sat_'.$id.'.xml"',
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error al obtener historial de envíos', [
-                'error' => $e->getMessage(),
-                'instalacion_id' => $instalacionId
+            return redirect()->back()->with('error', 'Error al descargar XML');
+        }
+    }
+
+    /**
+     * Descargar acuse del SAT
+     */
+    public function descargarAcuse($id)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $response = $this->apiGet("/api/reportes-sat/{$id}/acuse");
+
+            if (! $this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', 'Acuse no encontrado');
+            }
+
+            $contenido = $this->apiResponseData($response, []);
+
+            return response($contenido, 200, [
+                'Content-Type' => 'application/xml',
+                'Content-Disposition' => 'attachment; filename="acuse_'.$id.'.xml"',
             ]);
 
-            return redirect()->back()->with('error', 'Error al cargar historial');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al descargar acuse');
+        }
+    }
+
+    /**
+     * Exportar reportes
+     */
+    public function exportar(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+
+            $tipo = $request->get('tipo', 'excel');
+            $params = $request->all();
+            $params['per_page'] = 1000;
+
+            $response = $this->apiGet('/api/reportes-sat', $params);
+
+            if (! $this->apiResponseSuccessful($response)) {
+                return redirect()->back()->with('error', 'Error al obtener datos');
+            }
+
+            $reportes = $this->apiResponseData($response, []);
+
+            if ($tipo === 'pdf') {
+                $pdf = \PDF::loadView('reportes-sat.pdf', ['reportes' => $reportes]);
+
+                return $pdf->download('reportes_sat_'.date('Ymd').'.pdf');
+            }
+
+            return \Excel::download(new \App\Exports\ReporteSatExport($reportes),
+                'reportes_sat_'.date('Ymd').'.xlsx');
+
+        } catch (\Exception $e) {
+            Log::error('Error al exportar reportes SAT', ['error' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Error al exportar');
         }
     }
 }

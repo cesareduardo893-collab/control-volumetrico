@@ -208,7 +208,7 @@
                         <tbody>
                             @foreach($certificado['historial_verificaciones'] as $historial)
                                 <tr>
-                                    <td>{{ $historial['fecha'] }}</td>
+                                    <td>{{ ($historial['fecha'] ?? '') }}</td>
                                     <td>{{ $historial['tipo'] }}</td>
                                     <td>
                                         @if($historial['resultado'] == 'acreditado')

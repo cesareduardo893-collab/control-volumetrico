@@ -4,7 +4,7 @@
 @section('header', 'Detalle del Dictamen de Calidad')
 
 @section('actions')
-@if($dictamen['estado'] == 'VIGENTE')
+@if(($dictamen['estado'] ?? '') == 'VIGENTE')
     <a href="{{ route('dictamenes.edit', $dictamen['id']) }}" class="btn btn-sm btn-warning">
         <i class="bi bi-pencil"></i> Editar
     </a>
@@ -31,15 +31,15 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">Folio:</th>
-                        <td>{{ $dictamen['folio'] }}</td>
+                        <td>{{ $dictamen['folio'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <th>Número de Lote:</th>
-                        <td>{{ $dictamen['numero_lote'] }}</td>
+                        <td>{{ $dictamen['numero_lote'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <th>Fecha de Emisión:</th>
-                        <td>{{ $dictamen['fecha_emision'] }}</td>
+                        <td>{{ $dictamen['fecha_emision'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <th>Estado:</th>
@@ -49,9 +49,9 @@
                                     'VIGENTE' => 'success',
                                     'CADUCADO' => 'warning',
                                     'CANCELADO' => 'secondary'
-                                ][$dictamen['estado']] ?? 'secondary';
+                                ][$dictamen['estado'] ?? ''] ?? 'secondary';
                             @endphp
-                            <span class="badge bg-{{ $estadoClass }}">{{ $dictamen['estado'] }}</span>
+                            <span class="badge bg-{{ $estadoClass }}">{{ $dictamen['estado'] ?? '' }}</span>
                             @if($dictamen['vigente'] ?? true)
                                 <span class="badge bg-success">Vigente</span>
                             @else
@@ -78,7 +78,7 @@
                                 {{ $dictamen['contribuyente']['razon_social'] }}<br>
                                 <small class="text-muted">{{ $dictamen['contribuyente']['rfc'] }}</small>
                             @else
-                                {{ $dictamen['contribuyente_id'] }}
+                                {{ $dictamen['contribuyente_id'] ?? '' }}
                             @endif
                         </td>
                     </tr>
@@ -104,15 +104,15 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">RFC:</th>
-                        <td>{{ $dictamen['laboratorio_rfc'] }}</td>
+                        <td>{{ ($dictamen['laboratorio_rfc'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Nombre:</th>
-                        <td>{{ $dictamen['laboratorio_nombre'] }}</td>
+                        <td>{{ ($dictamen['laboratorio_nombre'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>N° Acreditación:</th>
-                        <td>{{ $dictamen['laboratorio_numero_acreditacion'] }}</td>
+                        <td>{{ ($dictamen['laboratorio_numero_acreditacion'] ?? '') }}</td>
                     </tr>
                 </table>
             </div>
@@ -128,15 +128,15 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">Toma de Muestra:</th>
-                        <td>{{ $dictamen['fecha_toma_muestra'] }}</td>
+                        <td>{{ ($dictamen['fecha_toma_muestra'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Fecha de Pruebas:</th>
-                        <td>{{ $dictamen['fecha_pruebas'] }}</td>
+                        <td>{{ ($dictamen['fecha_pruebas'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Fecha de Resultados:</th>
-                        <td>{{ $dictamen['fecha_resultados'] }}</td>
+                        <td>{{ $dictamen['fecha_resultados'] ?? '' }}</td>
                     </tr>
                 </table>
             </div>
@@ -164,15 +164,15 @@
                     @endif
                     <tr>
                         <th>Volumen de Muestra:</th>
-                        <td>{{ number_format($dictamen['volumen_muestra'], 3) }} {{ $dictamen['unidad_medida_muestra'] }}</td>
+                        <td>{{ number_format($dictamen['volumen_muestra'] ?? 0, 3) }} {{ $dictamen['unidad_medida_muestra'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <th>Método de Muestreo:</th>
-                        <td>{{ $dictamen['metodo_muestreo'] }}</td>
+                        <td>{{ $dictamen['metodo_muestreo'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <th>Método de Ensayo:</th>
-                        <td>{{ $dictamen['metodo_ensayo'] }}</td>
+                        <td>{{ $dictamen['metodo_ensayo'] ?? '' }}</td>
                     </tr>
                 </table>
             </div>
@@ -200,12 +200,12 @@
                         <tbody>
                             @foreach($dictamen['parametros'] as $parametro)
                                 <tr>
-                                    <td>{{ $parametro['nombre'] }}</td>
-                                    <td>{{ $parametro['resultado'] }}</td>
-                                    <td>{{ $parametro['unidad'] }}</td>
-                                    <td>{{ $parametro['especificacion'] }}</td>
+                                    <td>{{ $parametro['nombre'] ?? '' }}</td>
+                                    <td>{{ $parametro['resultado'] ?? '' }}</td>
+                                    <td>{{ $parametro['unidad'] ?? '' }}</td>
+                                    <td>{{ $parametro['especificacion'] ?? '' }}</td>
                                     <td>
-                                        @if($parametro['cumple'])
+                                        @if($parametro['cumple'] ?? false)
                                             <span class="badge bg-success">Cumple</span>
                                         @else
                                             <span class="badge bg-danger">No Cumple</span>
@@ -230,7 +230,7 @@
                 <h5 class="card-title mb-0">Resultados del Análisis</h5>
             </div>
             <div class="card-body">
-                <p>{{ $dictamen['resultados'] }}</p>
+                <p>{{ $dictamen['resultados'] ?? '' }}</p>
             </div>
         </div>
     </div>
@@ -245,7 +245,7 @@
                 <h5 class="card-title mb-0">Observaciones</h5>
             </div>
             <div class="card-body">
-                <p>{{ $dictamen['observaciones'] }}</p>
+                <p>{{ $dictamen['observaciones'] ?? '' }}</p>
             </div>
         </div>
     </div>
@@ -262,9 +262,9 @@
             <div class="card-body">
                 <div class="list-group">
                     @foreach($dictamen['documentos_adjuntos'] as $documento)
-                        <a href="{{ $documento['url'] }}" class="list-group-item list-group-item-action" target="_blank">
-                            <i class="bi bi-file-pdf text-danger"></i> {{ $documento['nombre'] }}
-                            <small class="text-muted">({{ $documento['tamano'] }})</small>
+                        <a href="{{ $documento['url'] ?? '#' }}" class="list-group-item list-group-item-action" target="_blank">
+                            <i class="bi bi-file-pdf text-danger"></i> {{ $documento['nombre'] ?? '' }}
+                            <small class="text-muted">({{ $documento['tamano'] ?? '' }})</small>
                         </a>
                     @endforeach
                 </div>

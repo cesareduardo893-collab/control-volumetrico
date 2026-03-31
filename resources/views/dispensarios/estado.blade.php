@@ -57,9 +57,9 @@
                                                     'OPERATIVO' => 'success',
                                                     'MANTENIMIENTO' => 'warning',
                                                     'FUERA_SERVICIO' => 'danger'
-                                                ][$estado['estado_actual']] ?? 'secondary';
+                                                ][($estado['estado_actual'] ?? '')] ?? 'secondary';
                                             @endphp
-                                            <span class="badge bg-{{ $badgeClass }}">{{ $estado['estado_actual'] }}</span>
+                                            <span class="badge bg-{{ $badgeClass }}">{{ ($estado['estado_actual'] ?? '') }}</span>
                                         </td>
                                     </tr>
                                 </table>

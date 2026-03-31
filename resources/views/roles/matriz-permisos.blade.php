@@ -37,7 +37,7 @@
                             <td>
                                 <small>{{ $permiso['name'] }}</small>
                                 <br>
-                                <span class="text-muted small">{{ $permiso['slug'] }}</span>
+                                <span class="text-muted small">{{ ($permiso['slug'] ?? '') }}</span>
                             </td>
                             @foreach($roles as $role)
                                 @php

@@ -4,17 +4,17 @@
 @section('header', 'Detalle del Medidor')
 
 @section('actions')
-<a href="{{ route('medidores.edit', $medidor['id']) }}" class="btn btn-sm btn-warning">
+<a href="{{ route('medidores.edit', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-warning">
     <i class="bi bi-pencil"></i> Editar
 </a>
-<a href="{{ route('medidores.historial-calibraciones', $medidor['id']) }}" class="btn btn-sm btn-info">
+<a href="{{ route('medidores.historial-calibraciones', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-info">
     <i class="bi bi-calendar-check"></i> Historial Calibraciones
 </a>
-<a href="{{ route('medidores.verificar-estado', $medidor['id']) }}" class="btn btn-sm btn-primary">
+<a href="{{ route('medidores.verificar-estado', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-primary">
     <i class="bi bi-check-circle"></i> Verificar Estado
 </a>
-@if($medidor['estado'] == 'OPERATIVO')
-    <a href="{{ route('medidores.probar-comunicacion', $medidor['id']) }}" class="btn btn-sm btn-success">
+@if(($medidor['estado'] ?? '') == 'OPERATIVO')
+    <a href="{{ route('medidores.probar-comunicacion', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-success">
         <i class="bi bi-wifi"></i> Probar Comunicación
     </a>
 @endif
@@ -34,11 +34,11 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">Clave:</th>
-                        <td><strong>{{ $medidor['clave'] }}</strong></td>
+                        <td><strong>{{ ($medidor['clave'] ?? '') }}</strong></td>
                     </tr>
                     <tr>
                         <th>Número de Serie:</th>
-                        <td>{{ $medidor['numero_serie'] }}</td>
+                        <td>{{ ($medidor['numero_serie'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Modelo:</th>
@@ -50,11 +50,11 @@
                     </tr>
                     <tr>
                         <th>Tipo de Elemento:</th>
-                        <td>{{ ucfirst($medidor['elemento_tipo']) }}</td>
+                        <td>{{ ucfirst((($medidor['elemento_tipo'] ?? '') ?? '')) }}</td>
                     </tr>
                     <tr>
                         <th>Tipo de Medición:</th>
-                        <td>{{ $medidor['tipo_medicion'] }}</td>
+                        <td>{{ ($medidor['tipo_medicion'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Estado:</th>
@@ -66,15 +66,15 @@
                                     'MANTENIMIENTO' => 'warning',
                                     'FUERA_SERVICIO' => 'danger',
                                     'FALLA_COMUNICACION' => 'secondary'
-                                ][$medidor['estado']] ?? 'secondary';
+                                ][($medidor['estado'] ?? '')] ?? 'secondary';
                             @endphp
-                            <span class="badge bg-{{ $estadoClass }}">{{ $medidor['estado'] }}</span>
+                            <span class="badge bg-{{ $estadoClass }}">{{ ($medidor['estado'] ?? '') }}</span>
                         </td>
                     </tr>
                     <tr>
                         <th>Activo:</th>
                         <td>
-                            @if($medidor['activo'])
+                            @if(($medidor['activo'] ?? true))
                                 <span class="badge bg-success">Sí</span>
                             @else
                                 <span class="badge bg-secondary">No</span>
@@ -97,11 +97,11 @@
                         <th style="width: 40%">Instalación:</th>
                         <td>
                             @if(isset($medidor['instalacion']))
-                                <a href="{{ route('instalaciones.show', $medidor['instalacion']['id']) }}">
+                                <a href="{{ route('instalaciones.show', ($medidor['instalacion']['id'] ?? 0)) }}">
                                     {{ $medidor['instalacion']['nombre'] }}
                                 </a>
                             @else
-                                {{ $medidor['instalacion_id'] }}
+                                {{ $medidor['instalacion_id'] ?? '' }}
                             @endif
                         </td>
                     </tr>
@@ -109,8 +109,8 @@
                         <th>Tanque Asignado:</th>
                         <td>
                             @if(isset($medidor['tanque']))
-                                <a href="{{ route('tanques.show', $medidor['tanque']['id']) }}">
-                                    {{ $medidor['tanque']['identificador'] }}
+                                <a href="{{ route('tanques.show', $medidor['tanque']['id'] ?? 0) }}">
+                                    {{ $medidor['tanque']['identificador'] ?? '' }}
                                 </a>
                                 <br>
                                 <small class="text-muted">{{ $medidor['tanque']['producto']['nombre'] ?? 'Sin producto' }}</small>
@@ -135,11 +135,11 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">Precisión:</th>
-                        <td>{{ $medidor['precision'] }}%</td>
+                        <td>{{ ($medidor['precision'] ?? 0) }}%</td>
                     </tr>
                     <tr>
                         <th>Capacidad Máxima:</th>
-                        <td>{{ number_format($medidor['capacidad_maxima'], 1) }} L/min</td>
+                        <td>{{ number_format($medidor['capacidad_maxima'] ?? 0, 1) }} L/min</td>
                     </tr>
                     @if(isset($medidor['presion_maxima']))
                         <tr>
@@ -156,13 +156,19 @@
                     @if(isset($medidor['tecnologia_id']))
                         <tr>
                             <th>Tecnología:</th>
-                            <td>{{ $medidor['tecnologia_id'] }}</td>
+                            <td>
+                                @php
+                                    $tecnologiaId = is_array($medidor['tecnologia_id']) ? ($medidor['tecnologia_id']['id'] ?? '') : $medidor['tecnologia_id'];
+                                    $tecnologiaEncontrada = collect($tecnologias ?? [])->firstWhere('id', $tecnologiaId);
+                                @endphp
+                                {{ $tecnologiaEncontrada['descripcion'] ?? $tecnologiaEncontrada['valor'] ?? $tecnologiaId }}
+                            </td>
                         </tr>
                     @endif
                     @if(isset($medidor['protocolo_comunicacion']))
                         <tr>
                             <th>Protocolo:</th>
-                            <td>{{ $medidor['protocolo_comunicacion'] }}</td>
+                            <td>{{ ucfirst($medidor['protocolo_comunicacion']) }}</td>
                         </tr>
                     @endif
                 </table>
@@ -235,12 +241,12 @@
                         <tbody>
                             @foreach($medidor['mangueras'] as $manguera)
                                 <tr>
-                                    <td>{{ $manguera['clave'] }}</td>
+                                    <td>{{ $manguera['clave'] ?? '' }}</td>
                                     <td>{{ $manguera['descripcion'] ?? '-' }}</td>
                                     <td>
                                         @if(isset($manguera['dispensario']))
-                                            <a href="{{ route('dispensarios.show', $manguera['dispensario']['id']) }}">
-                                                {{ $manguera['dispensario']['clave'] }}
+                                            <a href="{{ route('dispensarios.show', $manguera['dispensario']['id'] ?? 0) }}">
+                                                {{ $manguera['dispensario']['clave'] ?? '' }}
                                             </a>
                                         @endif
                                     </td>
@@ -250,12 +256,12 @@
                                                 'OPERATIVO' => 'success',
                                                 'MANTENIMIENTO' => 'warning',
                                                 'FUERA_SERVICIO' => 'danger'
-                                            ][$manguera['estado']] ?? 'secondary';
+                                            ][$manguera['estado'] ?? ''] ?? 'secondary';
                                         @endphp
-                                        <span class="badge bg-{{ $estadoMangueraClass }}">{{ $manguera['estado'] }}</span>
+                                        <span class="badge bg-{{ $estadoMangueraClass }}">{{ $manguera['estado'] ?? '' }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('mangueras.show', $manguera['id']) }}" class="btn btn-sm btn-info">
+                                        <a href="{{ route('mangueras.show', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-info">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </td>
@@ -287,7 +293,7 @@
 
 <!-- Botón de eliminar (solo si no tiene mangueras asociadas) -->
 @if(empty($medidor['mangueras']))
-<form method="POST" action="{{ route('medidores.destroy', $medidor['id']) }}" class="d-inline"
+<form method="POST" action="{{ route('medidores.destroy', ($medidor['id'] ?? 0)) }}" class="d-inline"
       onsubmit="return confirm('¿Está seguro de eliminar este medidor? Esta acción no se puede deshacer.');">
     @csrf
     @method('DELETE')

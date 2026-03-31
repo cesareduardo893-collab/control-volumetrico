@@ -4,7 +4,7 @@
 @section('header', 'Detalle de Manguera')
 
 @section('actions')
-<a href="{{ route('mangueras.edit', $manguera['id']) }}" class="btn btn-sm btn-warning">
+<a href="{{ route('mangueras.edit', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-warning">
     <i class="bi bi-pencil"></i> Editar
 </a>
 <a href="{{ route('mangueras.index') }}" class="btn btn-sm btn-secondary">
@@ -45,7 +45,7 @@
                     <tr>
                         <th>Activo:</th>
                         <td>
-                            @if($manguera['activo'])
+                            @if(($manguera['activo'] ?? true))
                                 <span class="badge bg-success">Sí</span>
                             @else
                                 <span class="badge bg-secondary">No</span>
@@ -140,7 +140,7 @@
                         </tr>
                     </table>
                     
-                    <form method="POST" action="{{ route('mangueras.quitar-medidor', $manguera['id']) }}" 
+                    <form method="POST" action="{{ route('mangueras.quitar-medidor', ($manguera['id'] ?? 0)) }}" 
                           class="d-inline" onsubmit="return confirm('¿Está seguro de quitar el medidor de esta manguera?');">
                         @csrf
                         <button type="submit" class="btn btn-danger btn-sm">
@@ -149,7 +149,7 @@
                     </form>
                 @else
                     <p class="text-muted">No hay medidor asignado</p>
-                    <a href="{{ route('mangueras.edit', $manguera['id']) }}" class="btn btn-primary btn-sm">
+                    <a href="{{ route('mangueras.edit', ($manguera['id'] ?? 0)) }}" class="btn btn-primary btn-sm">
                         <i class="bi bi-plus-circle"></i> Asignar Medidor
                     </a>
                 @endif
@@ -231,12 +231,12 @@
                         <tbody>
                             @foreach($manguera['historial_calibraciones'] as $calibracion)
                                 <tr>
-                                    <td>{{ $calibracion['fecha'] }}</td>
+                                    <td>{{ ($calibracion['fecha'] ?? '') }}</td>
                                     <td>{{ $calibracion['certificado'] }}</td>
                                     <td>{{ $calibracion['laboratorio'] }}</td>
                                     <td>{{ $calibracion['precision'] }}%</td>
                                     <td>
-                                        @if($calibracion['exitosa'])
+                                        @if(($calibracion['exitosa'] ?? true))
                                             <span class="badge bg-success">Exitosa</span>
                                         @else
                                             <span class="badge bg-danger">Fallida</span>
@@ -255,7 +255,7 @@
 
 <!-- Botón de eliminar (solo si no tiene medidor asignado) -->
 @if(!isset($manguera['medidor']))
-<form method="POST" action="{{ route('mangueras.destroy', $manguera['id']) }}" class="d-inline" 
+<form method="POST" action="{{ route('mangueras.destroy', ($manguera['id'] ?? 0)) }}" class="d-inline" 
       onsubmit="return confirm('¿Está seguro de eliminar esta manguera? Esta acción no se puede deshacer.');">
     @csrf
     @method('DELETE')

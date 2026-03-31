@@ -21,7 +21,7 @@
                     </div>
                 @endif
                 
-                <form method="POST" action="{{ route('mangueras.update', $manguera['id']) }}">
+                <form method="POST" action="{{ route('mangueras.update', ($manguera['id'] ?? 0)) }}">
                     @csrf
                     @method('PUT')
                     
@@ -52,9 +52,9 @@
                             <select class="form-select select2" id="medidor_id" name="medidor_id">
                                 <option value="">Sin medidor</option>
                                 @foreach($medidores as $medidor)
-                                    <option value="{{ $medidor['id'] }}" 
-                                        {{ old('medidor_id', $manguera['medidor_id'] ?? '') == $medidor['id'] ? 'selected' : '' }}>
-                                        {{ $medidor['clave'] }} - {{ $medidor['numero_serie'] }} ({{ $medidor['estado'] }})
+                                    <option value="{{ ($medidor['id'] ?? 0) }}" 
+                                        {{ old('medidor_id', $manguera['medidor_id'] ?? '') == ($medidor['id'] ?? 0) ? 'selected' : '' }}>
+                                        {{ $medidor['clave'] }} - {{ ($medidor['numero_serie'] ?? '') }} ({{ ($medidor['estado'] ?? '') }})
                                     </option>
                                 @endforeach
                             </select>
@@ -93,7 +93,7 @@
                     <div class="mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1"
-                                   {{ old('activo', $manguera['activo']) ? 'checked' : '' }}>
+                                   {{ old('activo', ($manguera['activo'] ?? true)) ? 'checked' : '' }}>
                             <label class="form-check-label" for="activo">Manguera Activa</label>
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                     <hr>
                     
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('mangueras.show', $manguera['id']) }}" class="btn btn-secondary">
+                        <a href="{{ route('mangueras.show', ($manguera['id'] ?? 0)) }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Cancelar
                         </a>
                         <button type="submit" class="btn btn-warning">

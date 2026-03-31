@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bitacora;
 use App\Http\Controllers\Traits\ValidacionEspanol;
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class ContribuyenteController extends BaseController
 {
     use ValidacionEspanol;
+
     /**
      * Listar contribuyentes
      */
@@ -21,7 +22,7 @@ class ContribuyenteController extends BaseController
 
             $params = $request->only([
                 'rfc', 'razon_social', 'regimen_fiscal', 'numero_permiso',
-                'activo', 'proxima_verificacion', 'per_page', 'page'
+                'activo', 'proxima_verificacion', 'per_page', 'page',
             ]);
 
             $response = $this->apiGet('/api/contribuyentes', $params);
@@ -30,7 +31,7 @@ class ContribuyenteController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al listar contribuyentes', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar contribuyentes');
@@ -55,13 +56,13 @@ class ContribuyenteController extends BaseController
 
             // Obtener parámetros de filtro opcionales
             $params = $request->only([
-                'rfc', 'razon_social', 'nombre_comercial', 'regimen_fiscal', 'status'
+                'rfc', 'razon_social', 'nombre_comercial', 'regimen_fiscal', 'status',
             ]);
 
             $modulo = 'contribuyentes';
-            $response = $this->apiGet('/api/exportar/' . $modulo, $params);
+            $response = $this->apiGetRaw('/api/exportar/'.$modulo, $params);
 
-            if ($response->successful()) {
+            if ($response && $response->successful()) {
                 // Si la API devuelve un archivo, lo enviamos directamente
                 $contentType = $response->headers->get('Content-Type');
                 $contentDisposition = $response->headers->get('Content-Disposition');
@@ -73,6 +74,7 @@ class ContribuyenteController extends BaseController
 
             // Si no es exitoso, manejamos el error
             $json = $response->json();
+
             return $this->jsonError(
                 $json['message'] ?? 'Error al exportar contribuyentes',
                 $response->status(),
@@ -80,7 +82,7 @@ class ContribuyenteController extends BaseController
             );
         } catch (\Exception $e) {
             Log::error('Error al exportar contribuyentes', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al exportar contribuyentes');
@@ -122,6 +124,7 @@ class ContribuyenteController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -134,7 +137,7 @@ class ContribuyenteController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al crear contribuyente', [
                 'error' => $e->getMessage(),
-                'data' => $request->except('_token')
+                'data' => $request->except('_token'),
             ]);
 
             return redirect()->back()
@@ -153,7 +156,7 @@ class ContribuyenteController extends BaseController
 
             $response = $this->apiGet("/api/contribuyentes/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('contribuyentes.index')
                     ->with('error', $this->apiResponseMessage($response, 'Contribuyente no encontrado'));
             }
@@ -161,13 +164,13 @@ class ContribuyenteController extends BaseController
             $contribuyente = $this->apiResponseData($response, []);
 
             return view('contribuyentes.show', [
-                'contribuyente' => $contribuyente
+                'contribuyente' => $contribuyente,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al mostrar contribuyente', [
                 'error' => $e->getMessage(),
-                'contribuyente_id' => $id
+                'contribuyente_id' => $id,
             ]);
 
             return redirect()->route('contribuyentes.index')
@@ -185,7 +188,7 @@ class ContribuyenteController extends BaseController
 
             $response = $this->apiGet("/api/contribuyentes/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('contribuyentes.index')
                     ->with('error', $this->apiResponseMessage($response, 'Contribuyente no encontrado'));
             }
@@ -193,13 +196,13 @@ class ContribuyenteController extends BaseController
             $contribuyente = $this->apiResponseData($response, []);
 
             return view('contribuyentes.edit', [
-                'contribuyente' => $contribuyente
+                'contribuyente' => $contribuyente,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de edición', [
                 'error' => $e->getMessage(),
-                'contribuyente_id' => $id
+                'contribuyente_id' => $id,
             ]);
 
             return redirect()->route('contribuyentes.index')
@@ -239,6 +242,7 @@ class ContribuyenteController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -251,7 +255,7 @@ class ContribuyenteController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al actualizar contribuyente', [
                 'error' => $e->getMessage(),
-                'contribuyente_id' => $id
+                'contribuyente_id' => $id,
             ]);
 
             return redirect()->back()
@@ -296,7 +300,7 @@ class ContribuyenteController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al eliminar contribuyente', [
                 'error' => $e->getMessage(),
-                'contribuyente_id' => $id
+                'contribuyente_id' => $id,
             ]);
 
             return redirect()->route('contribuyentes.index')
@@ -316,7 +320,7 @@ class ContribuyenteController extends BaseController
 
             $response = $this->apiGet("/api/contribuyentes/{$id}/instalaciones", $params);
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('contribuyentes.show', $id)
                     ->with('error', $this->apiResponseMessage($response, 'Error al cargar instalaciones'));
             }
@@ -325,13 +329,13 @@ class ContribuyenteController extends BaseController
 
             return view('contribuyentes.instalaciones', [
                 'instalaciones' => $instalaciones['data'] ?? $instalaciones,
-                'contribuyente_id' => $id
+                'contribuyente_id' => $id,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar instalaciones del contribuyente', [
                 'error' => $e->getMessage(),
-                'contribuyente_id' => $id
+                'contribuyente_id' => $id,
             ]);
 
             return redirect()->route('contribuyentes.show', $id)
@@ -349,7 +353,7 @@ class ContribuyenteController extends BaseController
 
             $response = $this->apiGet("/api/contribuyentes/{$id}/cumplimiento");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('contribuyentes.show', $id)
                     ->with('error', $this->apiResponseMessage($response, 'Error al cargar cumplimiento'));
             }
@@ -357,13 +361,13 @@ class ContribuyenteController extends BaseController
             $cumplimiento = $this->apiResponseData($response, []);
 
             return view('contribuyentes.cumplimiento', [
-                'cumplimiento' => $cumplimiento
+                'cumplimiento' => $cumplimiento,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar cumplimiento del contribuyente', [
                 'error' => $e->getMessage(),
-                'contribuyente_id' => $id
+                'contribuyente_id' => $id,
             ]);
 
             return redirect()->route('contribuyentes.show', $id)
@@ -381,7 +385,7 @@ class ContribuyenteController extends BaseController
 
             $response = $this->apiGet('/api/contribuyentes/catalogo');
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return $this->jsonError($this->apiResponseMessage($response, 'Error al cargar catálogo'), 400);
             }
 
@@ -389,7 +393,7 @@ class ContribuyenteController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al cargar catálogo de contribuyentes', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return $this->jsonError('Error al cargar catálogo', 500);

@@ -67,9 +67,9 @@
                                 <option value="">Seleccione...</option>
                                 @foreach($medidores as $medidor)
                                     @php
-                                        $mid = is_array($medidor) ? ($medidor['id'] ?? $medidor['ID'] ?? null)
+                                        $mid = is_array($medidor) ? (($medidor['id'] ?? 0) ?? $medidor['ID'] ?? null)
                                             : (is_object($medidor) ? ($medidor->id ?? $medidor->ID ?? null) : $medidor);
-                                        $mclave = is_array($medidor) ? ($medidor['clave'] ?? $medidor['numero_serie'] ?? '')
+                                        $mclave = is_array($medidor) ? ($medidor['clave'] ?? ($medidor['numero_serie'] ?? '') ?? '')
                                             : (is_object($medidor) ? ($medidor->clave ?? $medidor->numero_serie ?? '') : '');
                                         $mmodelo = is_array($medidor) ? ($medidor['modelo'] ?? '')
                                             : (is_object($medidor) ? ($medidor->modelo ?? '') : '');

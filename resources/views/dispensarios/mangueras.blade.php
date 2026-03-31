@@ -40,7 +40,7 @@
                                     </span>
                                 @else
                                     <span class="text-muted">No asignado</span>
-                                    <a href="{{ route('mangueras.edit', $manguera['id']) }}" class="btn btn-sm btn-primary mt-1">
+                                    <a href="{{ route('mangueras.edit', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-primary mt-1">
                                         Asignar
                                     </a>
                                 @endif
@@ -56,7 +56,7 @@
                                 <span class="badge bg-{{ $estadoClass }}">{{ $manguera['estado'] }}</span>
                             </td>
                             <td>
-                                @if($manguera['activo'])
+                                @if(($manguera['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>
@@ -77,10 +77,10 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('mangueras.show', $manguera['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                    <a href="{{ route('mangueras.show', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-info" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('mangueras.edit', $manguera['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <a href="{{ route('mangueras.edit', ($manguera['id'] ?? 0)) }}" class="btn btn-sm btn-warning" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 </div>

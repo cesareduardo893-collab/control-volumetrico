@@ -35,11 +35,11 @@
                 <tbody>
                     @forelse($medidores as $medidor)
                         <tr>
-                            <td>{{ $medidor['clave'] }}</td>
-                            <td>{{ $medidor['numero_serie'] }}</td>
+                            <td>{{ ($medidor['clave'] ?? '') }}</td>
+                            <td>{{ ($medidor['numero_serie'] ?? '') }}</td>
                             <td>{{ $medidor['modelo'] ?? '-' }}</td>
-                            <td>{{ $medidor['tipo_medicion'] }}</td>
-                            <td>{{ ucfirst($medidor['elemento_tipo']) }}</td>
+                            <td>{{ ($medidor['tipo_medicion'] ?? '') }}</td>
+                            <td>{{ ucfirst(($medidor['elemento_tipo'] ?? '')) }}</td>
                             <td>
                                 @if(isset($medidor['tanque']))
                                     {{ $medidor['tanque']['identificador'] }}
@@ -47,7 +47,7 @@
                                     <span class="text-muted">No asignado</span>
                                 @endif
                             </td>
-                            <td>{{ $medidor['precision'] }}%</td>
+                            <td>{{ ($medidor['precision'] ?? 0) }}%</td>
                             <td>
                                 @php
                                     $estadoClass = [
@@ -56,12 +56,12 @@
                                         'MANTENIMIENTO' => 'warning',
                                         'FUERA_SERVICIO' => 'danger',
                                         'FALLA_COMUNICACION' => 'secondary'
-                                    ][$medidor['estado']] ?? 'secondary';
+                                    ][($medidor['estado'] ?? '')] ?? 'secondary';
                                 @endphp
-                                <span class="badge bg-{{ $estadoClass }}">{{ $medidor['estado'] }}</span>
+                                <span class="badge bg-{{ $estadoClass }}">{{ ($medidor['estado'] ?? '') }}</span>
                             </td>
                             <td>
-                                @if($medidor['activo'])
+                                @if(($medidor['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>
@@ -81,16 +81,16 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('medidores.show', $medidor['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                    <a href="{{ route('medidores.show', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-info" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('medidores.edit', $medidor['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <a href="{{ route('medidores.edit', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-warning" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="{{ route('medidores.probar-comunicacion', $medidor['id']) }}" class="btn btn-sm btn-secondary" title="Probar Comunicación">
+                                    <a href="{{ route('medidores.probar-comunicacion', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-secondary" title="Probar Comunicación">
                                         <i class="bi bi-wifi"></i>
                                     </a>
-                                    <a href="{{ route('medidores.verificar-estado', $medidor['id']) }}" class="btn btn-sm btn-primary" title="Verificar Estado">
+                                    <a href="{{ route('medidores.verificar-estado', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-primary" title="Verificar Estado">
                                         <i class="bi bi-check-circle"></i>
                                     </a>
                                 </div>

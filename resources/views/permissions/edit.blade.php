@@ -34,7 +34,7 @@
                     <div class="mb-3">
                         <label for="slug" class="form-label">Slug *</label>
                         <input type="text" class="form-control" id="slug" name="slug" 
-                               value="{{ old('slug', $permiso['slug']) }}" required>
+                               value="{{ old('slug', ($permiso['slug'] ?? '')) }}" required>
                     </div>
                     
                     <div class="mb-3">
@@ -52,7 +52,7 @@
                     <div class="mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1"
-                                   {{ old('activo', $permiso['activo']) ? 'checked' : '' }}>
+                                   {{ old('activo', ($permiso['activo'] ?? true)) ? 'checked' : '' }}>
                             <label class="form-check-label" for="activo">Permiso Activo</label>
                         </div>
                     </div>

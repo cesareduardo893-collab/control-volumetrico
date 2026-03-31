@@ -49,13 +49,13 @@
                         <div class="col-md-4 mb-3">
                             <label for="fecha_toma_muestra" class="form-label">Toma de Muestra</label>
                             <input type="date" class="form-control" id="fecha_toma_muestra" 
-                                   value="{{ $dictamen['fecha_toma_muestra'] }}" disabled readonly>
+                                   value="{{ ($dictamen['fecha_toma_muestra'] ?? '') }}" disabled readonly>
                         </div>
                         
                         <div class="col-md-4 mb-3">
                             <label for="fecha_pruebas" class="form-label">Fecha de Pruebas</label>
                             <input type="date" class="form-control" id="fecha_pruebas" 
-                                   value="{{ $dictamen['fecha_pruebas'] }}" disabled readonly>
+                                   value="{{ ($dictamen['fecha_pruebas'] ?? '') }}" disabled readonly>
                         </div>
                         
                         <div class="col-md-4 mb-3">
@@ -75,13 +75,13 @@
                         <div class="col-md-4 mb-3">
                             <label for="laboratorio_nombre" class="form-label">Nombre Laboratorio</label>
                             <input type="text" class="form-control" id="laboratorio_nombre" 
-                                   value="{{ $dictamen['laboratorio_nombre'] }}" disabled readonly>
+                                   value="{{ ($dictamen['laboratorio_nombre'] ?? '') }}" disabled readonly>
                         </div>
                         
                         <div class="col-md-4 mb-3">
                             <label for="laboratorio_numero_acreditacion" class="form-label">N° Acreditación</label>
                             <input type="text" class="form-control" id="laboratorio_numero_acreditacion" 
-                                   value="{{ $dictamen['laboratorio_numero_acreditacion'] }}" disabled readonly>
+                                   value="{{ ($dictamen['laboratorio_numero_acreditacion'] ?? '') }}" disabled readonly>
                         </div>
                     </div>
                     

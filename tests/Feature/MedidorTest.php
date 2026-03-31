@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 
 class MedidorTest extends TestCase
 {
@@ -23,15 +21,29 @@ class MedidorTest extends TestCase
                 'numero_serie' => 'MED-001',
                 'clave' => 'M-001',
                 'tipo_medicion' => 'estatica',
-                'estado' => 'OPERATIVO'
+                'estado' => 'OPERATIVO',
+                'instalacion' => ['id' => 1, 'nombre' => 'Instalación 1'],
+                'tanque' => ['id' => 1, 'identificador' => 'TAN-001'],
+                'modelo' => 'Modelo X',
+                'elemento_tipo' => 'primario',
+                'precision' => 99.5,
+                'fecha_proxima_calibracion' => '2024-07-15',
+                'activo' => true,
             ],
             [
                 'id' => 2,
                 'numero_serie' => 'MED-002',
                 'clave' => 'M-002',
                 'tipo_medicion' => 'dinamica',
-                'estado' => 'CALIBRACION'
-            ]
+                'estado' => 'CALIBRACION',
+                'instalacion' => ['id' => 2, 'nombre' => 'Instalación 2'],
+                'tanque' => ['id' => 2, 'identificador' => 'TAN-002'],
+                'modelo' => 'Modelo Y',
+                'elemento_tipo' => 'secundario',
+                'precision' => 98.0,
+                'fecha_proxima_calibracion' => '2024-08-15',
+                'activo' => true,
+            ],
         ];
 
         $this->mockPaginatedResponse('/api/medidores', $medidores, 2);
@@ -48,16 +60,16 @@ class MedidorTest extends TestCase
     {
         $instalaciones = [
             ['id' => 1, 'nombre' => 'Instalación 1'],
-            ['id' => 2, 'nombre' => 'Instalación 2']
+            ['id' => 2, 'nombre' => 'Instalación 2'],
         ];
 
         $tanques = [
             ['id' => 1, 'identificador' => 'TAN-001'],
-            ['id' => 2, 'identificador' => 'TAN-002']
+            ['id' => 2, 'identificador' => 'TAN-002'],
         ];
 
-        $this->mockSuccessfulResponse('/api/instalaciones?activo=true', $instalaciones);
-        $this->mockSuccessfulResponse('/api/tanques?activo=true', $tanques);
+        $this->mockSuccessfulResponse('/api/instalaciones', $instalaciones);
+        $this->mockSuccessfulResponse('/api/tanques', $tanques);
 
         $response = $this->get('/medidores/create');
 
@@ -85,7 +97,7 @@ class MedidorTest extends TestCase
             'tecnologia_id' => 'TECH-001',
             'protocolo_comunicacion' => 'Modbus',
             'presion_maxima' => 10,
-            'temperatura_maxima' => 50
+            'temperatura_maxima' => 50,
         ];
 
         $createdMedidor = array_merge($medidorData, ['id' => 1]);
@@ -104,13 +116,13 @@ class MedidorTest extends TestCase
         $invalidData = [
             'elemento_tipo' => 'INVALIDO',
             'tipo_medicion' => 'INVALIDO',
-            'estado' => 'INVALIDO'
+            'estado' => 'INVALIDO',
         ];
 
         $this->mockValidationErrorResponse('/api/medidores', [
             'elemento_tipo' => ['El campo elemento tipo debe ser uno de: primario, secundario, terciario'],
             'tipo_medicion' => ['El campo tipo medicion debe ser uno de: estatica, dinamica'],
-            'estado' => ['El campo estado debe ser uno de: OPERATIVO, CALIBRACION, MANTENIMIENTO, FUERA_SERVICIO, FALLA_COMUNICACION']
+            'estado' => ['El campo estado debe ser uno de: OPERATIVO, CALIBRACION, MANTENIMIENTO, FUERA_SERVICIO, FALLA_COMUNICACION'],
         ]);
 
         $response = $this->post('/medidores', $invalidData);
@@ -130,7 +142,7 @@ class MedidorTest extends TestCase
             'tanque' => ['identificador' => 'TAN-001'],
             'estado' => 'OPERATIVO',
             'ultima_calibracion' => '2024-01-15',
-            'proxima_calibracion' => '2024-07-15'
+            'proxima_calibracion' => '2024-07-15',
         ];
 
         $this->mockSuccessfulResponse('/api/medidores/1', $medidor);
@@ -150,7 +162,7 @@ class MedidorTest extends TestCase
             'fecha_proxima_calibracion' => '2024-07-15',
             'certificado_calibracion' => 'CERT-001',
             'laboratorio_calibracion' => 'Laboratorio Test',
-            'precision' => 0.998
+            'precision' => 0.998,
         ];
 
         $this->mockSuccessfulResponse('/api/medidores/1/calibrar', [], 'Calibración registrada exitosamente');
@@ -167,7 +179,7 @@ class MedidorTest extends TestCase
         $resultado = [
             'success' => true,
             'tiempo_respuesta' => 150,
-            'mensaje' => 'Comunicación exitosa'
+            'mensaje' => 'Comunicación exitosa',
         ];
 
         $this->mockSuccessfulResponse('/api/medidores/1/probar-comunicacion', $resultado);
@@ -193,12 +205,22 @@ class MedidorTest extends TestCase
     public function test_verificar_estado_checks_meter_status()
     {
         $estado = [
-            'estado' => 'OPERATIVO',
+            'estado_general' => 'OPERATIVO',
+            'estado_actual' => 'OPERATIVO',
             'conectado' => true,
+            'clave' => 'M-001',
+            'numero_serie' => 'MED-001',
+            'modelo' => 'Modelo X',
             'ultima_lectura' => '2024-01-20 10:30:00',
             'lectura_actual' => 1234.56,
-            'precision_actual' => 0.997,
-            'alertas' => []
+            'precision_actual' => 99.7,
+            'desviacion' => 0.3,
+            'total_lecturas' => 15000,
+            'promedio_diario' => 500,
+            'dias_ultima_calibracion' => 30,
+            'dias_proxima_calibracion' => 150,
+            'alertas' => [],
+            'recomendaciones' => [],
         ];
 
         $this->mockSuccessfulResponse('/api/medidores/1/verificar-estado', $estado);
@@ -218,14 +240,14 @@ class MedidorTest extends TestCase
                 'fecha_calibracion' => '2024-01-15',
                 'certificado' => 'CERT-001',
                 'laboratorio' => 'Lab A',
-                'precision' => 0.998
+                'precision' => 0.998,
             ],
             [
                 'fecha_calibracion' => '2023-07-15',
                 'certificado' => 'CERT-002',
                 'laboratorio' => 'Lab B',
-                'precision' => 0.997
-            ]
+                'precision' => 0.997,
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/medidores/1/historial-calibraciones', $historial);
@@ -242,7 +264,7 @@ class MedidorTest extends TestCase
     {
         $updateData = [
             'estado' => 'MANTENIMIENTO',
-            'observaciones' => 'Mantenimiento preventivo'
+            'observaciones' => 'Mantenimiento preventivo',
         ];
 
         $this->mockSuccessfulResponse('/api/medidores/1', [], 'Medidor actualizado exitosamente');
@@ -268,16 +290,16 @@ class MedidorTest extends TestCase
     public function test_filter_medidores_by_estado()
     {
         $medidores = [
-            ['id' => 1, 'estado' => 'OPERATIVO', 'numero_serie' => 'MED-001']
+            ['id' => 1, 'estado' => 'OPERATIVO', 'numero_serie' => 'MED-001', 'clave' => 'M-001', 'tipo_medicion' => 'estatica', 'modelo' => 'Modelo X', 'elemento_tipo' => 'primario', 'precision' => 99.5, 'fecha_proxima_calibracion' => '2024-07-15', 'activo' => true, 'instalacion' => ['nombre' => 'Inst 1'], 'tanque' => ['identificador' => 'TAN-001']],
         ];
 
-        $this->mockSuccessfulResponse('/api/medidores?estado=OPERATIVO', ['data' => $medidores]);
+        $this->mockSuccessfulResponse('/api/medidores', ['data' => $medidores]);
 
         $response = $this->get('/medidores?estado=OPERATIVO');
 
         $response->assertStatus(200);
         $response->assertViewHas('medidores');
-        
+
         $medidores = $response->viewData('medidores');
         $this->assertCount(1, $medidores);
         $this->assertEquals('OPERATIVO', $medidores[0]['estado']);

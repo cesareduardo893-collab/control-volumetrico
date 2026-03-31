@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Traits;
 
 use App\Models\Bitacora;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\DB;
 
 trait LogsActivity
 {
@@ -14,7 +12,7 @@ trait LogsActivity
      */
     protected function logActivity($userId, $tipoEvento, $subtipoEvento, $modulo, $descripcion, $tabla = null, $registroId = null, $datosAnteriores = null, $datosNuevos = null, $metadatos = [])
     {
-// Use a valid tipo_evento from the allowed ENUM values
+        // Use a valid tipo_evento from the allowed ENUM values
         $allowedTiposEvento = [
             'administracion_sistema',
             'eventos_ucc',
@@ -23,40 +21,46 @@ trait LogsActivity
             'operaciones_cotidianas',
             'verificaciones_autoridad',
             'inconsistencias_volumetricas',
-            'seguridad'
+            'seguridad',
         ];
 
         // Validate the tipo_evento value
-        if (!in_array($tipoEvento, $allowedTiposEvento)) {
+        if (! in_array($tipoEvento, $allowedTiposEvento)) {
             // If the value is not valid, use a default value
             $tipoEvento = 'seguridad';
         }
 
-// Create the bitacora entry
-        $bitacora = new Bitacora();
-        $bitacora->numero_registro = $this->getNextBitacoraNumber();
-        $bitacora->usuario_id = $userId;
-        $bitacora->tipo_evento = $tipoEvento;
-        $bitacora->subtipo_evento = $subtipoEvento;
-        $bitacora->modulo = $modulo;
-        $bitacora->tabla = $tabla;
-        $bitacora->registro_id = $registroId;
-        $bitacora->datos_anteriores = $datosAnteriores;
-        $bitacora->datos_nuevos = $datosNuevos;
-        $bitacora->descripcion = $descripcion;
-        $bitacora->ip_address = Request::ip();
-        $bitacora->user_agent = Request::userAgent();
-        $bitacora->dispositivo = $this->getDeviceFromUserAgent(Request::userAgent());
-        $bitacora->metadatos_seguridad = $metadatos;
+        // Create the bitacora entry
+        try {
+            $bitacora = new Bitacora;
+            $bitacora->numero_registro = $this->getNextBitacoraNumber();
+            $bitacora->usuario_id = $userId;
+            $bitacora->tipo_evento = $tipoEvento;
+            $bitacora->subtipo_evento = $subtipoEvento;
+            $bitacora->modulo = $modulo;
+            $bitacora->tabla = $tabla;
+            $bitacora->registro_id = $registroId;
+            $bitacora->datos_anteriores = $datosAnteriores;
+            $bitacora->datos_nuevos = $datosNuevos;
+            $bitacora->descripcion = $descripcion;
+            $bitacora->ip_address = Request::ip();
+            $bitacora->user_agent = Request::userAgent();
+            $bitacora->dispositivo = $this->getDeviceFromUserAgent(Request::userAgent());
+            $bitacora->metadatos_seguridad = $metadatos;
 
-        // Generate hash values for SQLite
-        $lastBitacora = Bitacora::orderBy('created_at', 'desc')->first();
-        $bitacora->hash_anterior = $lastBitacora ? $lastBitacora->hash_actual : null;
-        $now = now();
-        $bitacora->hash_actual = hash('sha256', $bitacora->descripcion . $now);
-        $bitacora->save();
+            // Generate hash values for SQLite
+            $lastBitacora = Bitacora::orderBy('created_at', 'desc')->first();
+            $bitacora->hash_anterior = $lastBitacora ? $lastBitacora->hash_actual : null;
+            $now = now();
+            $bitacora->hash_actual = hash('sha256', $bitacora->descripcion.$now);
+            $bitacora->save();
 
-        return $bitacora;
+            return $bitacora;
+        } catch (\Exception $e) {
+            \Log::error('Error al registrar en bitácora: '.$e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -64,8 +68,13 @@ trait LogsActivity
      */
     private function getNextBitacoraNumber()
     {
-        $last = Bitacora::orderBy('numero_registro', 'desc')->first();
-        return $last ? $last->numero_registro + 1 : 1;
+        try {
+            $last = Bitacora::orderBy('id', 'desc')->first();
+
+            return $last ? $last->id + 1 : 1;
+        } catch (\Exception $e) {
+            return rand(1000, 9999);
+        }
     }
 
     /**

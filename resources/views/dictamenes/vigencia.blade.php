@@ -4,7 +4,7 @@
 @section('header', 'Resultado de Verificación de Vigencia')
 
 @section('actions')
-<a href="{{ route('dictamenes.show', $resultado['dictamen_id']) }}" class="btn btn-sm btn-secondary">
+<a href="{{ route('dictamenes.show', $resultado['dictamen_id'] ?? 0) }}" class="btn btn-sm btn-secondary">
     <i class="bi bi-arrow-left"></i> Volver al Dictamen
 </a>
 @endsection
@@ -14,8 +14,8 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header 
-                @if($resultado['vigente']) bg-success 
-                @elseif($resultado['proximo_vencer']) bg-warning 
+                @if($resultado['vigente'] ?? false) bg-success 
+                @elseif($resultado['proximo_vencer'] ?? false) bg-warning 
                 @else bg-danger 
                 @endif text-white">
                 <h5 class="card-title mb-0">
@@ -25,10 +25,10 @@
             </div>
             <div class="card-body">
                 <div class="text-center mb-4">
-                    @if($resultado['vigente'])
+                    @if($resultado['vigente'] ?? false)
                         <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
                         <h3 class="text-success mt-3">DICTAMEN VIGENTE</h3>
-                    @elseif($resultado['proximo_vencer'])
+                    @elseif($resultado['proximo_vencer'] ?? false)
                         <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 5rem;"></i>
                         <h3 class="text-warning mt-3">PRÓXIMO A VENCER</h3>
                     @else
@@ -47,19 +47,19 @@
                                 <table class="table table-sm">
                                     <tr>
                                         <th>Folio:</th>
-                                        <td>{{ $resultado['folio'] }}</td>
+                                        <td>{{ $resultado['folio'] ?? '' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Número de Lote:</th>
-                                        <td>{{ $resultado['numero_lote'] }}</td>
+                                        <td>{{ ($resultado['numero_lote'] ?? '') }}</td>
                                     </tr>
                                     <tr>
                                         <th>Fecha de Emisión:</th>
-                                        <td>{{ $resultado['fecha_emision'] }}</td>
+                                        <td>{{ $resultado['fecha_emision'] ?? '' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Producto:</th>
-                                        <td>{{ $resultado['producto'] }}</td>
+                                        <td>{{ is_array($resultado['producto'] ?? null) ? ($resultado['producto']['nombre'] ?? '') : ($resultado['producto'] ?? '') }}</td>
                                     </tr>
                                 </table>
                             </div>
@@ -103,9 +103,9 @@
                                                     'VIGENTE' => 'success',
                                                     'CADUCADO' => 'warning',
                                                     'CANCELADO' => 'secondary'
-                                                ][$resultado['estado']] ?? 'secondary';
+                                                ][$resultado['estado'] ?? ''] ?? 'secondary';
                                             @endphp
-                                            <span class="badge bg-{{ $estadoClass }}">{{ $resultado['estado'] }}</span>
+                                            <span class="badge bg-{{ $estadoClass }}">{{ $resultado['estado'] ?? '' }}</span>
                                         </td>
                                     </tr>
                                 </table>
@@ -128,7 +128,7 @@
                 <hr>
                 
                 <div class="d-flex justify-content-center">
-                    <a href="{{ route('dictamenes.show', $resultado['dictamen_id']) }}" class="btn btn-primary me-2">
+                    <a href="{{ route('dictamenes.show', $resultado['dictamen_id'] ?? 0) }}" class="btn btn-primary me-2">
                         <i class="bi bi-eye"></i> Ver Dictamen
                     </a>
                     <a href="{{ route('dictamenes.index') }}" class="btn btn-secondary">

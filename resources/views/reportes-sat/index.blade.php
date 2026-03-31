@@ -225,18 +225,34 @@
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     
-                                    @if(in_array($reporte['estado'], ['GENERADO', 'PENDIENTE']))
-                                        <button type="button" class="btn btn-sm btn-primary" 
-                                                onclick="confirmarEnvio({{ $reporte['id'] }})" title="Enviar">
-                                            <i class="bi bi-send"></i>
-                                        </button>
+                                    @if($reporte['estado'] == 'GENERADO')
+                                        <form action="{{ route('reportes-sat.firmar', $reporte['id']) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-warning" title="Firmar">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                        </form>
                                     @endif
                                     
-                                    @if($reporte['estado'] == 'GENERADO')
-                                        <button type="button" class="btn btn-sm btn-warning" 
-                                                onclick="confirmarFirma({{ $reporte['id'] }})" title="Firmar">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
+                                    @if($reporte['estado'] == 'FIRMADO')
+                                        <form action="{{ route('reportes-sat.enviar', $reporte['id']) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-primary" title="Enviar al SAT">
+                                                <i class="bi bi-send"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    
+                                    @if(isset($reporte['ruta_xml']))
+                                        <a href="{{ route('reportes-sat.descargar-xml', $reporte['id']) }}" class="btn btn-sm btn-secondary" title="Descargar XML" target="_blank">
+                                            <i class="bi bi-file-earmark-code"></i>
+                                        </a>
+                                    @endif
+                                    
+                                    @if(isset($reporte['acuse_sat']))
+                                        <a href="{{ route('reportes-sat.descargar-acuse', $reporte['id']) }}" class="btn btn-sm btn-dark" title="Descargar Acuse" target="_blank">
+                                            <i class="bi bi-file-earmark-check"></i>
+                                        </a>
                                     @endif
                                     
                                     @if(in_array($reporte['estado'], ['PENDIENTE', 'GENERADO', 'ERROR', 'RECHAZADO']))

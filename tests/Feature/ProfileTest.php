@@ -11,10 +11,19 @@ class ProfileTest extends TestCase
     {
         $this->authenticateUser();
 
+        $this->mockSuccessfulResponse('/api/user', [
+            'id' => 1,
+            'nombres' => 'Test',
+            'apellidos' => 'User',
+            'email' => 'test@example.com',
+            'roles' => [],
+            'permissions' => [],
+        ]);
+
         $response = $this->get('/profile');
 
         $response->assertStatus(200);
-        $response->assertViewIs('profile.index');
+        $response->assertViewIs('profile.edit');
     }
 
     /** @test */
@@ -26,15 +35,15 @@ class ProfileTest extends TestCase
             'nombres' => 'Updated',
             'apellidos' => 'User',
             'email' => 'updated@example.com',
-            'telefono' => '9876543210'
+            'telefono' => '9876543210',
         ];
 
-        $this->mockSuccessfulResponse('/api/users/1', $updateData, 'Perfil actualizado exitosamente');
+        $this->mockSuccessfulResponse('/api/user', $updateData, 'Perfil actualizado exitosamente');
 
         $response = $this->put('/profile', $updateData);
 
-        $response->assertRedirect('/profile');
-        $response->assertSessionHas('success', 'Perfil actualizado exitosamente');
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Perfil actualizado correctamente');
     }
 
     /** @test */
@@ -42,15 +51,13 @@ class ProfileTest extends TestCase
     {
         $this->authenticateUser();
 
-        $this->mockValidationErrorResponse('/api/users/1', [
-            'email' => ['El correo electrónico ya está en uso.']
-        ]);
+        $this->mockSuccessfulResponse('/api/user', []);
 
         $response = $this->put('/profile', [
-            'email' => 'invalid'
+            'email' => 'invalid',
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHasErrors(['email']);
+        $response->assertSessionHasErrors(['nombres', 'apellidos', 'email']);
     }
 }

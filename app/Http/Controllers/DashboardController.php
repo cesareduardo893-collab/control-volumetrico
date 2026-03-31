@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class DashboardController extends BaseController
 {
@@ -18,12 +18,12 @@ class DashboardController extends BaseController
 
             // Obtener resumen desde la API
             $response = $this->apiGet('/api/dashboard/resumen');
-            
+
             if ($this->apiResponseSuccessful($response)) {
                 $resumen = $this->apiResponseData($response, []);
-                
+
                 // Si el endpoint de resumen no devuelve alarmas_activas, obtenerlo directamente
-                if (!isset($resumen['alarmas_activas'])) {
+                if (! isset($resumen['alarmas_activas'])) {
                     $alarmasResponse = $this->apiGet('/api/alarmas/activas');
                     if ($this->apiResponseSuccessful($alarmasResponse)) {
                         $alarmas = $this->apiResponseData($alarmasResponse, []);
@@ -32,7 +32,7 @@ class DashboardController extends BaseController
                 }
             } else {
                 $resumen = $this->getDefaultResumen();
-                
+
                 // Intentar obtener alarmas activas directamente como fallback
                 $alarmasResponse = $this->apiGet('/api/alarmas/activas');
                 if ($this->apiResponseSuccessful($alarmasResponse)) {
@@ -47,11 +47,11 @@ class DashboardController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al cargar dashboard', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             $resumen = $this->getDefaultResumen();
-            
+
             // Intentar obtener alarmas activas directamente como fallback
             try {
                 $this->setApiToken(Session::get('api_token'));
@@ -99,9 +99,9 @@ class DashboardController extends BaseController
         try {
             $this->setApiToken(Session::get('api_token'));
             $dias = $request->get('dias', 7);
-            
+
             $response = $this->apiGet('/api/dashboard/grafica-movimientos', ['dias' => $dias]);
-            
+
             if ($this->apiResponseSuccessful($response)) {
                 return response()->json($this->apiResponseData($response, [
                     'labels' => [],
@@ -109,17 +109,18 @@ class DashboardController extends BaseController
                     'salidas' => [],
                 ]));
             }
-            
+
             return response()->json([
                 'labels' => [],
                 'entradas' => [],
                 'salidas' => [],
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Error al obtener gráfica de movimientos', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return response()->json([
                 'labels' => [],
                 'entradas' => [],
@@ -135,30 +136,31 @@ class DashboardController extends BaseController
     {
         try {
             $this->setApiToken(Session::get('api_token'));
-            
+
             $response = $this->apiGet('/api/dashboard/grafica-productos');
-            
+
             if ($this->apiResponseSuccessful($response)) {
                 $data = $this->apiResponseData($response, [
                     'labels' => [],
                     'valores' => [],
                 ]);
-                
+
                 return response()->json([
                     'labels' => $data['labels'] ?? [],
                     'valores' => $data['valores'] ?? [],
                 ]);
             }
-            
+
             return response()->json([
                 'labels' => [],
                 'valores' => [],
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Error al obtener gráfica de productos', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return response()->json([
                 'labels' => [],
                 'valores' => [],
@@ -175,15 +177,15 @@ class DashboardController extends BaseController
             $this->setApiToken(Session::get('api_token'));
 
             $params = $request->only([
-                'fecha_inicio', 'fecha_fin', 'tipo_reporte'
+                'fecha_inicio', 'fecha_fin', 'tipo_reporte',
             ]);
 
             $modulo = 'dashboard';
-            $response = $this->apiGetRaw('/api/exportar/' . $modulo, $params);
+            $response = $this->apiGetRaw('/api/exportar/'.$modulo, $params);
 
             if ($response && $response->successful()) {
-                $contentType = $response->headers->get('Content-Type');
-                $contentDisposition = $response->headers->get('Content-Disposition');
+                $contentType = $response->header('Content-Type');
+                $contentDisposition = $response->header('Content-Disposition');
 
                 return response($response->body(), $response->status())
                     ->header('Content-Type', $contentType)
@@ -192,6 +194,7 @@ class DashboardController extends BaseController
 
             if ($response) {
                 $json = $response->json();
+
                 return $this->jsonError(
                     $json['message'] ?? 'Error al exportar dashboard',
                     $response->status(),
@@ -202,7 +205,7 @@ class DashboardController extends BaseController
             return $this->jsonError('Error al exportar dashboard', 500);
         } catch (\Exception $e) {
             Log::error('Error al exportar dashboard', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al exportar dashboard');
@@ -216,18 +219,19 @@ class DashboardController extends BaseController
     {
         try {
             $this->setApiToken(Session::get('api_token'));
-            
+
             $response = $this->apiGet('/api/notificaciones');
-            
+
             if ($this->apiResponseSuccessful($response)) {
                 return response()->json($this->apiResponseData($response, []));
             }
-            
+
             return response()->json([]);
         } catch (\Exception $e) {
             Log::error('Error al obtener notificaciones', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return response()->json([]);
         }
     }

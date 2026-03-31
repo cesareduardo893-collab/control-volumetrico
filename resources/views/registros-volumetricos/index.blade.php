@@ -199,32 +199,32 @@
                 <tbody>
                     @forelse($registros as $registro)
                         <tr>
-                            <td>{{ $registro['numero_registro'] }}</td>
-                            <td>{{ $registro['fecha'] }} {{ substr($registro['hora_inicio'], 0, 5) }}</td>
+                            <td>{{ ($registro['numero_registro'] ?? '') }}</td>
+                            <td>{{ ($registro['fecha'] ?? '') }} {{ substr(($registro['hora_inicio'] ?? ''), 0, 5) }}</td>
                             <td>
                                 @if(isset($registro['instalacion']))
                                     {{ $registro['instalacion']['nombre'] }}
                                 @else
-                                    {{ $registro['instalacion_id'] }}
+                                    {{ ($registro['instalacion_id'] ?? 0) }}
                                 @endif
                             </td>
                             <td>
                                 @if(isset($registro['tanque']))
                                     {{ $registro['tanque']['identificador'] }}
                                 @else
-                                    {{ $registro['tanque_id'] }}
+                                    {{ ($registro['tanque_id'] ?? 0) }}
                                 @endif
                             </td>
                             <td>
                                 @if(isset($registro['producto']))
                                     {{ $registro['producto']['nombre'] }}
                                 @else
-                                    {{ $registro['producto_id'] }}
+                                    {{ ($registro['producto_id'] ?? 0) }}
                                 @endif
                             </td>
-                            <td><strong>{{ number_format($registro['volumen_operacion'], 3) }} L</strong></td>
+                            <td><strong>{{ number_format(($registro['volumen_operacion'] ?? 0), 3) }} L</strong></td>
                             <td>
-                                <span class="badge bg-info">{{ $registro['tipo_registro'] }}</span>
+                                <span class="badge bg-info">{{ ($registro['tipo_registro'] ?? '') }}</span>
                             </td>
                             <td>
                                 @php
@@ -247,16 +247,16 @@
                                         'ERROR' => 'danger',
                                         'CANCELADO' => 'secondary',
                                         'CON_ALARMA' => 'danger'
-                                    ][$registro['estado']] ?? 'secondary';
+                                    ][($registro['estado'] ?? '')] ?? 'secondary';
                                 @endphp
-                                <span class="badge bg-{{ $estadoClass }}">{{ $registro['estado'] }}</span>
+                                <span class="badge bg-{{ $estadoClass }}">{{ ($registro['estado'] ?? '') }}</span>
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="{{ route('registros-volumetricos.show', $registro['id']) }}" class="btn btn-sm btn-info" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    @if(in_array($registro['estado'], ['PENDIENTE', 'ERROR']))
+                                    @if(in_array(($registro['estado'] ?? ''), ['PENDIENTE', 'ERROR']))
                                         <button type="button" class="btn btn-sm btn-success" 
                                                 onclick="confirmarValidacion({{ $registro['id'] }})" title="Validar">
                                             <i class="bi bi-check-circle"></i>

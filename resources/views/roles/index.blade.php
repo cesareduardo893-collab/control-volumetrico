@@ -106,14 +106,14 @@
                                 <span class="badge bg-secondary">{{ $rol['usuarios_count'] ?? 0 }}</span>
                             </td>
                             <td class="text-center">
-                                @if($rol['es_administrador'])
+                                @if(($rol['es_administrador'] ?? false))
                                     <span class="badge bg-success">Sí</span>
                                 @else
                                     <span class="badge bg-secondary">No</span>
                                 @endif
                             </td>
                             <td class="text-center">
-                                @if($rol['activo'])
+                                @if(($rol['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>

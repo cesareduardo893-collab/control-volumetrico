@@ -93,8 +93,15 @@
             
             <div class="col-md-2">
                 <label for="protocolo_comunicacion" class="form-label">Protocolo</label>
-                <input type="text" class="form-control" id="protocolo_comunicacion" name="protocolo_comunicacion" 
-                       value="{{ request('protocolo_comunicacion') }}" placeholder="Ej: MODBUS">
+                <select class="form-select" id="protocolo_comunicacion" name="protocolo_comunicacion">
+                    <option value="">Todos</option>
+                    <option value="modbus" {{ request('protocolo_comunicacion') == 'modbus' ? 'selected' : '' }}>Modbus</option>
+                    <option value="opc" {{ request('protocolo_comunicacion') == 'opc' ? 'selected' : '' }}>OPC</option>
+                    <option value="serial" {{ request('protocolo_comunicacion') == 'serial' ? 'selected' : '' }}>Serial</option>
+                    <option value="ethernet" {{ request('protocolo_comunicacion') == 'ethernet' ? 'selected' : '' }}>Ethernet</option>
+                    <option value="wireless" {{ request('protocolo_comunicacion') == 'wireless' ? 'selected' : '' }}>Wireless</option>
+                    <option value="otros" {{ request('protocolo_comunicacion') == 'otros' ? 'selected' : '' }}>Otros</option>
+                </select>
             </div>
             
             <div class="col-md-2">
@@ -193,18 +200,18 @@
                 <tbody>
                     @forelse($medidores as $medidor)
                         <tr>
-                            <td><strong>{{ $medidor['clave'] }}</strong></td>
-                            <td>{{ $medidor['numero_serie'] }}</td>
+                            <td><strong>{{ ($medidor['clave'] ?? '') }}</strong></td>
+                            <td>{{ ($medidor['numero_serie'] ?? '') }}</td>
                             <td>
                                 @if(isset($medidor['instalacion']))
                                     {{ $medidor['instalacion']['nombre'] }}
                                 @else
-                                    {{ $medidor['instalacion_id'] }}
+                                    {{ ($medidor['instalacion_id'] ?? 0) }}
                                 @endif
                             </td>
                             <td>
                                 @if(isset($medidor['tanque']))
-                                    <a href="{{ route('tanques.show', $medidor['tanque']['id']) }}">
+                                    <a href="{{ route('tanques.show', ($medidor['tanque']['id'] ?? 0)) }}">
                                         {{ $medidor['tanque']['identificador'] }}
                                     </a>
                                 @else
@@ -212,9 +219,9 @@
                                 @endif
                             </td>
                             <td>{{ $medidor['modelo'] ?? '-' }}</td>
-                            <td>{{ $medidor['tipo_medicion'] }}</td>
-                            <td>{{ ucfirst($medidor['elemento_tipo']) }}</td>
-                            <td>{{ $medidor['precision'] }}%</td>
+                            <td>{{ ($medidor['tipo_medicion'] ?? '') }}</td>
+                            <td>{{ ucfirst(($medidor['elemento_tipo'] ?? '')) }}</td>
+                            <td>{{ ($medidor['precision'] ?? 0) }}%</td>
                             <td>
                                 @php
                                     $estadoClass = [
@@ -223,9 +230,9 @@
                                         'MANTENIMIENTO' => 'warning',
                                         'FUERA_SERVICIO' => 'danger',
                                         'FALLA_COMUNICACION' => 'secondary'
-                                    ][$medidor['estado']] ?? 'secondary';
+                                    ][($medidor['estado'] ?? '')] ?? 'secondary';
                                 @endphp
-                                <span class="badge bg-{{ $estadoClass }}">{{ $medidor['estado'] }}</span>
+                                <span class="badge bg-{{ $estadoClass }}">{{ ($medidor['estado'] ?? '') }}</span>
                             </td>
                             <td>
                                 @if(isset($medidor['fecha_proxima_calibracion']))
@@ -243,7 +250,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if($medidor['activo'])
+                                @if(($medidor['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>
@@ -251,20 +258,20 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('medidores.show', $medidor['id']) }}" class="btn btn-sm btn-info" title="Ver">
+                                    <a href="{{ route('medidores.show', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-info" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('medidores.edit', $medidor['id']) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <a href="{{ route('medidores.edit', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-warning" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="{{ route('medidores.historial-calibraciones', $medidor['id']) }}" class="btn btn-sm btn-secondary" title="Historial Calibraciones">
+                                    <a href="{{ route('medidores.historial-calibraciones', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-secondary" title="Historial Calibraciones">
                                         <i class="bi bi-calendar-check"></i>
                                     </a>
-                                    <a href="{{ route('medidores.verificar-estado', $medidor['id']) }}" class="btn btn-sm btn-primary" title="Verificar Estado">
+                                    <a href="{{ route('medidores.verificar-estado', ($medidor['id'] ?? 0)) }}" class="btn btn-sm btn-primary" title="Verificar Estado">
                                         <i class="bi bi-check-circle"></i>
                                     </a>
-                                    @if($medidor['estado'] == 'OPERATIVO')
-                                        <a href="{{ route('medidores.probar-comunicacion', $medidor['id']) }}" 
+                                    @if(($medidor['estado'] ?? '') == 'OPERATIVO')
+                                        <a href="{{ route('medidores.probar-comunicacion', ($medidor['id'] ?? 0)) }}" 
                                            class="btn btn-sm btn-success" title="Probar Comunicación">
                                             <i class="bi bi-wifi"></i>
                                         </a>

@@ -4,7 +4,7 @@
 @section('header', 'Análisis de Cumplimiento')
 
 @section('actions')
-<a href="{{ route('contribuyentes.show', $contribuyente_id) }}" class="btn btn-sm btn-secondary">
+<a href="{{ route('contribuyentes.show', ($contribuyente_id ?? 0)) }}" class="btn btn-sm btn-secondary">
     <i class="bi bi-arrow-left"></i> Volver al Contribuyente
 </a>
 @endsection

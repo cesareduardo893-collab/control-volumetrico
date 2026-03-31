@@ -76,10 +76,159 @@
                         <div class="col-md-6 mb-3">
                             <label for="estado" class="form-label">Estado</label>
                             <select class="form-select" id="estado" name="estado" required>
-                                <option value="OPERATIVO" {{ old('estado', $dispensario['estado']) == 'OPERATIVO' ? 'selected' : '' }}>Operativo</option>
-                                <option value="MANTENIMIENTO" {{ old('estado', $dispensario['estado']) == 'MANTENIMIENTO' ? 'selected' : '' }}>Mantenimiento</option>
-                                <option value="FUERA_SERVICIO" {{ old('estado', $dispensario['estado']) == 'FUERA_SERVICIO' ? 'selected' : '' }}>Fuera de Servicio</option>
+                                <option value="OPERATIVO" {{ old('estado', ($dispensario['estado'] ?? '')) == 'OPERATIVO' ? 'selected' : '' }}>Operativo</option>
+                                <option value="MANTENIMIENTO" {{ old('estado', ($dispensario['estado'] ?? '')) == 'MANTENIMIENTO' ? 'selected' : '' }}>Mantenimiento</option>
+                                <option value="FUERA_SERVICIO" {{ old('estado', ($dispensario['estado'] ?? '')) == 'FUERA_SERVICIO' ? 'selected' : '' }}>Fuera de Servicio</option>
                             </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección de conexión con tanques -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="bi bi-fuel-pump me-2"></i>
+                                Conexión con Tanques de Almacenamiento
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Importante:</strong> Según el Anexo 21 de la Resolución Miscelánea Fiscal, 
+                                cada dispensario debe estar conectado a al menos un tanque para poder realizar 
+                                la conciliación diaria de existencias.
+                            </div>
+                            
+                            <!-- Tanques actualmente conectados -->
+                            @if(isset($dispensario['tanques']) && count($dispensario['tanques']) > 0)
+                                <div class="mb-4">
+                                    <h6 class="text-primary">
+                                        <i class="bi bi-link-45deg me-2"></i>
+                                        Tanques Conectados Actualmente
+                                    </h6>
+                                    <div class="row">
+                                        @foreach($dispensario['tanques'] as $tanque)
+                                            @php
+                                                $tanqueId = is_array($tanque) ? ($tanque['id'] ?? $tanque['ID'] ?? null) 
+                                                    : (is_object($tanque) ? ($tanque->id ?? $tanque->ID ?? null) : $tanque);
+                                                $tanqueIdentificador = is_array($tanque) ? ($tanque['identificador'] ?? '') 
+                                                    : (is_object($tanque) ? ($tanque->identificador ?? '') : '');
+                                                $tanqueProducto = is_array($tanque) ? ($tanque['producto']['nombre'] ?? 'Sin producto') 
+                                                    : (is_object($tanque) ? ($tanque->producto->nombre ?? 'Sin producto') : 'Sin producto');
+                                                $tanqueCapacidad = is_array($tanque) ? ($tanque['capacidad_total'] ?? 0) 
+                                                    : (is_object($tanque) ? ($tanque->capacidad_total ?? 0) : 0);
+                                                $tanqueEstado = is_array($tanque) ? ($tanque['estado'] ?? '') 
+                                                    : (is_object($tanque) ? ($tanque->estado ?? '') : '');
+                                                $pivotActivo = is_array($tanque) ? ($tanque['pivot']['activo'] ?? true) 
+                                                    : (is_object($tanque) ? ($tanque->pivot->activo ?? true) : true);
+                                            @endphp
+                                            @if($tanqueId !== null)
+                                                <div class="col-md-4 mb-3">
+                                                    <div class="card h-100 border-{{ $pivotActivo ? 'success' : 'secondary' }}">
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between align-items-start">
+                                                                <div>
+                                                                    <strong class="text-primary">{{ $tanqueIdentificador }}</strong>
+                                                                    <br>
+                                                                    <small class="text-muted">{{ $tanqueProducto }}</small>
+                                                                    <br>
+                                                                    <small class="text-muted">Cap: {{ number_format($tanqueCapacidad, 0) }} L</small>
+                                                                </div>
+                                                                <div class="text-end">
+                                                                    <span class="badge bg-{{ $tanqueEstado == 'OPERATIVO' ? 'success' : 'warning' }}">
+                                                                        {{ $tanqueEstado }}
+                                                                    </span>
+                                                                    <br>
+                                                                    <span class="badge bg-{{ $pivotActivo ? 'success' : 'secondary' }} mt-1">
+                                                                        {{ $pivotActivo ? 'Conectado' : 'Desconectado' }}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="mt-2">
+                                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                        onclick="desconectarTanque({{ $tanqueId }})">
+                                                                    <i class="bi bi-x-circle"></i> Desconectar
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <hr>
+                            @endif
+                            
+                            <!-- Agregar nuevas conexiones -->
+                            <div class="mb-4">
+                                <h6 class="text-success">
+                                    <i class="bi bi-plus-circle me-2"></i>
+                                    Agregar Nuevas Conexiones
+                                </h6>
+                                <div class="row" id="tanques-container">
+                                    @foreach($tanques as $tanque)
+                                        @php
+                                            $tanqueId = is_array($tanque) ? ($tanque['id'] ?? $tanque['ID'] ?? null) 
+                                                : (is_object($tanque) ? ($tanque->id ?? $tanque->ID ?? null) : $tanque);
+                                            $tanqueIdentificador = is_array($tanque) ? ($tanque['identificador'] ?? '') 
+                                                : (is_object($tanque) ? ($tanque->identificador ?? '') : '');
+                                            $tanqueProducto = is_array($tanque) ? ($tanque['producto']['nombre'] ?? 'Sin producto') 
+                                                : (is_object($tanque) ? ($tanque->producto->nombre ?? 'Sin producto') : 'Sin producto');
+                                            $tanqueCapacidad = is_array($tanque) ? ($tanque['capacidad_total'] ?? 0) 
+                                                : (is_object($tanque) ? ($tanque->capacidad_total ?? 0) : 0);
+                                            $tanqueEstado = is_array($tanque) ? ($tanque['estado'] ?? '') 
+                                                : (is_object($tanque) ? ($tanque->estado ?? '') : '');
+                                            
+                                            // Verificar si ya está conectado
+                                            $yaConectado = false;
+                                            if(isset($dispensario['tanques'])) {
+                                                foreach($dispensario['tanques'] as $tanqueConectado) {
+                                                    $conectadoId = is_array($tanqueConectado) ? ($tanqueConectado['id'] ?? null) 
+                                                        : (is_object($tanqueConectado) ? ($tanqueConectado->id ?? null) : null);
+                                                    if($conectadoId == $tanqueId) {
+                                                        $yaConectado = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        @endphp
+                                        @if($tanqueId !== null && !$yaConectado)
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card h-100 border-2" id="tanque-card-{{ $tanqueId }}">
+                                                    <div class="card-body p-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="tanques_seleccionados[]" 
+                                                                   value="{{ $tanqueId }}" 
+                                                                   id="tanque_{{ $tanqueId }}"
+                                                                   {{ in_array($tanqueId, old('tanques_seleccionados', [])) ? 'checked' : '' }}>
+                                                            <label class="form-check-label w-100" for="tanque_{{ $tanqueId }}">
+                                                                <div class="d-flex justify-content-between align-items-start">
+                                                                    <div>
+                                                                        <strong class="text-primary">{{ $tanqueIdentificador }}</strong>
+                                                                        <br>
+                                                                        <small class="text-muted">{{ $tanqueProducto }}</small>
+                                                                        <br>
+                                                                        <small class="text-muted">Cap: {{ number_format($tanqueCapacidad, 0) }} L</small>
+                                                                    </div>
+                                                                    <span class="badge bg-{{ $tanqueEstado == 'OPERATIVO' ? 'success' : 'warning' }}">
+                                                                        {{ $tanqueEstado }}
+                                                                    </span>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    Solo se muestran tanques en estado OPERATIVO que no están conectados
+                                </small>
+                            </div>
                         </div>
                     </div>
                     
@@ -122,7 +271,7 @@
                     <div class="mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1"
-                                   {{ old('activo', $dispensario['activo']) ? 'checked' : '' }}>
+                                   {{ old('activo', (($dispensario['activo'] ?? true) ?? true)) ? 'checked' : '' }}>
                             <label class="form-check-label" for="activo">Dispensario Activo</label>
                         </div>
                     </div>

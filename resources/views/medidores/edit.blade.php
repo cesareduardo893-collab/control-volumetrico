@@ -21,7 +21,7 @@
                     </div>
                 @endif
                 
-                <form method="POST" action="{{ route('medidores.update', $medidor['id']) }}">
+                <form method="POST" action="{{ route('medidores.update', ($medidor['id'] ?? 0)) }}">
                     @csrf
                     @method('PUT')
                     
@@ -29,7 +29,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="numero_serie" class="form-label">Número de Serie</label>
                             <input type="text" class="form-control" id="numero_serie" 
-                                   value="{{ $medidor['numero_serie'] }}" disabled readonly>
+                                   value="{{ ($medidor['numero_serie'] ?? '') }}" disabled readonly>
                         </div>
                         
                         <div class="col-md-6 mb-3">
@@ -54,22 +54,35 @@
                         
                         <div class="col-md-4 mb-3">
                             <label for="tecnologia_id" class="form-label">Tecnología</label>
-                            <input type="text" class="form-control" id="tecnologia_id" name="tecnologia_id" 
-                                   value="{{ old('tecnologia_id', $medidor['tecnologia_id'] ?? '') }}">
+                            <select class="form-select" id="tecnologia_id" name="tecnologia_id">
+                                <option value="">Seleccione...</option>
+                                @foreach($tecnologias as $tecnologia)
+                                    <option value="{{ $tecnologia['id'] }}" {{ old('tecnologia_id', $medidor['tecnologia_id'] ?? '') == $tecnologia['id'] ? 'selected' : '' }}>
+                                        {{ $tecnologia['descripcion'] ?? $tecnologia['valor'] }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="protocolo_comunicacion" class="form-label">Protocolo Comunicación</label>
-                            <input type="text" class="form-control" id="protocolo_comunicacion" name="protocolo_comunicacion" 
-                                   value="{{ old('protocolo_comunicacion', $medidor['protocolo_comunicacion'] ?? '') }}">
+                            <select class="form-select" id="protocolo_comunicacion" name="protocolo_comunicacion">
+                                <option value="">Seleccione...</option>
+                                <option value="modbus" {{ old('protocolo_comunicacion', $medidor['protocolo_comunicacion'] ?? '') == 'modbus' ? 'selected' : '' }}>Modbus</option>
+                                <option value="opc" {{ old('protocolo_comunicacion', $medidor['protocolo_comunicacion'] ?? '') == 'opc' ? 'selected' : '' }}>OPC</option>
+                                <option value="serial" {{ old('protocolo_comunicacion', $medidor['protocolo_comunicacion'] ?? '') == 'serial' ? 'selected' : '' }}>Serial</option>
+                                <option value="ethernet" {{ old('protocolo_comunicacion', $medidor['protocolo_comunicacion'] ?? '') == 'ethernet' ? 'selected' : '' }}>Ethernet</option>
+                                <option value="wireless" {{ old('protocolo_comunicacion', $medidor['protocolo_comunicacion'] ?? '') == 'wireless' ? 'selected' : '' }}>Wireless</option>
+                                <option value="otros" {{ old('protocolo_comunicacion', $medidor['protocolo_comunicacion'] ?? '') == 'otros' ? 'selected' : '' }}>Otros</option>
+                            </select>
                         </div>
                         
                         <div class="col-md-6 mb-3">
                             <label for="precision" class="form-label">Precisión (%)</label>
                             <input type="number" step="0.01" min="0" class="form-control" 
-                                   id="precision" name="precision" value="{{ old('precision', $medidor['precision']) }}" required>
+                                   id="precision" name="precision" value="{{ old('precision', ($medidor['precision'] ?? 0)) }}" required>
                         </div>
                     </div>
                     
@@ -110,18 +123,18 @@
                         <div class="col-md-4 mb-3">
                             <label for="estado" class="form-label">Estado</label>
                             <select class="form-select" id="estado" name="estado" required>
-                                <option value="OPERATIVO" {{ old('estado', $medidor['estado']) == 'OPERATIVO' ? 'selected' : '' }}>Operativo</option>
-                                <option value="CALIBRACION" {{ old('estado', $medidor['estado']) == 'CALIBRACION' ? 'selected' : '' }}>Calibración</option>
-                                <option value="MANTENIMIENTO" {{ old('estado', $medidor['estado']) == 'MANTENIMIENTO' ? 'selected' : '' }}>Mantenimiento</option>
-                                <option value="FUERA_SERVICIO" {{ old('estado', $medidor['estado']) == 'FUERA_SERVICIO' ? 'selected' : '' }}>Fuera de Servicio</option>
-                                <option value="FALLA_COMUNICACION" {{ old('estado', $medidor['estado']) == 'FALLA_COMUNICACION' ? 'selected' : '' }}>Falla Comunicación</option>
+                                <option value="OPERATIVO" {{ old('estado', ($medidor['estado'] ?? '')) == 'OPERATIVO' ? 'selected' : '' }}>Operativo</option>
+                                <option value="CALIBRACION" {{ old('estado', ($medidor['estado'] ?? '')) == 'CALIBRACION' ? 'selected' : '' }}>Calibración</option>
+                                <option value="MANTENIMIENTO" {{ old('estado', ($medidor['estado'] ?? '')) == 'MANTENIMIENTO' ? 'selected' : '' }}>Mantenimiento</option>
+                                <option value="FUERA_SERVICIO" {{ old('estado', ($medidor['estado'] ?? '')) == 'FUERA_SERVICIO' ? 'selected' : '' }}>Fuera de Servicio</option>
+                                <option value="FALLA_COMUNICACION" {{ old('estado', ($medidor['estado'] ?? '')) == 'FALLA_COMUNICACION' ? 'selected' : '' }}>Falla Comunicación</option>
                             </select>
                         </div>
                         
                         <div class="col-md-4 mb-3">
                             <div class="form-check mt-4">
                                 <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1"
-                                       {{ old('activo', $medidor['activo']) ? 'checked' : '' }}>
+                                       {{ old('activo', ($medidor['activo'] ?? true)) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="activo">Medidor Activo</label>
                             </div>
                         </div>
@@ -156,7 +169,7 @@
                     <hr>
                     
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('medidores.show', $medidor['id']) }}" class="btn btn-secondary">
+                        <a href="{{ route('medidores.show', ($medidor['id'] ?? 0)) }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Cancelar
                         </a>
                         <button type="submit" class="btn btn-warning">

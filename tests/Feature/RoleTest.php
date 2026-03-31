@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 
 class RoleTest extends TestCase
 {
@@ -21,15 +19,23 @@ class RoleTest extends TestCase
             [
                 'id' => 1,
                 'nombre' => 'Administrador',
+                'descripcion' => 'Acceso total',
                 'nivel_jerarquico' => 100,
-                'activo' => true
+                'es_administrador' => true,
+                'activo' => true,
+                'permissions' => [],
+                'usuarios_count' => 2,
             ],
             [
                 'id' => 2,
                 'nombre' => 'Operador',
+                'descripcion' => 'Acceso limitado',
                 'nivel_jerarquico' => 50,
-                'activo' => true
-            ]
+                'es_administrador' => false,
+                'activo' => true,
+                'permissions' => [],
+                'usuarios_count' => 5,
+            ],
         ];
 
         $this->mockPaginatedResponse('/api/roles', $roles, 2);
@@ -47,10 +53,10 @@ class RoleTest extends TestCase
         $permisos = [
             ['id' => 1, 'name' => 'Crear Usuario', 'modulo' => 'Usuarios'],
             ['id' => 2, 'name' => 'Editar Usuario', 'modulo' => 'Usuarios'],
-            ['id' => 3, 'name' => 'Ver Alarmas', 'modulo' => 'Alarmas']
+            ['id' => 3, 'name' => 'Ver Alarmas', 'modulo' => 'Alarmas'],
         ];
 
-        $this->mockSuccessfulResponse('/api/permissions?per_page=500&activo=true', ['data' => $permisos]);
+        $this->mockSuccessfulResponse('/api/permissions', ['data' => $permisos]);
 
         $response = $this->get('/roles/create');
 
@@ -67,13 +73,13 @@ class RoleTest extends TestCase
             'descripcion' => 'Supervisor de operaciones',
             'nivel_jerarquico' => 75,
             'es_administrador' => false,
-            'permisos' => [1, 2, 3]
+            'permisos' => [1, 2, 3],
         ];
 
         $createdRole = [
             'id' => 3,
             'nombre' => 'Supervisor',
-            'nivel_jerarquico' => 75
+            'nivel_jerarquico' => 75,
         ];
 
         $this->mockSuccessfulResponse('/api/roles', $createdRole, 'Rol creado exitosamente', 201);
@@ -89,11 +95,11 @@ class RoleTest extends TestCase
     {
         $roleData = [
             'nombre' => 'Administrador',
-            'nivel_jerarquico' => 100
+            'nivel_jerarquico' => 100,
         ];
 
         $this->mockValidationErrorResponse('/api/roles', [
-            'nombre' => ['El nombre ya está registrado']
+            'nombre' => ['El nombre ya está registrado'],
         ]);
 
         $response = $this->post('/roles', $roleData);
@@ -114,8 +120,8 @@ class RoleTest extends TestCase
             'activo' => true,
             'permissions' => [
                 ['id' => 1, 'name' => 'Crear Usuario', 'modulo' => 'Usuarios'],
-                ['id' => 2, 'name' => 'Editar Usuario', 'modulo' => 'Usuarios']
-            ]
+                ['id' => 2, 'name' => 'Editar Usuario', 'modulo' => 'Usuarios'],
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/roles/1', $role);
@@ -136,17 +142,17 @@ class RoleTest extends TestCase
             'descripcion' => 'Acceso total',
             'nivel_jerarquico' => 100,
             'permissions' => [
-                ['id' => 1, 'name' => 'Crear Usuario']
-            ]
+                ['id' => 1, 'name' => 'Crear Usuario'],
+            ],
         ];
 
         $permisos = [
             ['id' => 1, 'name' => 'Crear Usuario', 'modulo' => 'Usuarios'],
-            ['id' => 2, 'name' => 'Editar Usuario', 'modulo' => 'Usuarios']
+            ['id' => 2, 'name' => 'Editar Usuario', 'modulo' => 'Usuarios'],
         ];
 
         $this->mockSuccessfulResponse('/api/roles/1', $role);
-        $this->mockSuccessfulResponse('/api/permissions?per_page=500&activo=true', ['data' => $permisos]);
+        $this->mockSuccessfulResponse('/api/permissions', ['data' => $permisos]);
 
         $response = $this->get('/roles/1/edit');
 
@@ -163,7 +169,7 @@ class RoleTest extends TestCase
         $updateData = [
             'descripcion' => 'Administrador con permisos limitados',
             'nivel_jerarquico' => 90,
-            'permisos' => [1, 2]
+            'permisos' => [1, 2],
         ];
 
         $this->mockSuccessfulResponse('/api/roles/1', [], 'Rol actualizado exitosamente');
@@ -178,7 +184,7 @@ class RoleTest extends TestCase
     public function test_asignar_permisos_assigns_permissions_to_role()
     {
         $permisosData = [
-            'permisos' => [1, 2, 3, 4]
+            'permisos' => [1, 2, 3, 4],
         ];
 
         $this->mockSuccessfulResponse('/api/roles/1/asignar-permisos', [], 'Permisos asignados exitosamente');
@@ -194,12 +200,12 @@ class RoleTest extends TestCase
     {
         $cloneData = [
             'nombre' => 'Administrador Clonado',
-            'incluir_permisos' => true
+            'incluir_permisos' => true,
         ];
 
         $clonedRole = [
             'id' => 5,
-            'nombre' => 'Administrador Clonado'
+            'nombre' => 'Administrador Clonado',
         ];
 
         $this->mockSuccessfulResponse('/api/roles/1/clonar', $clonedRole, 'Rol clonado exitosamente');
@@ -216,16 +222,16 @@ class RoleTest extends TestCase
         $matriz = [
             'roles' => [
                 ['id' => 1, 'nombre' => 'Administrador'],
-                ['id' => 2, 'nombre' => 'Operador']
+                ['id' => 2, 'nombre' => 'Operador'],
             ],
             'permisos' => [
                 ['id' => 1, 'name' => 'Crear Usuario', 'modulo' => 'Usuarios'],
-                ['id' => 2, 'name' => 'Ver Alarmas', 'modulo' => 'Alarmas']
+                ['id' => 2, 'name' => 'Ver Alarmas', 'modulo' => 'Alarmas'],
             ],
             'matriz' => [
                 1 => [1 => true, 2 => true],
-                2 => [1 => false, 2 => true]
-            ]
+                2 => [1 => false, 2 => true],
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/roles/matriz-permisos', $matriz);
@@ -265,16 +271,16 @@ class RoleTest extends TestCase
     public function test_filter_roles_by_nivel()
     {
         $roles = [
-            ['id' => 1, 'nombre' => 'Administrador', 'nivel_jerarquico' => 100]
+            ['id' => 1, 'nombre' => 'Administrador', 'nivel_jerarquico' => 100],
         ];
 
-        $this->mockSuccessfulResponse('/api/roles?nivel_minimo=80', ['data' => $roles]);
+        $this->mockSuccessfulResponse('/api/roles', ['data' => $roles]);
 
         $response = $this->get('/roles?nivel_minimo=80');
 
         $response->assertStatus(200);
         $response->assertViewHas('roles');
-        
+
         $roles = $response->viewData('roles');
         $this->assertCount(1, $roles);
         $this->assertGreaterThanOrEqual(80, $roles[0]['nivel_jerarquico']);
@@ -286,18 +292,18 @@ class RoleTest extends TestCase
         $permisos = [
             ['id' => 1, 'name' => 'Crear Usuario', 'modulo' => 'Usuarios'],
             ['id' => 2, 'name' => 'Editar Usuario', 'modulo' => 'Usuarios'],
-            ['id' => 3, 'name' => 'Ver Alarmas', 'modulo' => 'Alarmas']
+            ['id' => 3, 'name' => 'Ver Alarmas', 'modulo' => 'Alarmas'],
         ];
 
-        $this->mockSuccessfulResponse('/api/permissions?per_page=500&activo=true', ['data' => $permisos]);
+        $this->mockSuccessfulResponse('/api/permissions', ['data' => $permisos]);
 
         $response = $this->get('/roles/create');
 
         $response->assertStatus(200);
-        
+
         $modulos = $response->viewData('modulos');
         $this->assertCount(2, $modulos);
-        
+
         $modulosArray = $modulos->toArray();
         $this->assertEquals('Usuarios', $modulosArray[0]['modulo']);
         $this->assertCount(2, $modulosArray[0]['permisos']);

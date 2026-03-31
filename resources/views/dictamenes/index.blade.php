@@ -181,7 +181,7 @@
                             <td>{{ $dictamen['numero_lote'] }}</td>
                             <td>{{ $dictamen['fecha_emision'] }}</td>
                             <td>
-                                {{ $dictamen['laboratorio_nombre'] }}<br>
+                                {{ ($dictamen['laboratorio_nombre'] ?? '') }}<br>
                                 <small class="text-muted">{{ $dictamen['laboratorio_rfc'] }}</small>
                             </td>
                             <td>

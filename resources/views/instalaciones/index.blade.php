@@ -190,7 +190,7 @@
                                 <span class="badge bg-{{ $estatusClass }}">{{ $instalacion['estatus'] }}</span>
                             </td>
                             <td>
-                                @if($instalacion['activo'])
+                                @if(($instalacion['activo'] ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>

@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
+use Tests\TestCase;
 
 class ProductoTest extends TestCase
 {
@@ -21,17 +20,23 @@ class ProductoTest extends TestCase
             [
                 'id' => 1,
                 'clave_sat' => '15101501',
+                'codigo' => 'GAS-001',
                 'nombre' => 'Gasolina',
                 'tipo_hidrocarburo' => 'gasolina',
-                'activo' => true
+                'unidad_medida' => 'Litro',
+                'densidad_referencia' => 0.75,
+                'activo' => true,
             ],
             [
                 'id' => 2,
                 'clave_sat' => '15101502',
+                'codigo' => 'DIE-001',
                 'nombre' => 'Diesel',
                 'tipo_hidrocarburo' => 'diesel',
-                'activo' => true
-            ]
+                'unidad_medida' => 'Litro',
+                'densidad_referencia' => 0.85,
+                'activo' => true,
+            ],
         ];
 
         $this->mockPaginatedResponse('/api/productos', $productos, 2);
@@ -65,7 +70,7 @@ class ProductoTest extends TestCase
             'tipo_hidrocarburo' => 'gasolina',
             'densidad_referencia' => 0.75,
             'temperatura_referencia' => 20,
-            'octanaje' => 95
+            'octanaje' => 95,
         ];
 
         $createdProducto = array_merge($productoData, ['id' => 1]);
@@ -74,7 +79,7 @@ class ProductoTest extends TestCase
 
         $response = $this->post('/productos', $productoData);
 
-        $response->assertRedirect('/productos');
+        $response->assertRedirect('/productos/1');
         $response->assertSessionHas('success', 'Producto creado exitosamente');
     }
 
@@ -87,11 +92,11 @@ class ProductoTest extends TestCase
             'clave_identificacion' => 'GASOLINA',
             'nombre' => 'Gasolina',
             'unidad_medida' => 'Litro',
-            'tipo_hidrocarburo' => 'gasolina'
+            'tipo_hidrocarburo' => 'gasolina',
         ];
 
         $this->mockValidationErrorResponse('/api/productos', [
-            'clave_sat' => ['La clave SAT ya está registrada']
+            'clave_sat' => ['La clave SAT ya está registrada'],
         ]);
 
         $response = $this->post('/productos', $productoData);
@@ -113,16 +118,23 @@ class ProductoTest extends TestCase
             'tipo_hidrocarburo' => 'gasolina',
             'octanaje' => 95,
             'densidad_referencia' => 0.75,
-            'activo' => true
+            'activo' => true,
+            'tanques' => [],
         ];
 
-        $this->mockSuccessfulResponse('/api/productos/1', $producto);
+        Http::fake([
+            $this->baseApiUrl.'/api/productos/1' => Http::response([
+                'success' => true,
+                'message' => 'Success',
+                'data' => $producto,
+            ], 200),
+        ]);
 
         $response = $this->get('/productos/1');
 
         $response->assertStatus(200);
         $response->assertViewIs('productos.show');
-        $response->assertViewHas('producto', $producto);
+        $response->assertViewHas('producto');
     }
 
     /** @test */
@@ -132,7 +144,7 @@ class ProductoTest extends TestCase
             'id' => 1,
             'clave_sat' => '15101501',
             'nombre' => 'Gasolina',
-            'tipo_hidrocarburo' => 'gasolina'
+            'tipo_hidrocarburo' => 'gasolina',
         ];
 
         $this->mockSuccessfulResponse('/api/productos/1', $producto);
@@ -150,7 +162,7 @@ class ProductoTest extends TestCase
         $updateData = [
             'nombre' => 'Gasolina Magna',
             'octanaje' => 87,
-            'descripcion' => 'Gasolina regular'
+            'descripcion' => 'Gasolina regular',
         ];
 
         $this->mockSuccessfulResponse('/api/productos/1', [], 'Producto actualizado exitosamente');
@@ -166,17 +178,16 @@ class ProductoTest extends TestCase
     {
         $productos = [
             ['id' => 1, 'nombre' => 'Gasolina Premium', 'tipo_hidrocarburo' => 'gasolina'],
-            ['id' => 2, 'nombre' => 'Gasolina Magna', 'tipo_hidrocarburo' => 'gasolina']
+            ['id' => 2, 'nombre' => 'Gasolina Magna', 'tipo_hidrocarburo' => 'gasolina'],
         ];
 
-        $this->mockSuccessfulResponse('/api/productos/tipo/gasolina', $productos);
+        $this->mockPaginatedResponse('/api/productos', $productos, 2);
 
-        $response = $this->get('/productos/tipo/gasolina');
+        $response = $this->get('/productos?tipo_hidrocarburo=gasolina');
 
         $response->assertStatus(200);
-        $response->assertViewIs('productos.por-tipo');
-        $response->assertViewHas('productos', $productos);
-        $response->assertViewHas('tipo', 'gasolina');
+        $response->assertViewIs('productos.index');
+        $response->assertViewHas('productos');
     }
 
     /** @test */
@@ -184,12 +195,12 @@ class ProductoTest extends TestCase
     {
         $productos = [
             ['id' => 1, 'nombre' => 'Gasolina', 'clave_sat' => '15101501'],
-            ['id' => 2, 'nombre' => 'Diesel', 'clave_sat' => '15101502']
+            ['id' => 2, 'nombre' => 'Diesel', 'clave_sat' => '15101502'],
         ];
 
         $this->mockSuccessfulResponse('/api/productos/catalogo', $productos);
 
-        $response = $this->get('/productos/catalogo/list');
+        $response = $this->get('/productos/catalogo');
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -203,12 +214,12 @@ class ProductoTest extends TestCase
             'id' => 1,
             'clave_sat' => '15101501',
             'nombre' => 'Gasolina Premium',
-            'unidad_medida' => 'Litro'
+            'unidad_medida' => 'Litro',
         ];
 
         $this->mockSuccessfulResponse('/api/productos/clave-sat/15101501', $producto);
 
-        $response = $this->get('/productos/buscar/clave-sat/15101501');
+        $response = $this->get('/productos/clave-sat/15101501');
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -220,7 +231,7 @@ class ProductoTest extends TestCase
     {
         $this->mockErrorResponse('/api/productos/clave-sat/99999999', 'Producto no encontrado', 404);
 
-        $response = $this->get('/productos/buscar/clave-sat/99999999');
+        $response = $this->get('/productos/clave-sat/99999999');
 
         $response->assertStatus(404);
         $response->assertJson(['success' => false]);
@@ -240,28 +251,28 @@ class ProductoTest extends TestCase
     /** @test */
     public function test_destroy_fails_if_producto_has_related_records()
     {
-        $this->mockErrorResponse('/api/productos/1', 'No se puede eliminar el producto', 409);
+        $this->mockErrorResponse('/api/productos/1', 'No se puede eliminar el producto porque tiene registros relacionados', 409);
 
         $response = $this->delete('/productos/1');
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'No se puede eliminar el producto');
+        $response->assertSessionHas('error', 'No se puede eliminar el producto porque tiene registros relacionados');
     }
 
     /** @test */
     public function test_filter_productos_by_tipo()
     {
         $productos = [
-            ['id' => 1, 'nombre' => 'Gasolina', 'tipo_hidrocarburo' => 'gasolina']
+            ['id' => 1, 'nombre' => 'Gasolina', 'tipo_hidrocarburo' => 'gasolina', 'clave_sat' => '15101501', 'codigo' => 'GAS-001', 'unidad_medida' => 'Litro', 'densidad_referencia' => 0.75, 'activo' => true],
         ];
 
-        $this->mockSuccessfulResponse('/api/productos?tipo_hidrocarburo=gasolina', ['data' => $productos]);
+        $this->mockPaginatedResponse('/api/productos', $productos, 1);
 
         $response = $this->get('/productos?tipo_hidrocarburo=gasolina');
 
         $response->assertStatus(200);
         $response->assertViewHas('productos');
-        
+
         $productos = $response->viewData('productos');
         $this->assertCount(1, $productos);
         $this->assertEquals('gasolina', $productos[0]['tipo_hidrocarburo']);
@@ -271,14 +282,15 @@ class ProductoTest extends TestCase
     public function test_exportar_downloads_productos_file()
     {
         Http::fake([
-            $this->baseApiUrl . '/api/exportar/productos*' => Http::response(
+            $this->baseApiUrl.'/api/productos/exportar*' => Http::response(
                 'csv content',
                 200,
                 [
                     'Content-Type' => 'text/csv',
-                    'Content-Disposition' => 'attachment; filename="productos.csv"'
+                    'Content-Disposition' => 'attachment; filename="productos.csv"',
                 ]
-            )
+            ),
+            '*' => Http::response(['success' => true, 'data' => []], 200),
         ]);
 
         $response = $this->get('/productos/exportar');

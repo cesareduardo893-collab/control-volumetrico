@@ -92,6 +92,79 @@
                         </div>
                     </div>
                     
+                    <!-- Sección de conexión con tanques -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="bi bi-fuel-pump me-2"></i>
+                                Conexión con Tanques de Almacenamiento
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Importante:</strong> Según el Anexo 21 de la Resolución Miscelánea Fiscal, 
+                                cada dispensario debe estar conectado a al menos un tanque para poder realizar 
+                                la conciliación diaria de existencias.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">Seleccionar Tanques para Conexión:</label>
+                                    <div class="row" id="tanques-container">
+                                        @foreach($tanques as $tanque)
+                                            @php
+                                                $tanqueId = is_array($tanque) ? ($tanque['id'] ?? $tanque['ID'] ?? null) 
+                                                    : (is_object($tanque) ? ($tanque->id ?? $tanque->ID ?? null) : $tanque);
+                                                $tanqueIdentificador = is_array($tanque) ? ($tanque['identificador'] ?? '') 
+                                                    : (is_object($tanque) ? ($tanque->identificador ?? '') : '');
+                                                $tanqueProducto = is_array($tanque) ? ($tanque['producto']['nombre'] ?? 'Sin producto') 
+                                                    : (is_object($tanque) ? ($tanque->producto->nombre ?? 'Sin producto') : 'Sin producto');
+                                                $tanqueCapacidad = is_array($tanque) ? ($tanque['capacidad_total'] ?? 0) 
+                                                    : (is_object($tanque) ? ($tanque->capacidad_total ?? 0) : 0);
+                                                $tanqueEstado = is_array($tanque) ? ($tanque['estado'] ?? '') 
+                                                    : (is_object($tanque) ? ($tanque->estado ?? '') : '');
+                                            @endphp
+                                            @if($tanqueId !== null)
+                                                <div class="col-md-4 mb-3">
+                                                    <div class="card h-100 border-2" id="tanque-card-{{ $tanqueId }}">
+                                                        <div class="card-body p-3">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" 
+                                                                       name="tanques_seleccionados[]" 
+                                                                       value="{{ $tanqueId }}" 
+                                                                       id="tanque_{{ $tanqueId }}"
+                                                                       {{ in_array($tanqueId, old('tanques_seleccionados', [])) ? 'checked' : '' }}>
+                                                                <label class="form-check-label w-100" for="tanque_{{ $tanqueId }}">
+                                                                    <div class="d-flex justify-content-between align-items-start">
+                                                                        <div>
+                                                                            <strong class="text-primary">{{ $tanqueIdentificador }}</strong>
+                                                                            <br>
+                                                                            <small class="text-muted">{{ $tanqueProducto }}</small>
+                                                                            <br>
+                                                                            <small class="text-muted">Cap: {{ number_format($tanqueCapacidad, 0) }} L</small>
+                                                                        </div>
+                                                                        <span class="badge bg-{{ $tanqueEstado == 'OPERATIVO' ? 'success' : 'warning' }}">
+                                                                            {{ $tanqueEstado }}
+                                                                        </span>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        Solo se muestran tanques en estado OPERATIVO de la misma instalación
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="fecha_instalacion" class="form-label">Fecha de Instalación</label>

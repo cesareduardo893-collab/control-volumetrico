@@ -23,15 +23,15 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">Clave SAT:</th>
-                        <td><strong>{{ $producto['clave_sat'] }}</strong></td>
+                        <td><strong>{{ ($producto['clave_sat'] ?? '') }}</strong></td>
                     </tr>
                     <tr>
                         <th>Código Interno:</th>
-                        <td>{{ $producto['codigo'] }}</td>
+                        <td>{{ ($producto['codigo'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Clave Identificación:</th>
-                        <td>{{ $producto['clave_identificacion'] }}</td>
+                        <td>{{ ($producto['clave_identificacion'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Nombre:</th>
@@ -45,12 +45,12 @@
                     </tr>
                     <tr>
                         <th>Unidad de Medida:</th>
-                        <td>{{ $producto['unidad_medida'] }}</td>
+                        <td>{{ ($producto['unidad_medida'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Activo:</th>
                         <td>
-                            @if($producto['activo'])
+                            @if(($producto['activo'] ?? true))
                                 <span class="badge bg-success">Activo</span>
                             @else
                                 <span class="badge bg-secondary">Inactivo</span>
@@ -236,20 +236,20 @@
                         <tbody>
                             @foreach($producto['ultimos_registros'] as $registro)
                                 <tr>
-                                    <td>{{ $registro['fecha'] }}</td>
-                                    <td>{{ $registro['numero_registro'] }}</td>
+                                    <td>{{ ($registro['fecha'] ?? '') }}</td>
+                                    <td>{{ ($registro['numero_registro'] ?? '') }}</td>
                                     <td>{{ $registro['instalacion']['nombre'] ?? '' }}</td>
                                     <td>{{ $registro['tanque']['identificador'] ?? '' }}</td>
-                                    <td>{{ number_format($registro['volumen_operacion'], 3) }} L</td>
+                                    <td>{{ number_format(($registro['volumen_operacion'] ?? 0), 3) }} L</td>
                                     <td>
                                         @php
                                             $estadoClass = [
                                                 'VALIDADO' => 'success',
                                                 'PROCESADO' => 'info',
                                                 'PENDIENTE' => 'warning'
-                                            ][$registro['estado']] ?? 'secondary';
+                                            ][($registro['estado'] ?? '')] ?? 'secondary';
                                         @endphp
-                                        <span class="badge bg-{{ $estadoClass }}">{{ $registro['estado'] }}</span>
+                                        <span class="badge bg-{{ $estadoClass }}">{{ ($registro['estado'] ?? '') }}</span>
                                     </td>
                                 </tr>
                             @endforeach

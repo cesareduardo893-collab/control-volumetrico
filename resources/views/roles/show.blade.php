@@ -10,10 +10,10 @@
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">{{ $role['nombre'] }}</h5>
                 <div>
-                    @if($role['es_administrador'])
+                    @if(($role['es_administrador'] ?? false))
                         <span class="badge bg-success">Administrador</span>
                     @endif
-                    @if($role['activo'])
+                    @if(($role['activo'] ?? true))
                         <span class="badge bg-info">Activo</span>
                     @else
                         <span class="badge bg-secondary">Inactivo</span>
@@ -51,7 +51,7 @@
                         <div class="mb-3">
                             <label class="form-label text-muted">Es Administrador</label>
                             <p class="form-control-static">
-                                @if($role['es_administrador'])
+                                @if(($role['es_administrador'] ?? false))
                                     <span class="text-success"><i class="bi bi-check-circle"></i> Sí</span>
                                 @else
                                     <span class="text-muted"><i class="bi bi-circle"></i> No</span>
@@ -63,7 +63,7 @@
                         <div class="mb-3">
                             <label class="form-label text-muted">Estado</label>
                             <p class="form-control-static">
-                                @if($role['activo'])
+                                @if(($role['activo'] ?? true))
                                     <span class="text-success"><i class="bi bi-check-circle"></i> Activo</span>
                                 @else
                                     <span class="text-muted"><i class="bi bi-circle"></i> Inactivo</span>
@@ -93,7 +93,7 @@
                                                     <li class="mb-1">
                                                         <i class="bi bi-check text-success"></i>
                                                         {{ $permiso['name'] }}
-                                                        <small class="text-muted">({{ $permiso['slug'] }})</small>
+                                                        <small class="text-muted">({{ ($permiso['slug'] ?? '') }})</small>
                                                     </li>
                                                 @endforeach
                                             </ul>

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class DictamenController extends BaseController
 {
@@ -20,7 +20,7 @@ class DictamenController extends BaseController
             $params = $request->only([
                 'contribuyente_id', 'instalacion_id', 'producto_id', 'folio',
                 'numero_lote', 'laboratorio_rfc', 'fecha_emision_inicio',
-                'fecha_emision_fin', 'estado', 'vigente', 'per_page', 'page'
+                'fecha_emision_fin', 'estado', 'vigente', 'per_page', 'page',
             ]);
 
             $response = $this->apiGet('/api/dictamenes', $params);
@@ -29,7 +29,7 @@ class DictamenController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al listar dictámenes', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar dictámenes');
@@ -48,12 +48,12 @@ class DictamenController extends BaseController
             $params = $request->only([
                 'contribuyente_id', 'instalacion_id', 'producto_id', 'folio',
                 'numero_lote', 'laboratorio_rfc', 'fecha_emision_inicio',
-                'fecha_emision_fin', 'estado', 'vigente'
+                'fecha_emision_fin', 'estado', 'vigente',
             ]);
 
-            $response = $this->apiGet('/api/dictamenes/exportar', $params);
+            $response = $this->apiGetRaw('/api/dictamenes/exportar', $params);
 
-            if ($response->successful()) {
+            if ($response && $response->successful()) {
                 // Si la API devuelve un archivo, lo enviamos directamente
                 $contentType = $response->headers->get('Content-Type');
                 $contentDisposition = $response->headers->get('Content-Disposition');
@@ -65,6 +65,7 @@ class DictamenController extends BaseController
 
             // Si no es exitoso, manejamos el error
             $json = $response->json();
+
             return $this->jsonError(
                 $json['message'] ?? 'Error al exportar dictámenes',
                 $response->status(),
@@ -72,7 +73,7 @@ class DictamenController extends BaseController
             );
         } catch (\Exception $e) {
             Log::error('Error al exportar dictámenes', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al exportar dictámenes');
@@ -95,12 +96,12 @@ class DictamenController extends BaseController
             return view('dictamenes.create', [
                 'contribuyentes' => $contribuyentes,
                 'instalaciones' => $instalaciones,
-                'productos' => $productos
+                'productos' => $productos,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de creación', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('dictamenes.index')
@@ -157,6 +158,7 @@ class DictamenController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -168,7 +170,7 @@ class DictamenController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al crear dictamen', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()
@@ -187,7 +189,7 @@ class DictamenController extends BaseController
 
             $response = $this->apiGet("/api/dictamenes/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('dictamenes.index')
                     ->with('error', $this->apiResponseMessage($response, 'Dictamen no encontrado'));
             }
@@ -195,13 +197,13 @@ class DictamenController extends BaseController
             $dictamen = $this->apiResponseData($response, []);
 
             return view('dictamenes.show', [
-                'dictamen' => $dictamen
+                'dictamen' => $dictamen,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al mostrar dictamen', [
                 'error' => $e->getMessage(),
-                'dictamen_id' => $id
+                'dictamen_id' => $id,
             ]);
 
             return redirect()->route('dictamenes.index')
@@ -219,7 +221,7 @@ class DictamenController extends BaseController
 
             $response = $this->apiGet("/api/dictamenes/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('dictamenes.index')
                     ->with('error', $this->apiResponseMessage($response, 'Dictamen no encontrado'));
             }
@@ -227,13 +229,13 @@ class DictamenController extends BaseController
             $dictamen = $this->apiResponseData($response, []);
 
             return view('dictamenes.edit', [
-                'dictamen' => $dictamen
+                'dictamen' => $dictamen,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de edición', [
                 'error' => $e->getMessage(),
-                'dictamen_id' => $id
+                'dictamen_id' => $id,
             ]);
 
             return redirect()->route('dictamenes.index')
@@ -273,6 +275,7 @@ class DictamenController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -285,7 +288,7 @@ class DictamenController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al actualizar dictamen', [
                 'error' => $e->getMessage(),
-                'dictamen_id' => $id
+                'dictamen_id' => $id,
             ]);
 
             return redirect()->back()
@@ -335,7 +338,7 @@ class DictamenController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al cancelar dictamen', [
                 'error' => $e->getMessage(),
-                'dictamen_id' => $id
+                'dictamen_id' => $id,
             ]);
 
             return redirect()->back()
@@ -354,7 +357,7 @@ class DictamenController extends BaseController
 
             $response = $this->apiGet("/api/dictamenes/{$id}/verificar-vigencia");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('dictamenes.show', $id)
                     ->with('error', $this->apiResponseMessage($response, 'Error al verificar vigencia'));
             }
@@ -362,13 +365,13 @@ class DictamenController extends BaseController
             $resultado = $this->apiResponseData($response, []);
 
             return view('dictamenes.vigencia', [
-                'resultado' => $resultado
+                'resultado' => $resultado,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al verificar vigencia', [
                 'error' => $e->getMessage(),
-                'dictamen_id' => $id
+                'dictamen_id' => $id,
             ]);
 
             return redirect()->route('dictamenes.show', $id)
@@ -391,7 +394,7 @@ class DictamenController extends BaseController
 
             $response = $this->apiGet('/api/dictamenes/estadisticas', $request->all());
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar estadísticas'));
             }
 
@@ -399,12 +402,12 @@ class DictamenController extends BaseController
 
             return view('dictamenes.estadisticas', [
                 'estadisticas' => $estadisticas,
-                'filters' => $request->all()
+                'filters' => $request->all(),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al obtener estadísticas de dictámenes', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar estadísticas');
@@ -421,20 +424,20 @@ class DictamenController extends BaseController
 
             $response = $this->apiGet("/api/dictamenes/producto/{$productoId}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar dictámenes'));
             }
 
             $resultado = $this->apiResponseData($response, []);
 
             return view('dictamenes.por-producto', [
-                'resultado' => $resultado
+                'resultado' => $resultado,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al obtener dictámenes por producto', [
                 'error' => $e->getMessage(),
-                'producto_id' => $productoId
+                'producto_id' => $productoId,
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar dictámenes');

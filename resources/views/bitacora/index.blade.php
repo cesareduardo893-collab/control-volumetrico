@@ -142,14 +142,15 @@
                         <tr>
                             <td>{{ $evento['fecha_hora'] ?? $evento['created_at'] ?? '-' }}</td>
                             <td>
-                                @if($evento['usuario'])
-                                    {{ $evento['usuario']['nombres'] }} {{ $evento['usuario']['apellidos'] }}
+                                @if(!empty($evento['usuario']))
+                                    {{ $evento['usuario']['nombres'] ?? $evento['usuario']['nombre'] ?? '' }} {{ $evento['usuario']['apellidos'] ?? '' }}
                                 @else
                                     <span class="text-muted">Sistema</span>
                                 @endif
                             </td>
                             <td>
                                 @php
+                                    $tipoEvento = $evento['tipo_evento'] ?? '';
                                     $badgeClass = [
                                         'LOGIN' => 'success',
                                         'LOGOUT' => 'secondary',
@@ -158,14 +159,14 @@
                                         'DELETE' => 'danger',
                                         'VIEW' => 'info',
                                         'EXPORT' => 'dark'
-                                    ][$evento['tipo_evento']] ?? 'secondary';
+                                    ][$tipoEvento] ?? 'secondary';
                                 @endphp
-                                <span class="badge bg-{{ $badgeClass }}">{{ $evento['tipo_evento'] }}</span>
+                                <span class="badge bg-{{ $badgeClass }}">{{ $tipoEvento }}</span>
                             </td>
                             <td>{{ $evento['modulo'] ?? '-' }}</td>
                             <td>{{ Str::limit($evento['descripcion'], 50) }}</td>
                             <td>
-                                @if($evento['tabla'])
+                                @if(!empty($evento['tabla']))
                                     {{ $evento['tabla'] }}<br>
                                     <small>ID: {{ $evento['registro_id'] ?? '-' }}</small>
                                 @else

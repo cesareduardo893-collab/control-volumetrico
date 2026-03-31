@@ -3,79 +3,42 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Session;
 
 abstract class TestCase extends BaseTestCase
 {
-
     protected $baseApiUrl = 'http://localhost:8000';
+
     protected $testApiToken = 'test-token-12345';
+
     protected $testUser = [
         'id' => 1,
         'full_name' => 'Test User',
         'email' => 'test@example.com',
-        'roles' => ['admin'],
-        'force_password_change' => false
+        'roles' => ['Administrador'],
+        'force_password_change' => false,
     ];
 
-    /**
-     * Setup the test environment.
-     */
+    protected array $httpFakes = [];
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Configurar entorno de pruebas
         config(['app.env' => 'testing']);
         config(['services.api.url' => $this->baseApiUrl]);
-
-        // Limpiar sesión antes de cada prueba
         Session::flush();
-
-        // Mockear respuestas HTTP por defecto
-        $this->mockApiResponses();
+        $this->httpFakes = [];
     }
 
-    /**
-     * Mockear respuestas de la API
-     */
-    protected function mockApiResponses(): void
+    protected function tearDown(): void
     {
-        Http::fake([
-            // Mock para login
-            $this->baseApiUrl . '/api/login' => Http::response([
-                'success' => true,
-                'message' => 'Login exitoso',
-                'data' => [
-                    'token' => $this->testApiToken,
-                    'user' => $this->testUser
-                ]
-            ], 200),
-
-            // Mock para logout
-            $this->baseApiUrl . '/api/logout' => Http::response([
-                'success' => true,
-                'message' => 'Logout exitoso'
-            ], 200),
-
-            // Mock para obtener usuario
-            $this->baseApiUrl . '/api/user' => Http::response([
-                'success' => true,
-                'data' => $this->testUser
-            ], 200),
-
-            // Mock por defecto para otras rutas
-            '*' => Http::response([
-                'success' => true,
-                'data' => []
-            ], 200),
-        ]);
+        Http::preventStrayRequests(false);
+        Http::fake([]);
+        $this->httpFakes = [];
+        parent::tearDown();
     }
 
-    /**
-     * Autenticar usuario para pruebas
-     */
     protected function authenticateUser(): void
     {
         Session::put('api_token', $this->testApiToken);
@@ -85,73 +48,68 @@ abstract class TestCase extends BaseTestCase
         Session::put('user_roles', $this->testUser['roles']);
     }
 
-    /**
-     * Mockear respuesta exitosa de API
-     */
-    protected function mockSuccessfulResponse(string $endpoint, array $data = [], string $message = 'Success'): void
+    protected function applyHttpFakes(): void
     {
-        Http::fake([
-            $this->baseApiUrl . $endpoint => Http::response([
-                'success' => true,
-                'message' => $message,
-                'data' => $data
-            ], 200)
-        ]);
+        $fakes = $this->httpFakes;
+        $fakes['*'] = Http::response(['success' => true, 'data' => []], 200);
+
+        // Reset stub callbacks to prevent accumulation from previous Http::fake() calls
+        $reflection = new \ReflectionClass(Http::getFacadeRoot());
+        $prop = $reflection->getProperty('stubCallbacks');
+        $prop->setAccessible(true);
+        $prop->setValue(Http::getFacadeRoot(), new \Illuminate\Support\Collection);
+
+        Http::fake($fakes);
     }
 
-    /**
-     * Mockear respuesta de error de API
-     */
+    protected function mockSuccessfulResponse(string $endpoint, array $data = [], string $message = 'Success', int $status = 200): void
+    {
+        $this->httpFakes[$this->baseApiUrl.$endpoint.'*'] = Http::response([
+            'success' => true,
+            'message' => $message,
+            'data' => $data,
+        ], $status);
+        $this->applyHttpFakes();
+    }
+
     protected function mockErrorResponse(string $endpoint, string $message = 'Error', int $status = 400, array $errors = []): void
     {
-        Http::fake([
-            $this->baseApiUrl . $endpoint => Http::response([
-                'success' => false,
-                'message' => $message,
-                'errors' => $errors
-            ], $status)
-        ]);
+        $this->httpFakes[$this->baseApiUrl.$endpoint.'*'] = Http::response([
+            'success' => false,
+            'message' => $message,
+            'errors' => $errors,
+        ], $status);
+        $this->applyHttpFakes();
     }
 
-    /**
-     * Mockear respuesta de validación
-     */
     protected function mockValidationErrorResponse(string $endpoint, array $errors): void
     {
-        Http::fake([
-            $this->baseApiUrl . $endpoint => Http::response([
-                'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $errors
-            ], 422)
-        ]);
+        $this->httpFakes[$this->baseApiUrl.$endpoint.'*'] = Http::response([
+            'success' => false,
+            'message' => 'Error de validación',
+            'errors' => $errors,
+        ], 422);
+        $this->applyHttpFakes();
     }
 
-    /**
-     * Mockear respuesta paginada
-     */
     protected function mockPaginatedResponse(string $endpoint, array $data, int $total = 10, int $perPage = 10): void
     {
-        $response = [
+        $this->httpFakes[$this->baseApiUrl.$endpoint.'*'] = Http::response([
             'success' => true,
-            'data' => $data,
-            'current_page' => 1,
-            'from' => 1,
-            'to' => count($data),
-            'per_page' => $perPage,
-            'last_page' => ceil($total / $perPage),
-            'total' => $total,
-            'links' => []
-        ];
-
-        Http::fake([
-            $this->baseApiUrl . $endpoint => Http::response($response, 200)
-        ]);
+            'data' => [
+                'data' => $data,
+                'current_page' => 1,
+                'from' => 1,
+                'to' => count($data),
+                'per_page' => $perPage,
+                'last_page' => ceil($total / $perPage),
+                'total' => $total,
+                'links' => [],
+            ],
+        ], 200);
+        $this->applyHttpFakes();
     }
 
-    /**
-     * Crear datos de prueba para alarma
-     */
     protected function createTestAlarmData(array $overrides = []): array
     {
         return array_merge([
@@ -162,16 +120,16 @@ abstract class TestCase extends BaseTestCase
             'componente_id' => 1,
             'componente_identificador' => 'TAN-001',
             'tipo_alarma_id' => 1,
+            'tipo_alarma' => ['id' => 1, 'nombre' => 'Nivel Alto'],
             'gravedad' => 'ALTA',
             'descripcion' => 'Alarma de prueba',
             'estado_atencion' => 'PENDIENTE',
             'requiere_atencion_inmediata' => true,
+            'atendida' => false,
+            'atenciones' => [],
         ], $overrides);
     }
 
-    /**
-     * Crear datos de prueba para contribuyente
-     */
     protected function createTestContribuyenteData(array $overrides = []): array
     {
         return array_merge([
@@ -182,13 +140,14 @@ abstract class TestCase extends BaseTestCase
             'regimen_fiscal' => 'General',
             'domicilio_fiscal' => 'Calle Principal 123',
             'codigo_postal' => '12345',
+            'numero_permiso' => 'PERM-001',
+            'tipo_permiso' => 'Almacenamiento',
+            'instalaciones_count' => 2,
+            'estatus_verificacion' => 'ACREDITADO',
             'activo' => true,
         ], $overrides);
     }
 
-    /**
-     * Crear datos de prueba para instalación
-     */
     protected function createTestInstalacionData(array $overrides = []): array
     {
         return array_merge([
@@ -206,9 +165,6 @@ abstract class TestCase extends BaseTestCase
         ], $overrides);
     }
 
-    /**
-     * Crear datos de prueba para tanque
-     */
     protected function createTestTanqueData(array $overrides = []): array
     {
         return array_merge([

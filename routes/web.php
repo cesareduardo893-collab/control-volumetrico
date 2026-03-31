@@ -1,28 +1,31 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlarmaController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\CertificadoVerificacionController;
 use App\Http\Controllers\CfdiController;
+use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\ContribuyenteController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DictamenController;
 use App\Http\Controllers\DispensarioController;
 use App\Http\Controllers\ExistenciaController;
 use App\Http\Controllers\InstalacionController;
 use App\Http\Controllers\MangueraController;
 use App\Http\Controllers\MedidorController;
+use App\Http\Controllers\MunicipioController;
 use App\Http\Controllers\PedimentoController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegistroVolumetricoController;
 use App\Http\Controllers\ReporteSatController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TanqueController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,8 +47,8 @@ Route::middleware('api.auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Dashboard
-     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-     Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->name('dashboard.exportar');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->name('dashboard.exportar');
     // Perfil de usuario y cambio de contraseña
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::get('/change-password', [AuthController::class, 'showChangePasswordForm'])->name('password.change.form');
@@ -58,6 +61,9 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/', [AlarmaController::class, 'index'])->name('index');
         Route::get('/create', [AlarmaController::class, 'create'])->name('create');
         Route::post('/', [AlarmaController::class, 'store'])->name('store');
+        Route::get('/estadisticas', [AlarmaController::class, 'estadisticas'])->name('estadisticas');
+        Route::get('/activas/list', [AlarmaController::class, 'activas'])->name('activas');
+        Route::get('/exportar', [AlarmaController::class, 'exportar'])->name('exportar');
         Route::get('/{id}', [AlarmaController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [AlarmaController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AlarmaController::class, 'update'])->name('update');
@@ -66,19 +72,16 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/atender', [AlarmaController::class, 'atender'])->name('atender');
         Route::get('/{id}/actualizar-estado', [AlarmaController::class, 'actualizarEstadoForm'])->name('actualizar-estado.form');
         Route::post('/{id}/actualizar-estado', [AlarmaController::class, 'actualizarEstado'])->name('actualizar-estado');
-        Route::get('/estadisticas', [AlarmaController::class, 'estadisticas'])->name('estadisticas');
-        Route::get('/activas/list', [AlarmaController::class, 'activas'])->name('activas');
-        Route::get('/exportar', [AlarmaController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== BITÁCORA ====================
     Route::get('/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');
-    Route::get('/bitacora/{id}', [BitacoraController::class, 'show'])->name('bitacora.show');
     Route::get('/bitacora/resumen-actividad', [BitacoraController::class, 'resumenActividad'])->name('bitacora.resumen');
     Route::get('/bitacora/actividad-usuario/{usuarioId}', [BitacoraController::class, 'actividadUsuario'])->name('bitacora.actividad-usuario');
     Route::get('/bitacora/actividad-modulo/{modulo}', [BitacoraController::class, 'actividadModulo'])->name('bitacora.actividad-modulo');
     Route::get('/bitacora/actividad-tabla/{tabla}/{registroId?}', [BitacoraController::class, 'actividadTabla'])->name('bitacora.actividad-tabla');
     Route::get('/bitacora/exportar', [BitacoraController::class, 'exportar'])->name('bitacora.exportar');
+    Route::get('/bitacora/{id}', [BitacoraController::class, 'show'])->name('bitacora.show');
 
     // ==================== CERTIFICADOS DE VERIFICACIÓN ====================
     Route::prefix('certificados-verificacion')->name('certificados-verificacion.')->group(function () {
@@ -99,14 +102,14 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/', [CfdiController::class, 'index'])->name('index');
         Route::get('/create', [CfdiController::class, 'create'])->name('create');
         Route::post('/', [CfdiController::class, 'store'])->name('store');
+        Route::get('/rfc/{rfc}', [CfdiController::class, 'porRfc'])->name('por-rfc');
+        Route::get('/resumen/fiscal', [CfdiController::class, 'resumenFiscal'])->name('resumen-fiscal');
+        Route::get('/exportar', [CfdiController::class, 'exportar'])->name('exportar');
         Route::get('/{id}', [CfdiController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [CfdiController::class, 'edit'])->name('edit');
         Route::put('/{id}', [CfdiController::class, 'update'])->name('update');
         Route::delete('/{id}', [CfdiController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/cancelar', [CfdiController::class, 'cancelar'])->name('cancelar');
-        Route::get('/rfc/{rfc}', [CfdiController::class, 'porRfc'])->name('por-rfc');
-        Route::get('/resumen/fiscal', [CfdiController::class, 'resumenFiscal'])->name('resumen-fiscal');
-        Route::get('/exportar', [CfdiController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== CONTRIBUYENTES ====================
@@ -114,14 +117,14 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/', [ContribuyenteController::class, 'index'])->name('index');
         Route::get('/create', [ContribuyenteController::class, 'create'])->name('create');
         Route::post('/', [ContribuyenteController::class, 'store'])->name('store');
+        Route::get('/catalogo/list', [ContribuyenteController::class, 'catalogo'])->name('catalogo');
+        Route::get('/exportar', [ContribuyenteController::class, 'exportar'])->name('exportar');
         Route::get('/{id}', [ContribuyenteController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [ContribuyenteController::class, 'edit'])->name('edit');
         Route::put('/{id}', [ContribuyenteController::class, 'update'])->name('update');
         Route::delete('/{id}', [ContribuyenteController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/instalaciones', [ContribuyenteController::class, 'instalaciones'])->name('instalaciones');
         Route::get('/{id}/cumplimiento', [ContribuyenteController::class, 'cumplimiento'])->name('cumplimiento');
-        Route::get('/catalogo/list', [ContribuyenteController::class, 'catalogo'])->name('catalogo');
-        Route::get('/exportar', [ContribuyenteController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== DICTÁMENES ====================
@@ -129,15 +132,15 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/', [DictamenController::class, 'index'])->name('index');
         Route::get('/create', [DictamenController::class, 'create'])->name('create');
         Route::post('/', [DictamenController::class, 'store'])->name('store');
+        Route::get('/estadisticas', [DictamenController::class, 'estadisticas'])->name('estadisticas');
+        Route::get('/producto/{productoId}', [DictamenController::class, 'porProducto'])->name('por-producto');
+        Route::get('/exportar', [DictamenController::class, 'exportar'])->name('exportar');
         Route::get('/{id}', [DictamenController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [DictamenController::class, 'edit'])->name('edit');
         Route::put('/{id}', [DictamenController::class, 'update'])->name('update');
         Route::delete('/{id}', [DictamenController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/cancelar', [DictamenController::class, 'cancelar'])->name('cancelar');
         Route::get('/{id}/verificar-vigencia', [DictamenController::class, 'verificarVigencia'])->name('verificar-vigencia');
-        Route::get('/estadisticas', [DictamenController::class, 'estadisticas'])->name('estadisticas');
-        Route::get('/producto/{productoId}', [DictamenController::class, 'porProducto'])->name('por-producto');
-        Route::get('/exportar', [DictamenController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== DISPENSARIOS ====================
@@ -176,6 +179,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/', [InstalacionController::class, 'index'])->name('index');
         Route::get('/create', [InstalacionController::class, 'create'])->name('create');
         Route::post('/', [InstalacionController::class, 'store'])->name('store');
+        Route::get('/exportar', [InstalacionController::class, 'exportar'])->name('exportar');
         Route::get('/{id}', [InstalacionController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [InstalacionController::class, 'edit'])->name('edit');
         Route::put('/{id}', [InstalacionController::class, 'update'])->name('update');
@@ -184,7 +188,6 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/{id}/medidores', [InstalacionController::class, 'medidores'])->name('medidores');
         Route::get('/{id}/dispensarios', [InstalacionController::class, 'dispensarios'])->name('dispensarios');
         Route::get('/{id}/resumen-operativo', [InstalacionController::class, 'resumenOperativo'])->name('resumen-operativo');
-        Route::get('/exportar', [InstalacionController::class, 'exportar'])->name('exportar');
     });
 
     // ==================== MANGUERAS ====================
@@ -251,14 +254,14 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/', [ProductoController::class, 'index'])->name('index');
         Route::get('/create', [ProductoController::class, 'create'])->name('create');
         Route::post('/', [ProductoController::class, 'store'])->name('store');
-        Route::get('/{id}', [ProductoController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [ProductoController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [ProductoController::class, 'update'])->name('update');
-        Route::delete('/{id}', [ProductoController::class, 'destroy'])->name('destroy');
         Route::get('/tipo/{tipo}', [ProductoController::class, 'porTipo'])->name('por-tipo');
         Route::get('/catalogo/list', [ProductoController::class, 'catalogo'])->name('catalogo');
         Route::get('/buscar/clave-sat/{claveSat}', [ProductoController::class, 'buscarPorClaveSat'])->name('buscar-clave-sat');
         Route::get('/exportar', [ProductoController::class, 'exportar'])->name('exportar');
+        Route::get('/{id}', [ProductoController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [ProductoController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [ProductoController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ProductoController::class, 'destroy'])->name('destroy');
     });
 
     // ==================== REGISTROS VOLUMÉTRICOS ====================
@@ -266,6 +269,7 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/', [RegistroVolumetricoController::class, 'index'])->name('index');
         Route::get('/create', [RegistroVolumetricoController::class, 'create'])->name('create');
         Route::post('/', [RegistroVolumetricoController::class, 'store'])->name('store');
+        Route::post('/emulador', [RegistroVolumetricoController::class, 'crearConEmulador'])->name('emulador');
         Route::get('/{id}', [RegistroVolumetricoController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [RegistroVolumetricoController::class, 'edit'])->name('edit');
         Route::put('/{id}', [RegistroVolumetricoController::class, 'update'])->name('update');
@@ -290,8 +294,11 @@ Route::middleware('api.auth')->group(function () {
         Route::post('/{id}/enviar', [ReporteSatController::class, 'enviar'])->name('enviar');
         Route::post('/{id}/firmar', [ReporteSatController::class, 'firmar'])->name('firmar');
         Route::post('/{id}/cancelar', [ReporteSatController::class, 'cancelar'])->name('cancelar');
+        Route::get('/{id}/xml', [ReporteSatController::class, 'descargarXml'])->name('descargar-xml');
+        Route::get('/{id}/acuse', [ReporteSatController::class, 'descargarAcuse'])->name('descargar-acuse');
         Route::get('/historial/envios/{instalacionId}', [ReporteSatController::class, 'historialEnvios'])->name('historial-envios');
         Route::get('/exportar', [ReporteSatController::class, 'exportar'])->name('exportar');
+        Route::post('/generar-anual', [ReporteSatController::class, 'generarAnual'])->name('generar-anual');
     });
 
     // ==================== ROLES (Solo Administradores) ====================
@@ -343,24 +350,47 @@ Route::middleware('api.auth')->group(function () {
         Route::get('/{id}/actividad', [UserController::class, 'actividad'])->name('actividad');
     });
 
+    // ==================== CONFIGURACIÓN ====================
+    Route::prefix('configuracion')->name('configuracion.')->group(function () {
+        Route::get('/', [ConfiguracionController::class, 'index'])->name('index');
+        Route::put('/', [ConfiguracionController::class, 'update'])->name('update');
+        Route::post('/backup-manual', [ConfiguracionController::class, 'backupManual'])->name('backup-manual');
+        Route::post('/limpiar-cache', [ConfiguracionController::class, 'limpiarCache'])->name('limpiar-cache');
+        Route::get('/logs', [ConfiguracionController::class, 'logs'])->name('logs');
+        Route::get('/exportar', [ConfiguracionController::class, 'exportar'])->name('exportar');
+        Route::post('/importar', [ConfiguracionController::class, 'importar'])->name('importar');
+    });
+
+    // ==================== PERFIL ====================
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [ProfileController::class, 'update'])->name('update');
+    });
+
     // ==================== API INTERNAS (para AJAX) ====================
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/dashboard/grafica-movimientos', [DashboardController::class, 'graficaMovimientos'])->name('dashboard.grafica-movimientos');
         Route::get('/dashboard/grafica-productos', [DashboardController::class, 'graficaProductos'])->name('dashboard.grafica-productos');
         Route::get('/notificaciones', [DashboardController::class, 'notificaciones'])->name('notificaciones');
         Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->name('dashboard.exportar');
-        Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->name('dashboard.exportar'); // Para web
         Route::get('/catalogos', function () {
             return response()->json(['error' => 'Catálogo no implementado'], 501);
         })->name('catalogos');
+
+        // ==================== MUNICIPIOS ====================
+        Route::get('/municipios/por-estado', [MunicipioController::class, 'porEstado'])->name('municipios.por-estado');
+
+        // ==================== EMULADOR (Proxy al Backend) ====================
+        Route::get('/emulador/lectura/{tanqueId}', [RegistroVolumetricoController::class, 'emuladorLectura'])->name('emulador.lectura');
+        Route::get('/emulador/tanques/instalacion/{instalacionId}', [RegistroVolumetricoController::class, 'emuladorTanques'])->name('emulador.tanques');
     });
 });
 
-    // Ruta raíz redirige a dashboard o login según autenticación
-    Route::get('/', function () {
-        if (Auth::check()) {
-            return redirect()->route('dashboard');
-        }
-        return redirect()->route('login');
-    });
+// Ruta raíz redirige a dashboard o login según autenticación
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
 
+    return redirect()->route('login');
+});

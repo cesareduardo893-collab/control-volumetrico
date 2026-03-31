@@ -14,9 +14,9 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header 
-                @if($estado['estado_general'] == 'OPERATIVO') bg-success 
-                @elseif($estado['estado_general'] == 'CALIBRACION') bg-info
-                @elseif($estado['estado_general'] == 'MANTENIMIENTO') bg-warning
+                @if(($estado['estado_general'] ?? '') == 'OPERATIVO') bg-success 
+                @elseif(($estado['estado_general'] ?? '') == 'CALIBRACION') bg-info
+                @elseif(($estado['estado_general'] ?? '') == 'MANTENIMIENTO') bg-warning
                 @else bg-danger 
                 @endif text-white">
                 <h5 class="card-title mb-0">
@@ -26,13 +26,13 @@
             </div>
             <div class="card-body">
                 <div class="text-center mb-4">
-                    @if($estado['estado_general'] == 'OPERATIVO')
+                    @if(($estado['estado_general'] ?? '') == 'OPERATIVO')
                         <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
                         <h3 class="text-success mt-3">MEDIDOR OPERATIVO</h3>
-                    @elseif($estado['estado_general'] == 'CALIBRACION')
+                    @elseif(($estado['estado_general'] ?? '') == 'CALIBRACION')
                         <i class="bi bi-gear-fill text-info" style="font-size: 5rem;"></i>
                         <h3 class="text-info mt-3">EN CALIBRACIÓN</h3>
-                    @elseif($estado['estado_general'] == 'MANTENIMIENTO')
+                    @elseif(($estado['estado_general'] ?? '') == 'MANTENIMIENTO')
                         <i class="bi bi-tools text-warning" style="font-size: 5rem;"></i>
                         <h3 class="text-warning mt-3">EN MANTENIMIENTO</h3>
                     @else
@@ -51,11 +51,11 @@
                                 <table class="table table-sm">
                                     <tr>
                                         <th>Clave:</th>
-                                        <td>{{ $estado['clave'] }}</td>
+                                        <td>{{ ($estado['clave'] ?? '') }}</td>
                                     </tr>
                                     <tr>
                                         <th>N° Serie:</th>
-                                        <td>{{ $estado['numero_serie'] }}</td>
+                                        <td>{{ ($estado['numero_serie'] ?? '') }}</td>
                                     </tr>
                                     <tr>
                                         <th>Modelo:</th>
@@ -71,9 +71,9 @@
                                                     'MANTENIMIENTO' => 'warning',
                                                     'FUERA_SERVICIO' => 'danger',
                                                     'FALLA_COMUNICACION' => 'secondary'
-                                                ][$estado['estado_actual']] ?? 'secondary';
+                                                ][($estado['estado_actual'] ?? '')] ?? 'secondary';
                                             @endphp
-                                            <span class="badge bg-{{ $badgeClass }}">{{ $estado['estado_actual'] }}</span>
+                                            <span class="badge bg-{{ $badgeClass }}">{{ ($estado['estado_actual'] ?? '') }}</span>
                                         </td>
                                     </tr>
                                 </table>
@@ -96,9 +96,9 @@
                                         <th>Desviación:</th>
                                         <td>
                                             @php
-                                                $desviacionClass = $estado['desviacion'] > 1 ? 'danger' : ($estado['desviacion'] > 0.5 ? 'warning' : 'success');
+                                                $desviacionClass = ($estado['desviacion'] ?? 0) > 1 ? 'danger' : (($estado['desviacion'] ?? 0) > 0.5 ? 'warning' : 'success');
                                             @endphp
-                                            <span class="text-{{ $desviacionClass }}">{{ $estado['desviacion'] }}%</span>
+                                            <span class="text-{{ $desviacionClass }}">{{ ($estado['desviacion'] ?? 0) }}%</span>
                                         </td>
                                     </tr>
                                     <tr>

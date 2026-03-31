@@ -64,19 +64,19 @@
                             <tr>
                                 <th>Estado:</th>
                                 <td>
-                                    @if($user['locked_until'] && now() < \Carbon\Carbon::parse($user['locked_until']))
+                                    @if(($user['locked_until'] ?? null) && now() < \Carbon\Carbon::parse(($user['locked_until'] ?? null)))
                                         <span class="badge bg-danger">Bloqueado</span>
-                                    @elseif(!$user['activo'])
+                                    @elseif(!(($user['activo'] ?? true) ?? true))
                                         <span class="badge bg-secondary">Inactivo</span>
                                     @else
                                         <span class="badge bg-success">Activo</span>
                                     @endif
                                 </td>
                             </tr>
-                            @if($user['locked_until'] && now() < \Carbon\Carbon::parse($user['locked_until']))
+                            @if(($user['locked_until'] ?? null) && now() < \Carbon\Carbon::parse(($user['locked_until'] ?? null)))
                                 <tr>
                                     <th>Bloqueado hasta:</th>
-                                    <td>{{ $user['locked_until'] }}</td>
+                                    <td>{{ ($user['locked_until'] ?? null) }}</td>
                                 </tr>
                                 <tr>
                                     <th>Motivo:</th>
@@ -201,13 +201,13 @@
                 <h5 class="card-title mb-0">Acciones</h5>
             </div>
             <div class="card-body">
-                @if($user['activo'] && !$user['locked_until'])
+                @if((($user['activo'] ?? true) ?? true) && !($user['locked_until'] ?? null))
                     <button type="button" class="btn btn-danger" onclick="confirmarBloqueo({{ $user['id'] }})">
                         <i class="bi bi-lock"></i> Bloquear Usuario
                     </button>
                 @endif
                 
-                @if($user['locked_until'] && now() < \Carbon\Carbon::parse($user['locked_until']))
+                @if(($user['locked_until'] ?? null) && now() < \Carbon\Carbon::parse(($user['locked_until'] ?? null)))
                     <form method="POST" action="{{ route('users.desbloquear', $user['id']) }}" class="d-inline">
                         @csrf
                         <input type="hidden" name="motivo" value="Desbloqueo por administrador">
@@ -217,7 +217,7 @@
                     </form>
                 @endif
                 
-                @if($user['activo'])
+                @if((($user['activo'] ?? true) ?? true))
                     <form method="POST" action="{{ route('users.destroy', $user['id']) }}" class="d-inline">
                         @csrf
                         @method('DELETE')

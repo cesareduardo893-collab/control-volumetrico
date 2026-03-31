@@ -149,3 +149,143 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Valores por defecto para cada tipo de hidrocarburo
+    const defaultValues = {
+        'gasolina': {
+            clave_sat: '15101507',
+            nombre: 'Gasolina Magna',
+            descripcion: 'Gasolina de 87 octanos',
+            unidad_medida: 'LITRO',
+            densidad_referencia: 0.7500,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: 87,
+            numero_octano: 87
+        },
+        'diesel': {
+            clave_sat: '15101505',
+            nombre: 'Diésel',
+            descripcion: 'Combustible diésel ultrabajo en azufre',
+            unidad_medida: 'LITRO',
+            densidad_referencia: 0.8500,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: null,
+            numero_octano: null
+        },
+        'gas_lp': {
+            clave_sat: '15111500',
+            nombre: 'Gas LP',
+            descripcion: 'Gas licuado de petróleo',
+            unidad_medida: 'LITRO',
+            densidad_referencia: 0.5500,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: null,
+            numero_octano: null
+        },
+        'gas_natural': {
+            clave_sat: '15111501',
+            nombre: 'Gas Natural',
+            descripcion: 'Gas natural comprimido',
+            unidad_medida: 'METRO CUBICO',
+            densidad_referencia: 0.7170,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: null,
+            numero_octano: null
+        },
+        'turbosina': {
+            clave_sat: '15101509',
+            nombre: 'Turbosina',
+            descripcion: 'Combustible para aviación Jet-A1',
+            unidad_medida: 'LITRO',
+            densidad_referencia: 0.8100,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: null,
+            numero_octano: null
+        },
+        'propano': {
+            clave_sat: '15111502',
+            nombre: 'Propano',
+            descripcion: 'Gas propano',
+            unidad_medida: 'LITRO',
+            densidad_referencia: 0.5100,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: null,
+            numero_octano: null
+        },
+        'petroleo': {
+            clave_sat: '15101501',
+            nombre: 'Petróleo Crudo',
+            descripcion: 'Petróleo crudo',
+            unidad_medida: 'BARRIL',
+            densidad_referencia: 0.8500,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: null,
+            numero_octano: null
+        },
+        'condensados': {
+            clave_sat: '15101502',
+            nombre: 'Condensados',
+            descripcion: 'Hidrocarburos condensados',
+            unidad_medida: 'BARRIL',
+            densidad_referencia: 0.7200,
+            temperatura_referencia: 15,
+            factor_conversion: 1,
+            octanaje: null,
+            numero_octano: null
+        }
+    };
+
+    // Función para auto-completar campos
+    $('#tipo_hidrocarburo').on('change', function() {
+        const tipoSeleccionado = $(this).val();
+        
+        if (tipoSeleccionado && defaultValues[tipoSeleccionado]) {
+            const defaults = defaultValues[tipoSeleccionado];
+            
+            // Auto-completar solo campos técnicos (NO los campos de identificación)
+            if (defaults.unidad_medida) $('#unidad_medida').val(defaults.unidad_medida);
+            if (defaults.densidad_referencia) $('#densidad_referencia').val(defaults.densidad_referencia);
+            if (defaults.temperatura_referencia) $('#temperatura_referencia').val(defaults.temperatura_referencia);
+            if (defaults.factor_conversion) $('#factor_conversion').val(defaults.factor_conversion);
+            
+            // Manejar octanaje (solo para gasolina)
+            if (defaults.octanaje !== null) {
+                $('#octanaje').val(defaults.octanaje);
+                $('#numero_octano').val(defaults.numero_octano);
+            } else {
+                $('#octanaje').val('');
+                $('#numero_octano').val('');
+            }
+            
+            // Mostrar notificación
+            showToast('Campos técnicos auto-completados para ' + defaults.nombre, 'info');
+        }
+    });
+    
+    // Función para mostrar notificaciones
+    function showToast(message, type) {
+        const toast = $('<div>')
+            .addClass('alert alert-' + type + ' position-fixed top-0 end-0 m-3')
+            .css('z-index', '9999')
+            .html('<i class="bi bi-check-circle me-2"></i>' + message)
+            .appendTo('body');
+        
+        setTimeout(function() {
+            toast.fadeOut(500, function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+});
+</script>
+@endpush

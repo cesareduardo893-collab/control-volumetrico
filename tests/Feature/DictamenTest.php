@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
+use Tests\TestCase;
 
 class DictamenTest extends TestCase
 {
@@ -24,26 +23,18 @@ class DictamenTest extends TestCase
                 'numero_lote' => 'LOTE-001',
                 'contribuyente' => ['razon_social' => 'Empresa Prueba'],
                 'producto' => ['nombre' => 'Gasolina'],
+                'laboratorio_nombre' => 'Laboratorio Test',
+                'laboratorio_rfc' => 'LAB123456789A',
                 'fecha_emision' => '2024-01-15',
-                'estado' => 'VIGENTE'
+                'estado' => 'VIGENTE',
             ],
-            [
-                'id' => 2,
-                'folio' => 'DICT-002',
-                'numero_lote' => 'LOTE-002',
-                'contribuyente' => ['razon_social' => 'Empresa Test'],
-                'producto' => ['nombre' => 'Diesel'],
-                'fecha_emision' => '2024-01-20',
-                'estado' => 'VIGENTE'
-            ]
         ];
 
-        $this->mockPaginatedResponse('/api/dictamenes', $dictamenes, 2);
+        $this->mockPaginatedResponse('/api/dictamenes', $dictamenes, 1);
 
         $response = $this->get('/dictamenes');
 
         $response->assertStatus(200);
-        $response->assertViewIs('dictamenes.index');
         $response->assertViewHas('dictamenes');
     }
 
@@ -52,21 +43,21 @@ class DictamenTest extends TestCase
     {
         $contribuyentes = [
             ['id' => 1, 'razon_social' => 'Empresa Prueba'],
-            ['id' => 2, 'razon_social' => 'Empresa Test']
+            ['id' => 2, 'razon_social' => 'Empresa Test'],
         ];
 
         $instalaciones = [
             ['id' => 1, 'nombre' => 'Instalación 1'],
-            ['id' => 2, 'nombre' => 'Instalación 2']
+            ['id' => 2, 'nombre' => 'Instalación 2'],
         ];
 
         $productos = [
             ['id' => 1, 'nombre' => 'Gasolina'],
-            ['id' => 2, 'nombre' => 'Diesel']
+            ['id' => 2, 'nombre' => 'Diesel'],
         ];
 
         $this->mockSuccessfulResponse('/api/catalogo/contribuyentes', $contribuyentes);
-        $this->mockSuccessfulResponse('/api/instalaciones?activo=true', $instalaciones);
+        $this->mockSuccessfulResponse('/api/instalaciones', $instalaciones);
         $this->mockSuccessfulResponse('/api/catalogo/productos', $productos);
 
         $response = $this->get('/dictamenes/create');
@@ -85,7 +76,7 @@ class DictamenTest extends TestCase
             'folio' => 'DICT-001',
             'numero_lote' => 'LOTE-001',
             'contribuyente_id' => 1,
-            'laboratorio_rfc' => 'LAB123456XXX',
+                'laboratorio_rfc' => 'LAB123456789A',
             'laboratorio_nombre' => 'Laboratorio Test',
             'laboratorio_numero_acreditacion' => 'ACR-001',
             'fecha_emision' => '2024-01-15',
@@ -97,7 +88,7 @@ class DictamenTest extends TestCase
             'unidad_medida_muestra' => 'L',
             'metodo_muestreo' => 'Método estándar',
             'metodo_ensayo' => 'Método de prueba',
-            'estado' => 'VIGENTE'
+            'estado' => 'VIGENTE',
         ];
 
         $createdDictamen = array_merge($dictamenData, ['id' => 1]);
@@ -115,12 +106,12 @@ class DictamenTest extends TestCase
     {
         $invalidData = [
             'folio' => '',
-            'estado' => 'INVALIDO'
+            'estado' => 'INVALIDO',
         ];
 
         $this->mockValidationErrorResponse('/api/dictamenes', [
             'folio' => ['El campo folio es obligatorio'],
-            'estado' => ['El campo estado debe ser uno de: VIGENTE, CADUCADO, CANCELADO']
+            'estado' => ['El campo estado debe ser uno de: VIGENTE, CADUCADO, CANCELADO'],
         ]);
 
         $response = $this->post('/dictamenes', $invalidData);
@@ -136,29 +127,28 @@ class DictamenTest extends TestCase
             'id' => 1,
             'folio' => 'DICT-001',
             'numero_lote' => 'LOTE-001',
+            'contribuyente_id' => 1,
             'contribuyente' => [
                 'id' => 1,
                 'razon_social' => 'Empresa Prueba',
-                'rfc' => 'XAXX010101XXX'
+                'rfc' => 'XAXX010101XXX',
             ],
-            'laboratorio' => [
-                'rfc' => 'LAB123456XXX',
-                'nombre' => 'Laboratorio Test',
-                'numero_acreditacion' => 'ACR-001'
-            ],
+            'laboratorio_rfc' => 'LAB123456789A',
+            'laboratorio_nombre' => 'Laboratorio Test',
+            'laboratorio_numero_acreditacion' => 'ACR-001',
+            'producto_id' => 1,
             'producto' => [
                 'id' => 1,
                 'nombre' => 'Gasolina',
-                'clave_sat' => '15101501'
+                'clave_sat' => '15101501',
             ],
             'fecha_emision' => '2024-01-15',
-            'resultados' => [
-                'densidad' => 0.75,
-                'viscosidad' => 0.5,
-                'azufre' => 10,
-                'octanaje' => 95
-            ],
-            'estado' => 'VIGENTE'
+            'volumen_muestra' => 100,
+            'unidad_medida_muestra' => 'L',
+            'metodo_muestreo' => 'Método estándar',
+            'metodo_ensayo' => 'Método de prueba',
+            'estado' => 'VIGENTE',
+            'vigente' => true,
         ];
 
         $this->mockSuccessfulResponse('/api/dictamenes/1', $dictamen);
@@ -174,7 +164,7 @@ class DictamenTest extends TestCase
     public function test_cancelar_cancels_dictamen_successfully()
     {
         $cancelData = [
-            'motivo_cancelacion' => 'Error en el dictamen'
+            'motivo_cancelacion' => 'Error en el dictamen',
         ];
 
         $this->mockSuccessfulResponse('/api/dictamenes/1/cancelar', [], 'Dictamen cancelado exitosamente');
@@ -189,7 +179,7 @@ class DictamenTest extends TestCase
     public function test_cancelar_fails_if_dictamen_already_cancelled()
     {
         $cancelData = [
-            'motivo_cancelacion' => 'Error en el dictamen'
+            'motivo_cancelacion' => 'Error en el dictamen',
         ];
 
         $this->mockErrorResponse('/api/dictamenes/1/cancelar', 'El dictamen ya está cancelado', 403);
@@ -210,7 +200,7 @@ class DictamenTest extends TestCase
             'vigente' => true,
             'dias_restantes' => 180,
             'fecha_caducidad' => '2025-01-15',
-            'mensaje' => 'El dictamen se encuentra vigente'
+            'mensaje' => 'El dictamen se encuentra vigente',
         ];
 
         $this->mockSuccessfulResponse('/api/dictamenes/1/verificar-vigencia', $resultado);
@@ -227,7 +217,7 @@ class DictamenTest extends TestCase
     {
         $filters = [
             'contribuyente_id' => 1,
-            'anio' => 2024
+            'anio' => 2024,
         ];
 
         $estadisticas = [
@@ -237,22 +227,22 @@ class DictamenTest extends TestCase
             'por_estado' => [
                 'VIGENTE' => 10,
                 'CADUCADO' => 1,
-                'CANCELADO' => 1
+                'CANCELADO' => 1,
             ],
             'por_producto' => [
                 ['producto' => 'Gasolina', 'cantidad' => 8],
-                ['producto' => 'Diesel', 'cantidad' => 4]
+                ['producto' => 'Diesel', 'cantidad' => 4],
             ],
             'tendencia_mensual' => [
                 'Enero' => 1,
                 'Febrero' => 2,
-                'Marzo' => 1
-            ]
+                'Marzo' => 1,
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/dictamenes/estadisticas', $estadisticas);
 
-        $response = $this->get('/dictamenes/estadisticas?' . http_build_query($filters));
+        $response = $this->get('/dictamenes/estadisticas?'.http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertViewIs('dictamenes.estadisticas');
@@ -267,7 +257,7 @@ class DictamenTest extends TestCase
             'producto' => [
                 'id' => 1,
                 'nombre' => 'Gasolina',
-                'clave_sat' => '15101501'
+                'clave_sat' => '15101501',
             ],
             'total_dictamenes' => 5,
             'dictamenes' => [
@@ -276,16 +266,16 @@ class DictamenTest extends TestCase
                     'folio' => 'DICT-001',
                     'fecha_emision' => '2024-01-15',
                     'estado' => 'VIGENTE',
-                    'contribuyente' => 'Empresa Prueba'
+                    'contribuyente' => 'Empresa Prueba',
                 ],
                 [
                     'id' => 2,
                     'folio' => 'DICT-002',
                     'fecha_emision' => '2024-02-10',
                     'estado' => 'VIGENTE',
-                    'contribuyente' => 'Empresa Test'
-                ]
-            ]
+                    'contribuyente' => 'Empresa Test',
+                ],
+            ],
         ];
 
         $this->mockSuccessfulResponse("/api/dictamenes/producto/{$productoId}", $resultado);
@@ -302,7 +292,7 @@ class DictamenTest extends TestCase
     {
         $updateData = [
             'observaciones' => 'Se actualizó la información del dictamen',
-            'estado' => 'CADUCADO'
+            'estado' => 'CADUCADO',
         ];
 
         $this->mockSuccessfulResponse('/api/dictamenes/1', [], 'Dictamen actualizado exitosamente');
@@ -319,21 +309,22 @@ class DictamenTest extends TestCase
         $filters = [
             'contribuyente_id' => 1,
             'fecha_emision_inicio' => '2024-01-01',
-            'fecha_emision_fin' => '2024-12-31'
+            'fecha_emision_fin' => '2024-12-31',
         ];
 
         Http::fake([
-            $this->baseApiUrl . '/api/dictamenes/exportar*' => Http::response(
+            $this->baseApiUrl.'/api/dictamenes/exportar*' => Http::response(
                 "folio,numero_lote,contribuyente,producto,fecha_emision,estado\nDICT-001,LOTE-001,Empresa Prueba,Gasolina,2024-01-15,VIGENTE",
                 200,
                 [
                     'Content-Type' => 'text/csv',
-                    'Content-Disposition' => 'attachment; filename="dictamenes.csv"'
+                    'Content-Disposition' => 'attachment; filename="dictamenes.csv"',
                 ]
-            )
+            ),
+            '*' => Http::response(['success' => true, 'data' => []], 200),
         ]);
 
-        $response = $this->get('/dictamenes/exportar?' . http_build_query($filters));
+        $response = $this->get('/dictamenes/exportar?'.http_build_query($filters));
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv');

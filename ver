@@ -1,0 +1,41 @@
+<?php
+require __DIR__ . '/vendor/autoload.php';
+$app = require_once __DIR__ . '/bootstrap/app.php';
+$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+use Illuminate\Support\Facades\Route;
+
+echo "=== Verificando rutas del frontend ===" . PHP_EOL;
+
+$rutas = [
+    'api.dashboard.grafica-movimientos',
+    'api.dashboard.grafica-productos',
+];
+
+foreach ($rutas as $ruta) {
+    try {
+        $url = route($ruta);
+        echo "Ruta: $ruta" . PHP_EOL;
+        echo "URL: $url" . PHP_EOL;
+        echo "---" . PHP_EOL;
+    } catch (Exception $e) {
+        echo "Error al generar ruta $ruta: " . $e->getMessage() . PHP_EOL;
+        echo "---" . PHP_EOL;
+    }
+}
+
+echo PHP_EOL . "=== Verificando rutas de la API ===" . PHP_EOL;
+
+$rutasApi = [
+    'dashboard/grafica-movimientos',
+    'dashboard/grafica-productos',
+];
+
+foreach ($rutasApi as $ruta) {
+    $url = url($ruta);
+    echo "Ruta: $ruta" . PHP_EOL;
+    echo "URL: $url" . PHP_EOL;
+    echo "---" . PHP_EOL;
+}
+
+echo PHP_EOL . "=== Fin de verificación ===" . PHP_EOL;

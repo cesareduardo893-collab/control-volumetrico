@@ -29,14 +29,14 @@
                         <div class="col-md-6 mb-3">
                             <label for="clave_sat" class="form-label">Clave SAT</label>
                             <input type="text" class="form-control" id="clave_sat" 
-                                   value="{{ $producto['clave_sat'] }}" disabled readonly>
+                                   value="{{ ($producto['clave_sat'] ?? '') }}" disabled readonly>
                             <small class="text-muted">La clave SAT no puede ser modificada</small>
                         </div>
                         
                         <div class="col-md-6 mb-3">
                             <label for="codigo" class="form-label">Código Interno</label>
                             <input type="text" class="form-control" id="codigo" 
-                                   value="{{ $producto['codigo'] }}" disabled readonly>
+                                   value="{{ ($producto['codigo'] ?? '') }}" disabled readonly>
                         </div>
                     </div>
                     
@@ -44,7 +44,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="clave_identificacion" class="form-label">Clave Identificación</label>
                             <input type="text" class="form-control" id="clave_identificacion" 
-                                   value="{{ $producto['clave_identificacion'] }}" disabled readonly>
+                                   value="{{ ($producto['clave_identificacion'] ?? '') }}" disabled readonly>
                         </div>
                         
                         <div class="col-md-6 mb-3">
@@ -64,7 +64,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="unidad_medida" class="form-label">Unidad de Medida</label>
                             <input type="text" class="form-control" id="unidad_medida" name="unidad_medida" 
-                                   value="{{ old('unidad_medida', $producto['unidad_medida']) }}" required>
+                                   value="{{ old('unidad_medida', ($producto['unidad_medida'] ?? '')) }}" required>
                         </div>
                         
                         <div class="col-md-4 mb-3">
@@ -131,7 +131,7 @@
                     <div class="mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1"
-                                   {{ old('activo', $producto['activo']) ? 'checked' : '' }}>
+                                   {{ old('activo', ($producto['activo'] ?? true)) ? 'checked' : '' }}>
                             <label class="form-check-label" for="activo">Producto Activo</label>
                         </div>
                     </div>

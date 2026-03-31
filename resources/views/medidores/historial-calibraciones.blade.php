@@ -32,7 +32,7 @@
                 <tbody>
                     @forelse($historial as $calibracion)
                         <tr>
-                            <td>{{ $calibracion['fecha'] }}</td>
+                            <td>{{ ($calibracion['fecha'] ?? '') }}</td>
                             <td>
                                 @if(!empty($calibracion['certificado_url']))
                                     <a href="{{ $calibracion['certificado_url'] }}" target="_blank">
@@ -46,12 +46,12 @@
                             <td>{{ $calibracion['precision'] }}%</td>
                             <td>
                                 @php
-                                    $desviacionClass = $calibracion['desviacion'] > 1 ? 'danger' : ($calibracion['desviacion'] > 0.5 ? 'warning' : 'success');
+                                    $desviacionClass = ($calibracion['desviacion'] ?? 0) > 1 ? 'danger' : (($calibracion['desviacion'] ?? 0) > 0.5 ? 'warning' : 'success');
                                 @endphp
-                                <span class="text-{{ $desviacionClass }}">{{ $calibracion['desviacion'] }}%</span>
+                                <span class="text-{{ $desviacionClass }}">{{ ($calibracion['desviacion'] ?? 0) }}%</span>
                             </td>
                             <td>
-                                @if($calibracion['exitosa'])
+                                @if(($calibracion['exitosa'] ?? true))
                                     <span class="badge bg-success">Exitosa</span>
                                 @else
                                     <span class="badge bg-danger">Fallida</span>

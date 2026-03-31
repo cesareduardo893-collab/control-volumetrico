@@ -1,0 +1,83 @@
+  [41;1m FAILED [49;22m [1mTests\Feature\AlarmaTest[22m [90m>[39m index displays alarm list                                                         
+  [41;1m FAILED [49;22m [1mTests\Feature\AlarmaTest[22m [90m>[39m activas displays active alarms                                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\AlarmaTest[22m [90m>[39m exportar downloads file                                                           
+  [41;1m FAILED [49;22m [1mTests\Feature\AuthTest[22m [90m>[39m user profile is displayed                                                           
+  [41;1m FAILED [49;22m [1mTests\Feature\BitacoraTest[22m [90m>[39m index displays bitacora entries                                                 
+  [41;1m FAILED [49;22m [1mTests\Feature\BitacoraTest[22m [90m>[39m exportar returns csv file                                                       
+  [41;1m FAILED [49;22m [1mTests\Feature\BitacoraTest[22m [90m>[39m exportar returns pdf file                                                       
+  [41;1m FAILED [49;22m [1mTests\Feature\BitacoraTest[22m [90m>[39m exportar validation errors                                                      
+  [41;1m FAILED [49;22m [1mTests\Feature\BitacoraTest[22m [90m>[39m filter bitacora by tipo evento                                                  
+  [41;1m FAILED [49;22m [1mTests\Feature\BitacoraTest[22m [90m>[39m filter bitacora by date range                                                   
+  [41;1m FAILED [49;22m [1mTests\Feature\CfdiTest[22m [90m>[39m resumen fiscal displays fiscal summary                                              
+  [41;1m FAILED [49;22m [1mTests\Feature\CfdiTest[22m [90m>[39m exportar downloads cfdi file                                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\CfdiTest[22m [90m>[39m filter cfdi by estado                                                               
+  [41;1m FAILED [49;22m [1mTests\Feature\CfdiTest[22m [90m>[39m filter cfdi by date range                                                           
+  [41;1m FAILED [49;22m [1mTests\Feature\ConfiguracionTest[22m [90m>[39m logs displays system logs                                                  
+  [41;1m FAILED [49;22m [1mTests\Feature\ContribuyenteTest[22m [90m>[39m index displays contribuyentes list                                         
+  [41;1m FAILED [49;22m [1mTests\Feature\ContribuyenteTest[22m [90m>[39m edit form displays correctly                                               
+  [41;1m FAILED [49;22m [1mTests\Feature\ContribuyenteTest[22m [90m>[39m cumplimiento displays compliance summary                                   
+  [41;1m FAILED [49;22m [1mTests\Feature\ContribuyenteTest[22m [90m>[39m exportar downloads contribuyentes file                                     
+  [41;1m FAILED [49;22m [1mTests\Feature\ContribuyenteTest[22m [90m>[39m search contribuyentes by rfc                                               
+  [41;1m FAILED [49;22m [1mTests\Feature\DashboardTest[22m [90m>[39m index displays dashboard with data                                             
+  [41;1m FAILED [49;22m [1mTests\Feature\DashboardTest[22m [90m>[39m exportar downloads dashboard report                                            
+  [41;1m FAILED [49;22m [1mTests\Feature\DashboardTest[22m [90m>[39m dashboard refreshes data periodically                                          
+  [41;1m FAILED [49;22m [1mTests\Feature\DictamenTest[22m [90m>[39m index displays dictamenes list                                                  
+  [41;1m FAILED [49;22m [1mTests\Feature\DictamenTest[22m [90m>[39m create form displays correctly with catalogs                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\DictamenTest[22m [90m>[39m store creates dictamen successfully                                             
+  [41;1m FAILED [49;22m [1mTests\Feature\DictamenTest[22m [90m>[39m show displays dictamen details                                                  
+  [41;1m FAILED [49;22m [1mTests\Feature\DictamenTest[22m [90m>[39m verificar vigencia checks dictamen validity                                     
+  [41;1m FAILED [49;22m [1mTests\Feature\DictamenTest[22m [90m>[39m por producto displays dictamenes by product                                     
+  [41;1m FAILED [49;22m [1mTests\Feature\DictamenTest[22m [90m>[39m exportar downloads dictamenes file                                              
+  [41;1m FAILED [49;22m [1mTests\Feature\ExampleTest[22m [90m>[39m the application returns a successful response                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\InstalacionTest[22m [90m>[39m medidores displays instalacion medidores                                     
+  [41;1m FAILED [49;22m [1mTests\Feature\InstalacionTest[22m [90m>[39m dispensarios displays instalacion dispensarios                               
+  [41;1m FAILED [49;22m [1mTests\Feature\InstalacionTest[22m [90m>[39m resumen operativo displays operational summary                               
+  [41;1m FAILED [49;22m [1mTests\Feature\MedidorTest[22m [90m>[39m index displays medidores list                                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\MedidorTest[22m [90m>[39m create form displays correctly                                                   
+  [41;1m FAILED [49;22m [1mTests\Feature\MedidorTest[22m [90m>[39m show displays medidor details                                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\MedidorTest[22m [90m>[39m verificar estado checks meter status                                             
+  [41;1m FAILED [49;22m [1mTests\Feature\MedidorTest[22m [90m>[39m historial calibraciones displays calibration history                             
+  [41;1m FAILED [49;22m [1mTests\Feature\MedidorTest[22m [90m>[39m filter medidores by estado                                                       
+  [41;1m FAILED [49;22m [1mTests\Feature\ProductoTest[22m [90m>[39m index displays productos list                                                   
+  [41;1m FAILED [49;22m [1mTests\Feature\ProductoTest[22m [90m>[39m store creates producto successfully                                             
+  [41;1m FAILED [49;22m [1mTests\Feature\ProductoTest[22m [90m>[39m show displays producto details                                                  
+  [41;1m FAILED [49;22m [1mTests\Feature\ProductoTest[22m [90m>[39m edit form displays correctly                                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\ProductoTest[22m [90m>[39m por tipo displays products by type                                              
+  [41;1m FAILED [49;22m [1mTests\Feature\ProductoTest[22m [90m>[39m filter productos by tipo                                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\ProductoTest[22m [90m>[39m exportar downloads productos file                                               
+  [41;1m FAILED [49;22m [1mTests\Feature\ProfileTest[22m [90m>[39m profile page is displayed                                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\ProfileTest[22m [90m>[39m profile update successful                                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\ProfileTest[22m [90m>[39m profile update validation errors                                                 
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m index displays registros list                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m create form displays correctly with catalogs                         
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m store validation errors                                              
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m show displays registro details                                       
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m resumen diario displays daily summary                                
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m estadisticas mensuales displays monthly statistics                   
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m filter registros by operacion                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m filter registros by estado                                           
+  [41;1m FAILED [49;22m [1mTests\Feature\RegistroVolumetricoTest[22m [90m>[39m exportar downloads registros file                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\RoleTest[22m [90m>[39m index displays roles list                                                           
+  [41;1m FAILED [49;22m [1mTests\Feature\RoleTest[22m [90m>[39m create form displays correctly with permissions                                     
+  [41;1m FAILED [49;22m [1mTests\Feature\RoleTest[22m [90m>[39m show displays role details                                                          
+  [41;1m FAILED [49;22m [1mTests\Feature\RoleTest[22m [90m>[39m edit form displays correctly                                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\RoleTest[22m [90m>[39m matriz permisos displays permission matrix                                          
+  [41;1m FAILED [49;22m [1mTests\Feature\RoleTest[22m [90m>[39m filter roles by nivel                                                               
+  [41;1m FAILED [49;22m [1mTests\Feature\RoleTest[22m [90m>[39m role agrupacion permisos works correctly                                            
+  [41;1m FAILED [49;22m [1mTests\Feature\TanqueTest[22m [90m>[39m create form displays correctly                                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\TanqueTest[22m [90m>[39m store validation errors for invalid capacities                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\TanqueTest[22m [90m>[39m show displays tanque details                                                      
+  [41;1m FAILED [49;22m [1mTests\Feature\TanqueTest[22m [90m>[39m edit form displays correctly                                                      
+  [41;1m FAILED [49;22m [1mTests\Feature\TanqueTest[22m [90m>[39m verificar estado checks tank status                                               
+  [41;1m FAILED [49;22m [1mTests\Feature\TanqueTest[22m [90m>[39m curva calibracion displays calibration curve                                      
+  [41;1m FAILED [49;22m [1mTests\Feature\TanqueTest[22m [90m>[39m historial calibraciones displays calibration history                              
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m index displays users list                                                           
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m create form displays correctly with roles                                           
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m store creates user successfully                                                     
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m store validation errors for duplicate email                                         
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m show displays user details                                                          
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m edit form displays correctly                                                        
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m update modifies user successfully                                                   
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m actividad displays user activity                                                    
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m destroy deletes user successfully                                                   
+  [41;1m FAILED [49;22m [1mTests\Feature\UserTest[22m [90m>[39m search users by email                                                               

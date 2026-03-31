@@ -46,7 +46,7 @@
                     <tr>
                         <th>Activo:</th>
                         <td>
-                            @if($contribuyente['activo'])
+                            @if(($contribuyente['activo'] ?? true))
                                 <span class="badge bg-success">Activo</span>
                             @else
                                 <span class="badge bg-secondary">Inactivo</span>

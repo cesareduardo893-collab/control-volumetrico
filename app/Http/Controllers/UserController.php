@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bitacora;
 use App\Http\Controllers\Traits\ValidacionEspanol;
+use App\Models\Bitacora;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class UserController extends BaseController
 {
     use ValidacionEspanol;
+
     /**
      * Listar usuarios
      */
     public function index(Request $request)
     {
         // Verificar permisos
-        if (!canManageUsers()) {
+        if (! canManageUsers()) {
             return redirect()->route('dashboard')
                 ->with('error', 'No tiene permisos para gestionar usuarios');
         }
@@ -27,7 +28,7 @@ class UserController extends BaseController
 
             $params = $request->only([
                 'identificacion', 'nombres', 'apellidos', 'email',
-                'role_id', 'activo', 'bloqueados', 'per_page', 'page'
+                'role_id', 'activo', 'bloqueados', 'per_page', 'page',
             ]);
 
             $response = $this->apiGet('/api/users', $params);
@@ -36,7 +37,7 @@ class UserController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al listar usuarios', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar usuarios');
@@ -49,7 +50,7 @@ class UserController extends BaseController
     public function create()
     {
         // Verificar permisos
-        if (!canManageUsers()) {
+        if (! canManageUsers()) {
             return redirect()->route('users.index')
                 ->with('error', 'No tiene permisos para crear usuarios');
         }
@@ -61,12 +62,12 @@ class UserController extends BaseController
             $roles = $this->getCatalog('/api/roles', ['activo' => true]);
 
             return view('users.create', [
-                'roles' => $roles
+                'roles' => $roles,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de creación', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('users.index')
@@ -80,7 +81,7 @@ class UserController extends BaseController
     public function store(Request $request)
     {
         // Verificar permisos
-        if (!canManageUsers()) {
+        if (! canManageUsers()) {
             return redirect()->route('users.index')
                 ->with('error', 'No tiene permisos para crear usuarios');
         }
@@ -115,6 +116,7 @@ class UserController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -127,7 +129,7 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al crear usuario', [
                 'error' => $e->getMessage(),
-                'data' => $request->except('password', 'password_confirmation')
+                'data' => $request->except('password', 'password_confirmation'),
             ]);
 
             return redirect()->back()
@@ -146,7 +148,7 @@ class UserController extends BaseController
 
             $response = $this->apiGet("/api/users/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('users.index')
                     ->with('error', $this->apiResponseMessage($response, 'Usuario no encontrado'));
             }
@@ -154,13 +156,13 @@ class UserController extends BaseController
             $user = $this->apiResponseData($response, []);
 
             return view('users.show', [
-                'user' => $user
+                'user' => $user,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al mostrar usuario', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->route('users.index')
@@ -174,7 +176,7 @@ class UserController extends BaseController
     public function edit($id)
     {
         // Verificar permisos
-        if (!canManageUsers()) {
+        if (! canManageUsers()) {
             return redirect()->route('users.index')
                 ->with('error', 'No tiene permisos para editar usuarios');
         }
@@ -185,7 +187,7 @@ class UserController extends BaseController
             // Obtener datos del usuario
             $userResponse = $this->apiGet("/api/users/{$id}");
 
-            if (!$this->apiResponseSuccessful($userResponse)) {
+            if (! $this->apiResponseSuccessful($userResponse)) {
                 return redirect()->route('users.index')
                     ->with('error', $this->apiResponseMessage($userResponse, 'Usuario no encontrado'));
             }
@@ -197,13 +199,13 @@ class UserController extends BaseController
 
             return view('users.edit', [
                 'user' => $user,
-                'roles' => $roles
+                'roles' => $roles,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de edición', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->route('users.index')
@@ -217,7 +219,7 @@ class UserController extends BaseController
     public function update(Request $request, $id)
     {
         // Verificar permisos
-        if (!canManageUsers()) {
+        if (! canManageUsers()) {
             return redirect()->route('users.index')
                 ->with('error', 'No tiene permisos para actualizar usuarios');
         }
@@ -249,6 +251,7 @@ class UserController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -261,7 +264,7 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al actualizar usuario', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->back()
@@ -276,7 +279,7 @@ class UserController extends BaseController
     public function destroy($id)
     {
         // Verificar permisos
-        if (!canManageUsers()) {
+        if (! canManageUsers()) {
             return redirect()->route('users.index')
                 ->with('error', 'No tiene permisos para eliminar usuarios');
         }
@@ -306,7 +309,7 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al eliminar usuario', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->back()->with('error', 'Error al eliminar usuario');
@@ -320,7 +323,7 @@ class UserController extends BaseController
     {
         $request->validate([
             'motivo' => 'required|string|max:500',
-            'minutos_bloqueo' => 'nullable|integer|min:1'
+            'minutos_bloqueo' => 'nullable|integer|min:1',
         ]);
 
         try {
@@ -348,7 +351,7 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al bloquear usuario', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->back()->with('error', 'Error al bloquear usuario');
@@ -361,7 +364,7 @@ class UserController extends BaseController
     public function desbloquear(Request $request, $id)
     {
         $request->validate([
-            'motivo' => 'required|string|max:500'
+            'motivo' => 'required|string|max:500',
         ]);
 
         try {
@@ -389,7 +392,7 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al desbloquear usuario', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->back()->with('error', 'Error al desbloquear usuario');
@@ -402,14 +405,14 @@ class UserController extends BaseController
     public function asignarRol(Request $request, $id)
     {
         $request->validate([
-            'rol_id' => 'required|integer'
+            'rol_id' => 'required|integer',
         ]);
 
         try {
             $this->setApiToken(Session::get('api_token'));
 
             $response = $this->apiPost("/api/users/{$id}/asignar-rol", [
-                'rol_id' => $request->rol_id
+                'rol_id' => $request->rol_id,
             ]);
 
             if ($this->apiResponseSuccessful($response)) {
@@ -438,7 +441,7 @@ class UserController extends BaseController
             Log::error('Error al asignar rol', [
                 'error' => $e->getMessage(),
                 'user_id' => $id,
-                'rol_id' => $request->rol_id
+                'rol_id' => $request->rol_id,
             ]);
 
             return redirect()->back()->with('error', 'Error al asignar rol');
@@ -451,14 +454,14 @@ class UserController extends BaseController
     public function quitarRol(Request $request, $id)
     {
         $request->validate([
-            'rol_id' => 'required|integer'
+            'rol_id' => 'required|integer',
         ]);
 
         try {
             $this->setApiToken(Session::get('api_token'));
 
             $response = $this->apiPost("/api/users/{$id}/quitar-rol", [
-                'rol_id' => $request->rol_id
+                'rol_id' => $request->rol_id,
             ]);
 
             if ($this->apiResponseSuccessful($response)) {
@@ -487,7 +490,7 @@ class UserController extends BaseController
             Log::error('Error al revocar rol', [
                 'error' => $e->getMessage(),
                 'user_id' => $id,
-                'rol_id' => $request->rol_id
+                'rol_id' => $request->rol_id,
             ]);
 
             return redirect()->back()->with('error', 'Error al revocar rol');
@@ -506,6 +509,7 @@ class UserController extends BaseController
 
             if ($this->apiResponseSuccessful($response)) {
                 $permisos = $this->apiResponseData($response, []);
+
                 return view('users.permisos', compact('permisos', 'id'));
             }
 
@@ -515,7 +519,7 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al cargar permisos', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->route('users.show', $id)
@@ -537,7 +541,8 @@ class UserController extends BaseController
 
             if ($this->apiResponseSuccessful($response)) {
                 $actividad = $this->apiResponseData($response, []);
-                return view('users.actividad', compact('actividad', $id));
+
+                return view('users.actividad', compact('actividad', 'id'));
             }
 
             return redirect()->route('users.show', $id)
@@ -545,7 +550,7 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al cargar actividad', [
                 'error' => $e->getMessage(),
-                'user_id' => $id
+                'user_id' => $id,
             ]);
 
             return redirect()->route('users.show', $id)
@@ -563,7 +568,7 @@ class UserController extends BaseController
 
             // Obtener parámetros de filtro opcionales
             $params = $request->only([
-                'name', 'email', 'role_id', 'status'
+                'name', 'email', 'role_id', 'status',
             ]);
 
             $response = $this->apiGetRaw('/api/users/exportar', $params);
@@ -581,6 +586,7 @@ class UserController extends BaseController
             // Si no es exitoso, manejamos el error
             if ($response) {
                 $json = $response->json();
+
                 return $this->jsonError(
                     $json['message'] ?? 'Error al exportar usuarios',
                     $response->status(),
@@ -591,7 +597,7 @@ class UserController extends BaseController
             return $this->jsonError('Error al exportar usuarios', 500);
         } catch (\Exception $e) {
             Log::error('Error al exportar usuarios', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al exportar usuarios');

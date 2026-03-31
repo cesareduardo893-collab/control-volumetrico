@@ -11,8 +11,8 @@
                 <div class="mb-3">
                     <i class="bi bi-person-circle fs-1 text-primary"></i>
                 </div>
-                <h5 class="card-title">{{ $user['nombres'] }} {{ $user['apellidos'] }}</h5>
-                <p class="text-muted">{{ $user['email'] }}</p>
+                <h5 class="card-title">{{ $user['nombres'] ?? 'N/A' }} {{ $user['apellidos'] ?? '' }}</h5>
+                <p class="text-muted">{{ $user['email'] ?? 'N/A' }}</p>
                 
                 <hr>
                 
@@ -25,7 +25,7 @@
                 
                 <hr>
                 
-                <a href="{{ route('password.change.form') }}" class="btn btn-warning w-100">
+                <a href="{{ route('auth.password.change.form') }}" class="btn btn-warning w-100">
                     <i class="bi bi-key"></i> Cambiar Contraseña
                 </a>
             </div>

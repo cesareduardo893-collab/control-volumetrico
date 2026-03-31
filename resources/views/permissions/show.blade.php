@@ -31,7 +31,7 @@
                     </tr>
                     <tr>
                         <th>Slug:</th>
-                        <td><code>{{ $permiso['slug'] }}</code></td>
+                        <td><code>{{ ($permiso['slug'] ?? '') }}</code></td>
                     </tr>
                     <tr>
                         <th>Módulo:</th>
@@ -40,7 +40,7 @@
                     <tr>
                         <th>Activo:</th>
                         <td>
-                            @if($permiso['activo'])
+                            @if(($permiso['activo'] ?? true))
                                 <span class="badge bg-success">Activo</span>
                             @else
                                 <span class="badge bg-secondary">Inactivo</span>
@@ -93,7 +93,7 @@
                                         <td>{{ $rol['descripcion'] ?? '-' }}</td>
                                         <td><span class="badge bg-info">{{ $rol['nivel_jerarquico'] }}</span></td>
                                         <td>
-                                            @if($rol['activo'])
+                                            @if(($rol['activo'] ?? true))
                                                 <span class="badge bg-success">Activo</span>
                                             @else
                                                 <span class="badge bg-secondary">Inactivo</span>
@@ -112,7 +112,7 @@
     </div>
 </div>
 
-@if($permiso['activo'])
+@if(($permiso['activo'] ?? true))
 <form method="POST" action="{{ route('permissions.destroy', $permiso['id']) }}" class="d-inline"
       onsubmit="return confirm('¿Está seguro de desactivar este permiso? Los roles perderán este permiso.');">
     @csrf

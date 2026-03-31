@@ -4,7 +4,7 @@
 @section('header', 'Resumen Operativo de la Instalación')
 
 @section('actions')
-<a href="{{ route('instalaciones.show', $resumen['instalacion_id']) }}" class="btn btn-sm btn-secondary">
+<a href="{{ route('instalaciones.show', ($resumen['instalacion_id'] ?? 0)) }}" class="btn btn-sm btn-secondary">
     <i class="bi bi-arrow-left"></i> Volver a la Instalación
 </a>
 @endsection
@@ -20,15 +20,15 @@
                 <table class="table table-sm">
                     <tr>
                         <th style="width: 40%">Instalación:</th>
-                        <td><strong>{{ $resumen['instalacion_nombre'] }}</strong></td>
+                        <td><strong>{{ ($resumen['instalacion_nombre'] ?? '') }}</strong></td>
                     </tr>
                     <tr>
                         <th>Clave:</th>
-                        <td>{{ $resumen['instalacion_clave'] }}</td>
+                        <td>{{ ($resumen['instalacion_clave'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Contribuyente:</th>
-                        <td>{{ $resumen['contribuyente'] }}</td>
+                        <td>{{ ($resumen['contribuyente'] ?? '') }}</td>
                     </tr>
                     <tr>
                         <th>Estatus:</th>
@@ -38,9 +38,9 @@
                                     'OPERACION' => 'success',
                                     'SUSPENDIDA' => 'warning',
                                     'CANCELADA' => 'danger'
-                                ][$resumen['estatus']] ?? 'secondary';
+                                ][($resumen['estatus'] ?? '')] ?? 'secondary';
                             @endphp
-                            <span class="badge bg-{{ $estatusClass }}">{{ $resumen['estatus'] }}</span>
+                            <span class="badge bg-{{ $estatusClass }}">{{ ($resumen['estatus'] ?? '') }}</span>
                         </td>
                     </tr>
                 </table>
@@ -57,49 +57,49 @@
                 <table class="table table-sm">
                     <tr>
                         <th>Total Tanques:</th>
-                        <td><span class="badge bg-primary">{{ $resumen['total_tanques'] }}</span></td>
+                        <td><span class="badge bg-primary">{{ $resumen['total_tanques'] ?? 0 }}</span></td>
                     </tr>
                     <tr>
                         <th>Tanques Operativos:</th>
-                        <td><span class="badge bg-success">{{ $resumen['tanques_operativos'] }}</span></td>
+                        <td><span class="badge bg-success">{{ $resumen['tanques_operativos'] ?? 0 }}</span></td>
                     </tr>
                     <tr>
                         <th>Tanques en Mantenimiento:</th>
-                        <td><span class="badge bg-warning">{{ $resumen['tanques_mantenimiento'] }}</span></td>
+                        <td><span class="badge bg-warning">{{ $resumen['tanques_mantenimiento'] ?? 0 }}</span></td>
                     </tr>
                     <tr>
                         <th>Tanques Fuera de Servicio:</th>
-                        <td><span class="badge bg-danger">{{ $resumen['tanques_fuera_servicio'] }}</span></td>
+                        <td><span class="badge bg-danger">{{ $resumen['tanques_fuera_servicio'] ?? 0 }}</span></td>
                     </tr>
                 </table>
                 <hr>
                 <table class="table table-sm">
                     <tr>
                         <th>Total Medidores:</th>
-                        <td><span class="badge bg-primary">{{ $resumen['total_medidores'] }}</span></td>
+                        <td><span class="badge bg-primary">{{ $resumen['total_medidores'] ?? 0 }}</span></td>
                     </tr>
                     <tr>
                         <th>Medidores Operativos:</th>
-                        <td><span class="badge bg-success">{{ $resumen['medidores_operativos'] }}</span></td>
+                        <td><span class="badge bg-success">{{ $resumen['medidores_operativos'] ?? 0 }}</span></td>
                     </tr>
                     <tr>
                         <th>Medidores en Mantenimiento:</th>
-                        <td><span class="badge bg-warning">{{ $resumen['medidores_mantenimiento'] }}</span></td>
+                        <td><span class="badge bg-warning">{{ $resumen['medidores_mantenimiento'] ?? 0 }}</span></td>
                     </tr>
                 </table>
                 <hr>
                 <table class="table table-sm">
                     <tr>
                         <th>Total Dispensarios:</th>
-                        <td><span class="badge bg-primary">{{ $resumen['total_dispensarios'] }}</span></td>
+                        <td><span class="badge bg-primary">{{ $resumen['total_dispensarios'] ?? 0 }}</span></td>
                     </tr>
                     <tr>
                         <th>Dispensarios Operativos:</th>
-                        <td><span class="badge bg-success">{{ $resumen['dispensarios_operativos'] }}</span></td>
+                        <td><span class="badge bg-success">{{ $resumen['dispensarios_operativos'] ?? 0 }}</span></td>
                     </tr>
                     <tr>
                         <th>Total Mangueras:</th>
-                        <td><span class="badge bg-info">{{ $resumen['total_mangueras'] }}</span></td>
+                        <td><span class="badge bg-info">{{ $resumen['total_mangueras'] ?? 0 }}</span></td>
                     </tr>
                 </table>
             </div>
@@ -124,7 +124,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($resumen['productos'] as $producto)
+                            @forelse(($resumen['productos'] ?? []) as $producto)
                                 <tr>
                                     <td>{{ $producto['nombre'] }}</td>
                                     <td><strong>{{ number_format($producto['volumen_total'], 3) }} L</strong></td>
@@ -154,46 +154,46 @@
             </div>
             <div class="card-body">
                 <div class="list-group">
-                    @if($resumen['alarmas_activas'] > 0)
-                        <a href="{{ route('alarmas.activas', ['instalacion_id' => $resumen['instalacion_id']]) }}" 
+                    @if(($resumen['alarmas_activas'] ?? 0) > 0)
+                        <a href="{{ route('alarmas.activas', ['instalacion_id' => ($resumen['instalacion_id'] ?? 0)]) }}" 
                            class="list-group-item list-group-item-action list-group-item-danger">
-                            <i class="bi bi-exclamation-triangle"></i> {{ $resumen['alarmas_activas'] }} Alarmas Activas
+                            <i class="bi bi-exclamation-triangle"></i> {{ $resumen['alarmas_activas'] ?? 0 }} Alarmas Activas
                         </a>
                     @endif
                     
-                    @if($resumen['tanques_bajo_nivel'] > 0)
+                    @if(($resumen['tanques_bajo_nivel'] ?? 0) > 0)
                         <a href="#" class="list-group-item list-group-item-action list-group-item-warning">
-                            <i class="bi bi-arrow-down"></i> {{ $resumen['tanques_bajo_nivel'] }} Tanques con Nivel Bajo
+                            <i class="bi bi-arrow-down"></i> {{ $resumen['tanques_bajo_nivel'] ?? 0 }} Tanques con Nivel Bajo
                         </a>
                     @endif
                     
-                    @if($resumen['tanques_alto_nivel'] > 0)
+                    @if(($resumen['tanques_alto_nivel'] ?? 0) > 0)
                         <a href="#" class="list-group-item list-group-item-action list-group-item-warning">
-                            <i class="bi bi-arrow-up"></i> {{ $resumen['tanques_alto_nivel'] }} Tanques con Nivel Alto
+                            <i class="bi bi-arrow-up"></i> {{ $resumen['tanques_alto_nivel'] ?? 0 }} Tanques con Nivel Alto
                         </a>
                     @endif
                     
-                    @if($resumen['calibraciones_pendientes'] > 0)
+                    @if(($resumen['calibraciones_pendientes'] ?? 0) > 0)
                         <a href="#" class="list-group-item list-group-item-action list-group-item-warning">
-                            <i class="bi bi-calendar"></i> {{ $resumen['calibraciones_pendientes'] }} Calibraciones Pendientes
+                            <i class="bi bi-calendar"></i> {{ $resumen['calibraciones_pendientes'] ?? 0 }} Calibraciones Pendientes
                         </a>
                     @endif
                     
-                    @if($resumen['mantenimientos_pendientes'] > 0)
+                    @if(($resumen['mantenimientos_pendientes'] ?? 0) > 0)
                         <a href="#" class="list-group-item list-group-item-action list-group-item-warning">
-                            <i class="bi bi-tools"></i> {{ $resumen['mantenimientos_pendientes'] }} Mantenimientos Pendientes
+                            <i class="bi bi-tools"></i> {{ $resumen['mantenimientos_pendientes'] ?? 0 }} Mantenimientos Pendientes
                         </a>
                     @endif
                     
-                    @if($resumen['registros_pendientes_validar'] > 0)
-                        <a href="{{ route('existencias.index', ['estado' => 'PENDIENTE', 'instalacion_id' => $resumen['instalacion_id']]) }}" 
+                    @if(($resumen['registros_pendientes_validar'] ?? 0) > 0)
+                        <a href="{{ route('existencias.index', ['estado' => 'PENDIENTE', 'instalacion_id' => ($resumen['instalacion_id'] ?? 0)]) }}" 
                            class="list-group-item list-group-item-action list-group-item-info">
-                            <i class="bi bi-clock"></i> {{ $resumen['registros_pendientes_validar'] }} Registros Pendientes de Validar
+                            <i class="bi bi-clock"></i> {{ $resumen['registros_pendientes_validar'] ?? 0 }} Registros Pendientes de Validar
                         </a>
                     @endif
                     
-                    @if($resumen['alarmas_activas'] == 0 && $resumen['tanques_bajo_nivel'] == 0 && $resumen['tanques_alto_nivel'] == 0 && 
-                        $resumen['calibraciones_pendientes'] == 0 && $resumen['mantenimientos_pendientes'] == 0 && $resumen['registros_pendientes_validar'] == 0)
+                    @if(($resumen['alarmas_activas'] ?? 0) == 0 && ($resumen['tanques_bajo_nivel'] ?? 0) == 0 && ($resumen['tanques_alto_nivel'] ?? 0) == 0 && 
+                        ($resumen['calibraciones_pendientes'] ?? 0) == 0 && ($resumen['mantenimientos_pendientes'] ?? 0) == 0 && ($resumen['registros_pendientes_validar'] ?? 0) == 0)
                         <div class="list-group-item list-group-item-success">
                             <i class="bi bi-check-circle"></i> No hay alertas activas
                         </div>
@@ -248,22 +248,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($resumen['ultimos_registros'] as $registro)
+                            @forelse(($resumen['ultimos_registros'] ?? []) as $registro)
                                 <tr>
-                                    <td>{{ $registro['fecha'] }} {{ $registro['hora'] }}</td>
-                                    <td>{{ $registro['tipo_movimiento'] }}</td>
-                                    <td>{{ $registro['tanque'] }}</td>
-                                    <td>{{ $registro['producto'] }}</td>
-                                    <td>{{ number_format($registro['volumen'], 3) }} L</td>
+                                    <td>{{ ($registro['fecha'] ?? '') }} {{ $registro['hora'] ?? '' }}</td>
+                                    <td>{{ $registro['tipo_movimiento'] ?? '' }}</td>
+                                    <td>{{ $registro['tanque'] ?? '' }}</td>
+                                    <td>{{ $registro['producto'] ?? '' }}</td>
+                                    <td>{{ number_format($registro['volumen'] ?? 0, 3) }} L</td>
                                     <td>
                                         @php
                                             $estadoClass = [
                                                 'VALIDADO' => 'success',
                                                 'PENDIENTE' => 'warning',
                                                 'ERROR' => 'danger'
-                                            ][$registro['estado']] ?? 'secondary';
+                                            ][($registro['estado'] ?? '')] ?? 'secondary';
                                         @endphp
-                                        <span class="badge bg-{{ $estadoClass }}">{{ $registro['estado'] }}</span>
+                                        <span class="badge bg-{{ $estadoClass }}">{{ ($registro['estado'] ?? '') }}</span>
                                     </td>
                                 </tr>
                             @empty
@@ -308,17 +308,17 @@ $(document).ready(function() {
                 {
                     label: 'Operativos',
                     data: [
-                        {{ $resumen['tanques_operativos'] }},
-                        {{ $resumen['medidores_operativos'] }},
-                        {{ $resumen['dispensarios_operativos'] }}
+                        {{ $resumen['tanques_operativos'] ?? 0 }},
+                        {{ $resumen['medidores_operativos'] ?? 0 }},
+                        {{ $resumen['dispensarios_operativos'] ?? 0 }}
                     ],
                     backgroundColor: '#198754'
                 },
                 {
                     label: 'Mantenimiento',
                     data: [
-                        {{ $resumen['tanques_mantenimiento'] }},
-                        {{ $resumen['medidores_mantenimiento'] }},
+                        {{ $resumen['tanques_mantenimiento'] ?? 0 }},
+                        {{ $resumen['medidores_mantenimiento'] ?? 0 }},
                         0
                     ],
                     backgroundColor: '#ffc107'
@@ -326,7 +326,7 @@ $(document).ready(function() {
                 {
                     label: 'Fuera de Servicio',
                     data: [
-                        {{ $resumen['tanques_fuera_servicio'] }},
+                        {{ $resumen['tanques_fuera_servicio'] ?? 0 }},
                         0,
                         0
                     ],

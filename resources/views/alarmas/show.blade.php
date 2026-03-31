@@ -4,17 +4,17 @@
 @section('header', 'Detalle de Alarma')
 
 @section('actions')
-@if($alarma['estado_atencion'] == 'PENDIENTE')
-    <a href="{{ route('alarmas.atender.form', $alarma['id']) }}" class="btn btn-sm btn-warning">
+@if(($alarma['estado_atencion'] ?? '') == 'PENDIENTE')
+    <a href="{{ route('alarmas.atender.form', $alarma['id'] ?? 0) }}" class="btn btn-sm btn-warning">
         <i class="bi bi-check-circle"></i> Atender Alarma
     </a>
 @endif
-@if(in_array($alarma['estado_atencion'], ['PENDIENTE', 'EN_PROCESO']))
-    <a href="{{ route('alarmas.actualizar-estado.form', $alarma['id']) }}" class="btn btn-sm btn-secondary">
+@if(in_array($alarma['estado_atencion'] ?? '', ['PENDIENTE', 'EN_PROCESO']))
+    <a href="{{ route('alarmas.actualizar-estado.form', $alarma['id'] ?? 0) }}" class="btn btn-sm btn-secondary">
         <i class="bi bi-arrow-repeat"></i> Actualizar Estado
     </a>
 @endif
-<a href="{{ route('alarmas.edit', $alarma['id']) }}" class="btn btn-sm btn-primary">
+<a href="{{ route('alarmas.edit', $alarma['id'] ?? 0) }}" class="btn btn-sm btn-primary">
     <i class="bi bi-pencil"></i> Editar
 </a>
 <a href="{{ route('alarmas.index') }}" class="btn btn-sm btn-secondary">
@@ -32,16 +32,16 @@
             <div class="card-body">
                 <table class="table table-sm">
                     <tr>
-                        <th style="width: 40%">Número de Registro:</th>
-                        <td>{{ $alarma['numero_registro'] }}</td>
+                        <th>Número de Registro:</th>
+                        <td>{{ $alarma['numero_registro'] ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Fecha y Hora:</th>
-                        <td>{{ $alarma['fecha_hora'] }}</td>
+                        <td>{{ $alarma['fecha_hora'] ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Tipo de Alarma:</th>
-                        <td>{{ $alarma['tipo_alarma']['nombre'] ?? $alarma['tipo_alarma_id'] }}</td>
+                        <td>{{ $alarma['tipo_alarma']['nombre'] ?? $alarma['tipo_alarma_id'] ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Gravedad:</th>
@@ -52,9 +52,9 @@
                                     'MEDIA' => 'warning',
                                     'ALTA' => 'danger',
                                     'CRITICA' => 'dark'
-                                ][$alarma['gravedad']] ?? 'secondary';
+                                ][$alarma['gravedad'] ?? ''] ?? 'secondary';
                             @endphp
-                            <span class="badge bg-{{ $badgeClass }}">{{ $alarma['gravedad'] }}</span>
+                            <span class="badge bg-{{ $badgeClass }}">{{ $alarma['gravedad'] ?? 'N/A' }}</span>
                         </td>
                     </tr>
                     <tr>
@@ -67,15 +67,15 @@
                                     'RESUELTA' => 'success',
                                     'IGNORADA' => 'secondary'
                                 ];
-                                $estadoClass = $estadoClasses[$alarma['estado_atencion']] ?? 'secondary';
+                                $estadoClass = $estadoClasses[$alarma['estado_atencion'] ?? ''] ?? 'secondary';
                             @endphp
-                            <span class="badge bg-{{ $estadoClass }}">{{ $alarma['estado_atencion'] }}</span>
+                            <span class="badge bg-{{ $estadoClass }}">{{ $alarma['estado_atencion'] ?? 'N/A' }}</span>
                         </td>
                     </tr>
                     <tr>
                         <th>Requiere Atención Inmediata:</th>
                         <td>
-                            @if($alarma['requiere_atencion_inmediata'])
+                            @if($alarma['requiere_atencion_inmediata'] ?? false)
                                 <span class="badge bg-danger">Sí</span>
                             @else
                                 <span class="badge bg-success">No</span>

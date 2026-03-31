@@ -58,12 +58,12 @@
                                 <tbody>
                                     @foreach($productosTipo as $producto)
                                         <tr>
-                                            <td><strong>{{ $producto['clave_sat'] }}</strong></td>
-                                            <td>{{ $producto['codigo'] }}</td>
+                                            <td><strong>{{ ($producto['clave_sat'] ?? '') }}</strong></td>
+                                            <td>{{ ($producto['codigo'] ?? '') }}</td>
                                             <td>{{ $producto['nombre'] }}</td>
-                                            <td>{{ $producto['unidad_medida'] }}</td>
+                                            <td>{{ ($producto['unidad_medida'] ?? '') }}</td>
                                             <td>
-                                                @if($producto['activo'])
+                                                @if(($producto['activo'] ?? true))
                                                     <span class="badge bg-success">Activo</span>
                                                 @else
                                                     <span class="badge bg-secondary">Inactivo</span>

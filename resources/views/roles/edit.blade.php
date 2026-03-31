@@ -62,7 +62,7 @@
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="activo" 
                                        name="activo" value="1" 
-                                       {{ old('activo', $role['activo'] ?? true) ? 'checked' : '' }}>
+                                       {{ old('activo', ($role['activo'] ?? true) ?? true) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="activo">
                                     Rol activo
                                 </label>
@@ -91,7 +91,7 @@
                                                        {{ in_array($permiso['id'], old('permisos', $permisosActuales)) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="permiso_{{ $permiso['id'] }}">
                                                     {{ $permiso['name'] }}
-                                                    <small class="text-muted d-block">{{ $permiso['slug'] }}</small>
+                                                    <small class="text-muted d-block">{{ ($permiso['slug'] ?? '') }}</small>
                                                 </label>
                                             </div>
                                         @endforeach

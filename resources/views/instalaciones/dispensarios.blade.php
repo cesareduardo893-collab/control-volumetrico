@@ -44,12 +44,12 @@
                                         'OPERATIVO' => 'success',
                                         'MANTENIMIENTO' => 'warning',
                                         'FUERA_SERVICIO' => 'danger'
-                                    ][$dispensario['estado']] ?? 'secondary';
+                                    ][(($dispensario['estado'] ?? '') ?? '')] ?? 'secondary';
                                 @endphp
-                                <span class="badge bg-{{ $estadoClass }}">{{ $dispensario['estado'] }}</span>
+                                <span class="badge bg-{{ $estadoClass }}">{{ (($dispensario['estado'] ?? '') ?? '') }}</span>
                             </td>
                             <td>
-                                @if($dispensario['activo'])
+                                @if((($dispensario['activo'] ?? true) ?? true))
                                     <span class="badge bg-success">Activo</span>
                                 @else
                                     <span class="badge bg-secondary">Inactivo</span>

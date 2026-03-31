@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 
 class TanqueTest extends TestCase
 {
@@ -19,7 +17,7 @@ class TanqueTest extends TestCase
     {
         $tanques = [
             $this->createTestTanqueData(['id' => 1, 'identificador' => 'TAN-001']),
-            $this->createTestTanqueData(['id' => 2, 'identificador' => 'TAN-002'])
+            $this->createTestTanqueData(['id' => 2, 'identificador' => 'TAN-002']),
         ];
 
         $this->mockPaginatedResponse('/api/tanques', $tanques, 2);
@@ -36,16 +34,16 @@ class TanqueTest extends TestCase
     {
         $instalaciones = [
             ['id' => 1, 'nombre' => 'Instalación 1'],
-            ['id' => 2, 'nombre' => 'Instalación 2']
+            ['id' => 2, 'nombre' => 'Instalación 2'],
         ];
 
         $productos = [
             ['id' => 1, 'nombre' => 'Gasolina'],
-            ['id' => 2, 'nombre' => 'Diesel']
+            ['id' => 2, 'nombre' => 'Diesel'],
         ];
 
-        $this->mockSuccessfulResponse('/api/instalaciones?activo=true', $instalaciones);
-        $this->mockSuccessfulResponse('/api/productos?activo=true', $productos);
+        $this->mockSuccessfulResponse('/api/instalaciones', $instalaciones);
+        $this->mockSuccessfulResponse('/api/productos', $productos);
 
         $response = $this->get('/tanques/create');
 
@@ -69,7 +67,7 @@ class TanqueTest extends TestCase
             'temperatura_referencia' => 20,
             'presion_referencia' => 1,
             'tipo_medicion' => 'estatica',
-            'estado' => 'OPERATIVO'
+            'estado' => 'OPERATIVO',
         ];
 
         $createdTanque = array_merge($tanqueData, ['id' => 1]);
@@ -88,13 +86,13 @@ class TanqueTest extends TestCase
         $invalidData = [
             'capacidad_util' => 12000, // Mayor que capacidad_total
             'capacidad_operativa' => 11000, // Mayor que capacidad_util
-            'tipo_medicion' => 'INVALIDO'
+            'tipo_medicion' => 'INVALIDO',
         ];
 
         $this->mockValidationErrorResponse('/api/tanques', [
             'capacidad_util' => ['La capacidad util debe ser menor o igual a capacidad total'],
             'capacidad_operativa' => ['La capacidad operativa debe ser menor o igual a capacidad util'],
-            'tipo_medicion' => ['El campo tipo medicion debe ser uno de: estatica, dinamica']
+            'tipo_medicion' => ['El campo tipo medicion debe ser uno de: estatica, dinamica'],
         ]);
 
         $response = $this->post('/tanques', $invalidData);
@@ -123,11 +121,11 @@ class TanqueTest extends TestCase
         $tanque = $this->createTestTanqueData();
         $productos = [
             ['id' => 1, 'nombre' => 'Gasolina'],
-            ['id' => 2, 'nombre' => 'Diesel']
+            ['id' => 2, 'nombre' => 'Diesel'],
         ];
 
         $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
-        $this->mockSuccessfulResponse('/api/productos?activo=true', $productos);
+        $this->mockSuccessfulResponse('/api/productos', $productos);
 
         $response = $this->get('/tanques/1/edit');
 
@@ -143,7 +141,7 @@ class TanqueTest extends TestCase
         $updateData = [
             'producto_id' => 2,
             'estado' => 'MANTENIMIENTO',
-            'observaciones' => 'Mantenimiento programado'
+            'observaciones' => 'Mantenimiento programado',
         ];
 
         $this->mockSuccessfulResponse('/api/tanques/1', [], 'Tanque actualizado exitosamente');
@@ -164,8 +162,8 @@ class TanqueTest extends TestCase
             'entidad_calibracion' => 'Laboratorio Test',
             'tabla_aforo' => [
                 ['nivel' => 10, 'volumen' => 500],
-                ['nivel' => 20, 'volumen' => 1000]
-            ]
+                ['nivel' => 20, 'volumen' => 1000],
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/tanques/1/calibrar', [], 'Calibración registrada exitosamente');
@@ -186,7 +184,7 @@ class TanqueTest extends TestCase
             'temperatura' => 22.5,
             'presion' => 1.2,
             'ultima_calibracion' => '2024-01-15',
-            'proxima_calibracion' => '2024-07-15'
+            'proxima_calibracion' => '2024-07-15',
         ];
 
         $this->mockSuccessfulResponse('/api/tanques/1/verificar-estado', $estado);
@@ -204,7 +202,7 @@ class TanqueTest extends TestCase
         $changeData = [
             'producto_id' => 2,
             'motivo' => 'Cambio de producto por nueva recepción',
-            'fecha_cambio' => '2024-01-20'
+            'fecha_cambio' => '2024-01-20',
         ];
 
         $this->mockSuccessfulResponse('/api/tanques/1/cambiar-producto', [], 'Producto cambiado exitosamente');
@@ -223,9 +221,9 @@ class TanqueTest extends TestCase
             'puntos' => [
                 ['nivel' => 0, 'volumen' => 0],
                 ['nivel' => 100, 'volumen' => 5000],
-                ['nivel' => 200, 'volumen' => 10000]
+                ['nivel' => 200, 'volumen' => 10000],
             ],
-            'ultima_actualizacion' => '2024-01-15'
+            'ultima_actualizacion' => '2024-01-15',
         ];
 
         $this->mockSuccessfulResponse('/api/tanques/1/curva-calibracion', $curva);
@@ -245,14 +243,14 @@ class TanqueTest extends TestCase
                 'fecha_calibracion' => '2024-01-15',
                 'certificado' => 'CERT-001',
                 'entidad' => 'Laboratorio A',
-                'precision' => 0.99
+                'precision' => 0.99,
             ],
             [
                 'fecha_calibracion' => '2023-07-15',
                 'certificado' => 'CERT-002',
                 'entidad' => 'Laboratorio B',
-                'precision' => 0.98
-            ]
+                'precision' => 0.98,
+            ],
         ];
 
         $this->mockSuccessfulResponse('/api/tanques/1/historial-calibraciones', $historial);
@@ -290,16 +288,16 @@ class TanqueTest extends TestCase
     public function test_filter_tanques_by_estado()
     {
         $tanques = [
-            $this->createTestTanqueData(['id' => 1, 'estado' => 'OPERATIVO'])
+            $this->createTestTanqueData(['id' => 1, 'estado' => 'OPERATIVO']),
         ];
 
-        $this->mockSuccessfulResponse('/api/tanques?estado=OPERATIVO', ['data' => $tanques]);
+        $this->mockSuccessfulResponse('/api/tanques', ['data' => $tanques]);
 
         $response = $this->get('/tanques?estado=OPERATIVO');
 
         $response->assertStatus(200);
         $response->assertViewHas('tanques');
-        
+
         $tanques = $response->viewData('tanques');
         $this->assertCount(1, $tanques);
         $this->assertEquals('OPERATIVO', $tanques[0]['estado']);
