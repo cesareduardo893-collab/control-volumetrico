@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Bitacora;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class RegistroVolumetricoController extends BaseController
 {
@@ -21,18 +21,18 @@ class RegistroVolumetricoController extends BaseController
                 'instalacion_id', 'tanque_id', 'medidor_id', 'producto_id',
                 'numero_registro', 'fecha', 'fecha_inicio', 'fecha_fin',
                 'tipo_registro', 'operacion', 'estado', 'documento_fiscal_uuid',
-                'rfc_contraparte', 'per_page', 'page'
+                'rfc_contraparte', 'per_page', 'page',
             ]);
 
             $response = $this->apiGet('/api/registros-volumetricos', $params);
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar registros'));
             }
 
             $responseData = $this->apiResponseData($response, []);
             $registros = $responseData['data'] ?? [];
-            
+
             // Calcular resumen de totales
             $resumen = [
                 'total' => count($registros),
@@ -65,12 +65,12 @@ class RegistroVolumetricoController extends BaseController
                 'instalaciones' => $instalaciones,
                 'tanques' => $tanques,
                 'productos' => $productos,
-                'filters' => $request->all()
+                'filters' => $request->all(),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al listar registros volumétricos', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar registros');
@@ -97,12 +97,12 @@ class RegistroVolumetricoController extends BaseController
                 'tanques' => $tanques,
                 'medidores' => $medidores,
                 'productos' => $productos,
-                'usuarios' => $usuarios
+                'usuarios' => $usuarios,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de creación', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('registros-volumetricos.index')
@@ -165,6 +165,7 @@ class RegistroVolumetricoController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -176,7 +177,7 @@ class RegistroVolumetricoController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al crear registro volumétrico', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()
@@ -225,7 +226,7 @@ class RegistroVolumetricoController extends BaseController
                     Bitacora::TIPO_EVENTO_OPERACIONES,
                     'REGISTRO_VOLUMETRICO_EMULADOR_CREADO',
                     'Registros Volumétricos',
-                    "Registro volumétrico creado desde emulador",
+                    'Registro volumétrico creado desde emulador',
                     'registros_volumetricos',
                     $registroId
                 );
@@ -237,6 +238,7 @@ class RegistroVolumetricoController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -248,7 +250,7 @@ class RegistroVolumetricoController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al crear registro volumétrico desde emulador', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()
@@ -267,7 +269,7 @@ class RegistroVolumetricoController extends BaseController
 
             $response = $this->apiGet("/api/registros-volumetricos/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('registros-volumetricos.index')
                     ->with('error', $this->apiResponseMessage($response, 'Registro no encontrado'));
             }
@@ -275,13 +277,13 @@ class RegistroVolumetricoController extends BaseController
             $registro = $this->apiResponseData($response, []);
 
             return view('registros-volumetricos.show', [
-                'registro' => $registro
+                'registro' => $registro,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al mostrar registro volumétrico', [
                 'error' => $e->getMessage(),
-                'registro_id' => $id
+                'registro_id' => $id,
             ]);
 
             return redirect()->route('registros-volumetricos.index')
@@ -299,7 +301,7 @@ class RegistroVolumetricoController extends BaseController
 
             $response = $this->apiGet("/api/registros-volumetricos/{$id}");
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->route('registros-volumetricos.index')
                     ->with('error', $this->apiResponseMessage($response, 'Registro no encontrado'));
             }
@@ -319,13 +321,13 @@ class RegistroVolumetricoController extends BaseController
                 'tanques' => $tanques,
                 'medidores' => $medidores,
                 'productos' => $productos,
-                'usuarios' => $usuarios
+                'usuarios' => $usuarios,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al cargar formulario de edición', [
                 'error' => $e->getMessage(),
-                'registro_id' => $id
+                'registro_id' => $id,
             ]);
 
             return redirect()->route('registros-volumetricos.index')
@@ -385,6 +387,7 @@ class RegistroVolumetricoController extends BaseController
 
             if ($response['status'] === 422) {
                 $errors = $this->apiResponseErrors($response, []);
+
                 return redirect()->back()
                     ->withInput()
                     ->withErrors($errors);
@@ -397,7 +400,7 @@ class RegistroVolumetricoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al actualizar registro volumétrico', [
                 'error' => $e->getMessage(),
-                'registro_id' => $id
+                'registro_id' => $id,
             ]);
 
             return redirect()->back()
@@ -437,7 +440,7 @@ class RegistroVolumetricoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al eliminar registro volumétrico', [
                 'error' => $e->getMessage(),
-                'registro_id' => $id
+                'registro_id' => $id,
             ]);
 
             return redirect()->back()
@@ -486,7 +489,7 @@ class RegistroVolumetricoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al validar registro volumétrico', [
                 'error' => $e->getMessage(),
-                'registro_id' => $id
+                'registro_id' => $id,
             ]);
 
             return redirect()->back()
@@ -536,7 +539,7 @@ class RegistroVolumetricoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al cancelar registro volumétrico', [
                 'error' => $e->getMessage(),
-                'registro_id' => $id
+                'registro_id' => $id,
             ]);
 
             return redirect()->back()
@@ -560,7 +563,7 @@ class RegistroVolumetricoController extends BaseController
 
             $response = $this->apiGet('/api/registros-volumetricos/resumen-diario', $request->all());
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al generar resumen'));
             }
 
@@ -568,12 +571,12 @@ class RegistroVolumetricoController extends BaseController
 
             return view('registros-volumetricos.resumen-diario', [
                 'resumen' => $resumen,
-                'filters' => $request->all()
+                'filters' => $request->all(),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al obtener resumen diario', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al generar resumen');
@@ -596,7 +599,7 @@ class RegistroVolumetricoController extends BaseController
 
             $response = $this->apiGet('/api/registros-volumetricos/estadisticas-mensuales', $request->all());
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al cargar estadísticas'));
             }
 
@@ -604,12 +607,12 @@ class RegistroVolumetricoController extends BaseController
 
             return view('registros-volumetricos.estadisticas', [
                 'estadisticas' => $estadisticas,
-                'filters' => $request->all()
+                'filters' => $request->all(),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error al obtener estadísticas mensuales', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al cargar estadísticas');
@@ -652,7 +655,7 @@ class RegistroVolumetricoController extends BaseController
         } catch (\Exception $e) {
             Log::error('Error al asociar dictamen a registro', [
                 'error' => $e->getMessage(),
-                'registro_id' => $id
+                'registro_id' => $id,
             ]);
 
             return redirect()->back()
@@ -673,27 +676,27 @@ class RegistroVolumetricoController extends BaseController
                 'instalacion_id', 'tanque_id', 'medidor_id', 'producto_id',
                 'numero_registro', 'fecha', 'fecha_inicio', 'fecha_fin',
                 'tipo_registro', 'operacion', 'estado', 'documento_fiscal_uuid',
-                'rfc_contraparte'
+                'rfc_contraparte',
             ]);
 
             $response = $this->apiGet('/api/registros-volumetricos/exportar', $params);
 
-            if (!$this->apiResponseSuccessful($response)) {
+            if (! $this->apiResponseSuccessful($response)) {
                 return redirect()->back()->with('error', $this->apiResponseMessage($response, 'Error al exportar registros'));
             }
 
             $data = $this->apiResponseData($response, []);
 
             // Crear CSV
-            $filename = 'registros_volumetricos_' . date('Y-m-d_H-i-s') . '.csv';
+            $filename = 'registros_volumetricos_'.date('Y-m-d_H-i-s').'.csv';
             $headers = [
                 'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             ];
 
-            $callback = function() use ($data) {
+            $callback = function () use ($data) {
                 $file = fopen('php://output', 'w');
-                
+
                 // Encabezados
                 fputcsv($file, [
                     'ID',
@@ -715,7 +718,7 @@ class RegistroVolumetricoController extends BaseController
                     'Tipo Registro',
                     'Operación',
                     'Estado',
-                    'Observaciones'
+                    'Observaciones',
                 ]);
 
                 // Datos
@@ -740,7 +743,7 @@ class RegistroVolumetricoController extends BaseController
                         $registro['tipo_registro'] ?? '',
                         $registro['operacion'] ?? '',
                         $registro['estado'] ?? '',
-                        $registro['observaciones'] ?? ''
+                        $registro['observaciones'] ?? '',
                     ]);
                 }
 
@@ -752,7 +755,7 @@ class RegistroVolumetricoController extends BaseController
                 Bitacora::TIPO_EVENTO_OPERACIONES,
                 'REGISTRO_VOLUMETRICO_EXPORTADO',
                 'Registros Volumétricos',
-                "Registros volumétricos exportados",
+                'Registros volumétricos exportados',
                 'registros_volumetricos',
                 null
             );
@@ -761,7 +764,7 @@ class RegistroVolumetricoController extends BaseController
 
         } catch (\Exception $e) {
             Log::error('Error al exportar registros volumétricos', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()->with('error', 'Error al exportar registros');
@@ -776,25 +779,23 @@ class RegistroVolumetricoController extends BaseController
         try {
             $this->setApiToken(Session::get('api_token'));
             $response = $this->apiGet("/api/emulador/lectura/{$tanqueId}");
-            
-            if ($this->apiResponseSuccessful($response)) {
-                return response()->json($response);
-            }
-            
+
             return response()->json([
-                'success' => false,
-                'message' => $this->apiResponseMessage($response, 'Error al obtener lectura del emulador')
-            ], 500);
+                'success' => $response['success'] ?? false,
+                'data' => $response['data'] ?? [],
+                'message' => $response['message'] ?? '',
+            ], $response['status'] ?? 200);
 
         } catch (\Exception $e) {
             Log::error('Error en proxy emulador lectura', [
                 'error' => $e->getMessage(),
-                'tanque_id' => $tanqueId
+                'tanque_id' => $tanqueId,
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al conectar con el emulador'
+                'data' => [],
+                'message' => 'Error al conectar con el emulador: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -807,25 +808,130 @@ class RegistroVolumetricoController extends BaseController
         try {
             $this->setApiToken(Session::get('api_token'));
             $response = $this->apiGet("/api/emulador/tanques/instalacion/{$instalacionId}");
-            
-            if ($this->apiResponseSuccessful($response)) {
-                return response()->json($response);
-            }
-            
+
             return response()->json([
-                'success' => false,
-                'message' => $this->apiResponseMessage($response, 'Error al obtener tanques')
-            ], 500);
+                'success' => $response['success'] ?? false,
+                'data' => $response['data'] ?? [],
+                'message' => $response['message'] ?? '',
+            ], $response['status'] ?? 200);
 
         } catch (\Exception $e) {
             Log::error('Error en proxy emulador tanques', [
                 'error' => $e->getMessage(),
-                'instalacion_id' => $instalacionId
+                'instalacion_id' => $instalacionId,
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener tanques del emulador'
+                'data' => [],
+                'message' => 'Error al conectar con el emulador: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Proxy para datos automáticos del emulador
+     */
+    public function emuladorDatosAutomaticos()
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+            $response = $this->apiGet('/api/emulador/tanque/datos-automaticos');
+
+            return response()->json([
+                'success' => $response['success'] ?? false,
+                'data' => $response['data'] ?? [],
+                'message' => $response['message'] ?? '',
+            ], $response['status'] ?? 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error en proxy emulador datos automáticos', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'data' => [],
+                'message' => 'Error al conectar con el emulador: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Proxy para serial del emulador
+     */
+    public function emuladorSerial($instalacionId)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+            $response = $this->apiGet("/api/emulador/tanque/serial/{$instalacionId}");
+
+            return response()->json([
+                'success' => $response['success'] ?? false,
+                'data' => $response['data'] ?? [],
+                'message' => $response['message'] ?? '',
+            ], $response['status'] ?? 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data' => [],
+                'message' => 'Error al conectar con el emulador: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Proxy para simular llenado
+     */
+    public function emuladorSimularLlenado(Request $request)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+            $response = $this->apiPost('/api/emulador/tanque/simular-llenado', $request->all());
+
+            return response()->json([
+                'success' => $response['success'] ?? false,
+                'data' => $response['data'] ?? [],
+                'message' => $response['message'] ?? '',
+            ], $response['status'] ?? 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data' => [],
+                'message' => 'Error al conectar con el emulador: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function emuladorDetenerLlenado($tanqueId)
+    {
+        try {
+            $this->setApiToken(Session::get('api_token'));
+            $response = $this->apiGet("/api/emulador/lectura/{$tanqueId}");
+
+            if ($this->apiResponseSuccessful($response)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'volumen_final' => $response['data']['volumen'] ?? 0,
+                        'estado' => 'DETENIDO',
+                    ],
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'data' => [],
+                'message' => $response['message'] ?? 'Error al detener llenado',
+            ], $response['status'] ?? 500);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data' => [],
+                'message' => 'Error al conectar con el emulador: '.$e->getMessage(),
             ], 500);
         }
     }

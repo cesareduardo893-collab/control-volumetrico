@@ -383,6 +383,11 @@ Route::middleware('api.auth')->group(function () {
         // ==================== EMULADOR (Proxy al Backend) ====================
         Route::get('/emulador/lectura/{tanqueId}', [RegistroVolumetricoController::class, 'emuladorLectura'])->name('emulador.lectura');
         Route::get('/emulador/tanques/instalacion/{instalacionId}', [RegistroVolumetricoController::class, 'emuladorTanques'])->name('emulador.tanques');
+        Route::get('/emulador/tanque/datos-automaticos', [RegistroVolumetricoController::class, 'emuladorDatosAutomaticos'])->name('emulador.datos-automaticos');
+        Route::get('/emulador/tanque/serial/{instalacionId}', [RegistroVolumetricoController::class, 'emuladorSerial'])->name('emulador.serial');
+        Route::post('/emulador/tanque/simular-llenado', [RegistroVolumetricoController::class, 'emuladorSimularLlenado'])->name('emulador.simular-llenado');
+        Route::get('/emulador/tanque/estado-llenado/{tanqueId}', [RegistroVolumetricoController::class, 'emuladorLectura'])->name('emulador.estado-llenado');
+        Route::post('/emulador/tanque/detener-llenado/{tanqueId}', [RegistroVolumetricoController::class, 'emuladorDetenerLlenado'])->name('emulador.detener-llenado');
     });
 });
 

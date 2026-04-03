@@ -35,6 +35,7 @@
                 <form action="{{ route('tanques.store') }}" method="POST" id="tanqueForm">
                     @csrf
                     <input type="hidden" id="instalacion_id" name="instalacion_id" value="{{ old('instalacion_id') }}">
+                    <input type="hidden" id="producto_id" name="producto_id" value="{{ old('producto_id') }}">
                     <input type="hidden" id="tipo_medicion" name="tipo_medicion" value="dinamica">
                     
                     <!-- Selección de Producto para Recepción -->
@@ -255,7 +256,6 @@
 
 @push('scripts')
 <script>
-let apiBaseUrl = 'http://127.0.0.1:8000';
 let tanqueIdActual = null;
 let intervaloActualizacion = null;
 
@@ -268,8 +268,11 @@ function iniciarRecepcion() {
         return;
     }
     
+    // Set the hidden producto_id field
+    document.getElementById('producto_id').value = productoId;
+    
     // Obtener datos iniciales del tanque desde el emulador
-    fetch(apiBaseUrl + '/api/emulador/tanque/datos-automaticos')
+    fetch('/api/emulador/tanque/datos-automaticos')
         .then(response => response.json())
         .then(response => {
             if (response.success) {
@@ -287,7 +290,7 @@ function iniciarRecepcion() {
                 document.getElementById('presion_referencia').value = data.presion_referencia;
                 
                 // Generar número de serie
-                fetch(apiBaseUrl + '/api/emulador/tanque/serial/' + instalacionId)
+                fetch('/api/emulador/tanque/serial/' + instalacionId)
                     .then(r => r.json())
                     .then(serieRes => {
                         if (serieRes.success) {
@@ -296,10 +299,12 @@ function iniciarRecepcion() {
                     });
                 
                 // Iniciar simulación de llenado
-                fetch(apiBaseUrl + '/api/emulador/tanque/simular-llenado', {
+                fetch('/api/emulador/tanque/simular-llenado', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({
                         tanque_id: data.identificador,
@@ -358,7 +363,7 @@ function obtenerDatosRecepcion() {
         return;
     }
     
-    fetch(apiBaseUrl + '/api/emulador/tanque/estado-llenado/' + tanqueIdActual)
+    fetch('/api/emulador/tanque/estado-llenado/' + tanqueIdActual)
         .then(response => response.json())
         .then(response => {
             if (response.success) {
@@ -377,7 +382,7 @@ function detenerRecepcion() {
         clearInterval(intervaloActualizacion);
     }
     
-    fetch(apiBaseUrl + '/api/emulador/tanque/detener-llenado/' + tanqueIdActual, {
+    fetch('/api/emulador/tanque/detener-llenado/' + tanqueIdActual, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

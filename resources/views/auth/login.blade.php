@@ -676,6 +676,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('error') === 'google_auth_failed') {
             alert('Error al autenticar con Google. Por favor, intenta de nuevo.');
+            window.history.replaceState({}, document.title, '/login');
+        } else if (urlParams.get('error') === 'google_auth_error') {
+            alert('No se pudo conectar con Google. Verifica la configuración del servidor.');
+            window.history.replaceState({}, document.title, '/login');
         }
     </script>
 </body>

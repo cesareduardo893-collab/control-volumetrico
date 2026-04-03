@@ -479,15 +479,15 @@
                                     <span class="badge bg-light text-dark">{{ $movimiento['producto'] }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ $movimiento['tipo_movimiento'] == 'entrada' ? 'success' : 'danger' }}-subtle text-{{ $movimiento['tipo_movimiento'] == 'entrada' ? 'success' : 'danger' }}">
-                                        <i class="bi bi-arrow-{{ $movimiento['tipo_movimiento'] == 'entrada' ? 'down' : 'up' }} me-1"></i>
+                                    <span class="badge bg-{{ strtolower($movimiento['tipo_movimiento']) == 'recepcion' ? 'success' : 'danger' }}-subtle text-{{ strtolower($movimiento['tipo_movimiento']) == 'recepcion' ? 'success' : 'danger' }}">
+                                        <i class="bi bi-arrow-{{ strtolower($movimiento['tipo_movimiento']) == 'recepcion' ? 'down' : 'up' }} me-1"></i>
                                         {{ ucfirst($movimiento['tipo_movimiento']) }}
                                     </span>
                                 </td>
                                 <td class="text-end fw-semibold">{{ number_format($movimiento['volumen_neto'], 2) }} L</td>
                                 <td>
-                                    <span class="badge bg-{{ $movimiento['estado'] == 'validado' ? 'success' : 'warning' }}-subtle text-{{ $movimiento['estado'] == 'validado' ? 'success' : 'warning' }}">
-                                        <i class="bi bi-{{ $movimiento['estado'] == 'validado' ? 'check-circle' : 'clock' }} me-1"></i>
+                                    <span class="badge bg-{{ strtolower($movimiento['estado']) == 'validado' ? 'success' : 'warning' }}-subtle text-{{ strtolower($movimiento['estado']) == 'validado' ? 'success' : 'warning' }}">
+                                        <i class="bi bi-{{ strtolower($movimiento['estado']) == 'validado' ? 'check-circle' : 'clock' }} me-1"></i>
                                         {{ ucfirst($movimiento['estado']) }}
                                     </span>
                                 </td>

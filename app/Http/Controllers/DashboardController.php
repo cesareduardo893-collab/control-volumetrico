@@ -19,7 +19,36 @@ class DashboardController extends BaseController
             // Obtener resumen desde la API
             $response = $this->apiGet('/api/dashboard/resumen');
 
-            if ($this->apiResponseSuccessful($response)) {
+            // Verificar si la respuesta indica error de autenticación
+            if (isset($response['status']) && ($response['status'] === 401 || $response['status'] === 403)) {
+                // Token inválido o expirado, limpiar sesión y redirigir al login
+                Session::flush();
+                return redirect()->route('login')
+                    ->with('error', 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+            }
+
+            // Verificar si la respuesta fue exitosa
+            if (!$this->apiResponseSuccessful($response)) {
+                // Si no es exitosa, verificar si es un error de autenticación
+                $message = $this->apiResponseMessage($response, '');
+                if (strpos(strtolower($message), 'autorizado') !== false || 
+                    strpos(strtolower($message), 'sesión') !== false ||
+                    strpos(strtolower($message), 'token') !== false) {
+                    Session::flush();
+                    return redirect()->route('login')
+                        ->with('error', 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+                }
+                
+                // Si no es error de autenticación, usar datos por defecto
+                $resumen = $this->getDefaultResumen();
+
+                // Intentar obtener alarmas activas directamente como fallback
+                $alarmasResponse = $this->apiGet('/api/alarmas/activas');
+                if ($this->apiResponseSuccessful($alarmasResponse)) {
+                    $alarmas = $this->apiResponseData($alarmasResponse, []);
+                    $resumen['alarmas_activas'] = is_array($alarmas) ? count($alarmas) : 0;
+                }
+            } else {
                 $resumen = $this->apiResponseData($response, []);
 
                 // Si el endpoint de resumen no devuelve alarmas_activas, obtenerlo directamente
@@ -29,15 +58,6 @@ class DashboardController extends BaseController
                         $alarmas = $this->apiResponseData($alarmasResponse, []);
                         $resumen['alarmas_activas'] = is_array($alarmas) ? count($alarmas) : 0;
                     }
-                }
-            } else {
-                $resumen = $this->getDefaultResumen();
-
-                // Intentar obtener alarmas activas directamente como fallback
-                $alarmasResponse = $this->apiGet('/api/alarmas/activas');
-                if ($this->apiResponseSuccessful($alarmasResponse)) {
-                    $alarmas = $this->apiResponseData($alarmasResponse, []);
-                    $resumen['alarmas_activas'] = is_array($alarmas) ? count($alarmas) : 0;
                 }
             }
 

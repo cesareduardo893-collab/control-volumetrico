@@ -112,49 +112,9 @@
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold">Seleccionar Tanques para Conexión:</label>
                                     <div class="row" id="tanques-container">
-                                        @foreach($tanques as $tanque)
-                                            @php
-                                                $tanqueId = is_array($tanque) ? ($tanque['id'] ?? $tanque['ID'] ?? null) 
-                                                    : (is_object($tanque) ? ($tanque->id ?? $tanque->ID ?? null) : $tanque);
-                                                $tanqueIdentificador = is_array($tanque) ? ($tanque['identificador'] ?? '') 
-                                                    : (is_object($tanque) ? ($tanque->identificador ?? '') : '');
-                                                $tanqueProducto = is_array($tanque) ? ($tanque['producto']['nombre'] ?? 'Sin producto') 
-                                                    : (is_object($tanque) ? ($tanque->producto->nombre ?? 'Sin producto') : 'Sin producto');
-                                                $tanqueCapacidad = is_array($tanque) ? ($tanque['capacidad_total'] ?? 0) 
-                                                    : (is_object($tanque) ? ($tanque->capacidad_total ?? 0) : 0);
-                                                $tanqueEstado = is_array($tanque) ? ($tanque['estado'] ?? '') 
-                                                    : (is_object($tanque) ? ($tanque->estado ?? '') : '');
-                                            @endphp
-                                            @if($tanqueId !== null)
-                                                <div class="col-md-4 mb-3">
-                                                    <div class="card h-100 border-2" id="tanque-card-{{ $tanqueId }}">
-                                                        <div class="card-body p-3">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox" 
-                                                                       name="tanques_seleccionados[]" 
-                                                                       value="{{ $tanqueId }}" 
-                                                                       id="tanque_{{ $tanqueId }}"
-                                                                       {{ in_array($tanqueId, old('tanques_seleccionados', [])) ? 'checked' : '' }}>
-                                                                <label class="form-check-label w-100" for="tanque_{{ $tanqueId }}">
-                                                                    <div class="d-flex justify-content-between align-items-start">
-                                                                        <div>
-                                                                            <strong class="text-primary">{{ $tanqueIdentificador }}</strong>
-                                                                            <br>
-                                                                            <small class="text-muted">{{ $tanqueProducto }}</small>
-                                                                            <br>
-                                                                            <small class="text-muted">Cap: {{ number_format($tanqueCapacidad, 0) }} L</small>
-                                                                        </div>
-                                                                        <span class="badge bg-{{ $tanqueEstado == 'OPERATIVO' ? 'success' : 'warning' }}">
-                                                                            {{ $tanqueEstado }}
-                                                                        </span>
-                                                                    </div>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        @endforeach
+                                        <div class="col-12">
+                                            <small class="text-muted">Seleccione una instalación para ver los tanques disponibles</small>
+                                        </div>
                                     </div>
                                     <small class="text-muted">
                                         <i class="bi bi-exclamation-triangle me-1"></i>
@@ -237,6 +197,62 @@ $(document).ready(function() {
         theme: 'bootstrap-5',
         width: '100%'
     });
+    
+    // Filter tanques by selected installation
+    var allTanques = @json($tanques);
+    
+    $('#instalacion_id').on('change', function() {
+        var instalacionId = $(this).val();
+        var container = $('#tanques-container');
+        container.empty();
+        
+        if (!instalacionId) {
+            container.html('<div class="col-12"><small class="text-muted">Seleccione una instalación para ver los tanques disponibles</small></div>');
+            return;
+        }
+        
+        // Filter tanques by instalacion_id
+        var filteredTanques = allTanques.filter(function(t) {
+            var tInstId = t.instalacion_id || (t.instalacion && t.instalacion.id);
+            return tInstId == instalacionId;
+        });
+        
+        if (filteredTanques.length === 0) {
+            container.html('<div class="col-12"><small class="text-warning">No hay tanques operativos en esta instalación</small></div>');
+            return;
+        }
+        
+        filteredTanques.forEach(function(tanque) {
+            var id = tanque.id;
+            var identificador = tanque.identificador || '';
+            var producto = (tanque.producto && tanque.producto.nombre) ? tanque.producto.nombre : 'Sin producto';
+            var capacidad = tanque.capacidad_total || 0;
+            var estado = tanque.estado || '';
+            var badgeClass = estado === 'OPERATIVO' ? 'success' : 'warning';
+            
+            var html = '<div class="col-md-4 mb-3">' +
+                '<div class="card h-100 border-2" id="tanque-card-' + id + '">' +
+                '<div class="card-body p-3">' +
+                '<div class="form-check">' +
+                '<input class="form-check-input" type="checkbox" name="tanques_seleccionados[]" value="' + id + '" id="tanque_' + id + '">' +
+                '<label class="form-check-label w-100" for="tanque_' + id + '">' +
+                '<div class="d-flex justify-content-between align-items-start">' +
+                '<div>' +
+                '<strong class="text-primary">' + identificador + '</strong><br>' +
+                '<small class="text-muted">' + producto + '</small><br>' +
+                '<small class="text-muted">Cap: ' + Number(capacidad).toLocaleString() + ' L</small>' +
+                '</div>' +
+                '<span class="badge bg-' + badgeClass + '">' + estado + '</span>' +
+                '</div></label></div></div></div></div>';
+            
+            container.append(html);
+        });
+    });
+    
+    // Trigger filter on page load if installation is pre-selected
+    if ($('#instalacion_id').val()) {
+        $('#instalacion_id').trigger('change');
+    }
 });
 </script>
 @endpush

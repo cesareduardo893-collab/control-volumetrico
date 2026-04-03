@@ -55,8 +55,9 @@
                         </div>
                         
                         <div class="col-md-4 mb-3">
-                            <label for="producto_id" class="form-label">Producto</label>
-                            <input type="text" class="form-control bg-light" id="producto_id" readonly placeholder="Se cargará del tanque">
+                            <label for="producto_nombre" class="form-label">Producto</label>
+                            <input type="text" class="form-control bg-light" id="producto_nombre" readonly placeholder="Se cargará del tanque">
+                            <input type="hidden" id="producto_id" name="producto_id" value="">
                         </div>
                     </div>
                     
@@ -294,6 +295,7 @@ $(document).ready(function() {
         $('#tipo_operacion').val('');
         $('#capacidad_total, #capacidad_util, #capacidad_operativa, #capacidad_minima').val('');
         $('#temperatura_referencia, #presion_referencia').val('');
+        $('#producto_nombre').val('');
         $('#producto_id').val('');
         $('#btnGuardar').prop('disabled', true);
     }
@@ -335,7 +337,8 @@ $(document).ready(function() {
                     $('#tipo_operacion').val(data.tipo_operacion || 'ENTREGA');
                     
                     if (data.tanque) {
-                        $('#producto_id').val(data.tanque.producto || '');
+                        $('#producto_nombre').val(data.tanque.producto || '');
+                        $('#producto_id').val(data.tanque.producto_id || '');
                     }
                     
                     if (data.datos_tanque) {

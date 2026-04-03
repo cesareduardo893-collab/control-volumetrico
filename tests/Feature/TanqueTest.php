@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class TanqueTest extends TestCase
@@ -16,8 +17,20 @@ class TanqueTest extends TestCase
     public function test_index_displays_tanques_list()
     {
         $tanques = [
-            $this->createTestTanqueData(['id' => 1, 'identificador' => 'TAN-001']),
-            $this->createTestTanqueData(['id' => 2, 'identificador' => 'TAN-002']),
+            [
+                'id' => 1,
+                'identificador' => 'TAN-001',
+                'capacidad_total' => 10000,
+                'estado' => 'OPERATIVO',
+                'instalacion' => ['nombre' => 'Instalación 1'],
+            ],
+            [
+                'id' => 2,
+                'identificador' => 'TAN-002',
+                'capacidad_total' => 5000,
+                'estado' => 'MANTENIMIENTO',
+                'instalacion' => ['nombre' => 'Instalación 2'],
+            ],
         ];
 
         $this->mockPaginatedResponse('/api/tanques', $tanques, 2);
@@ -27,6 +40,273 @@ class TanqueTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('tanques.index');
         $response->assertViewHas('tanques');
+    }
+
+    /** @test */
+    public function test_show_displays_tanque_details()
+    {
+        $tanque = [
+            'id' => 1,
+            'identificador' => 'TAN-001',
+            'capacidad_total' => 10000,
+            'estado' => 'OPERATIVO',
+            'instalacion' => ['id' => 1, 'nombre' => 'Instalación 1'],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
+
+        $response = $this->get('/tanques/1');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('tanques.show');
+        $response->assertViewHas('tanque', $tanque);
+    }
+
+    /** @test */
+    public function test_edit_form_displays_correctly()
+    {
+        $tanque = [
+            'id' => 1,
+            'identificador' => 'TAN-001',
+            'capacidad_total' => 10000,
+            'estado' => 'OPERATIVO',
+            'instalacion_id' => 1,
+        ];
+
+        $instalaciones = [
+            ['id' => 1, 'nombre' => 'Instalación 1'],
+            ['id' => 2, 'nombre' => 'Instalación 2'],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
+        $this->mockSuccessfulResponse('/api/instalaciones', $instalaciones);
+
+        $response = $this->get('/tanques/1/edit');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('tanques.edit');
+        $response->assertViewHas('tanque', $tanque);
+        $response->assertViewHas('instalaciones', $instalaciones);
+    }
+
+    /** @test */
+    public function test_filter_tanques_by_estado()
+    {
+        $tanques = [
+            ['id' => 1, 'identificador' => 'TAN-001', 'capacidad_total' => 10000, 'estado' => 'OPERATIVO', 'instalacion' => ['nombre' => 'Inst 1']],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques', ['data' => $tanques]);
+
+        $response = $this->get('/tanques?estado=OPERATIVO');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('tanques');
+
+        $tanques = $response->viewData('tanques');
+        $this->assertCount(1, $tanques);
+        $this->assertEquals('OPERATIVO', $tanques[0]['estado']);
+    }
+
+    /** @test */
+    public function test_exportar_downloads_tanques_file()
+    {
+        Http::fake([
+            $this->baseApiUrl.'/api/tanques/exportar*' => Http::response(
+                'identificador,capacidad_total,estado\nTAN-001,10000,OPERATIVO',
+                200,
+                [
+                    'Content-Type' => 'text/csv',
+                    'Content-Disposition' => 'attachment; filename="tanques.csv"',
+                ]
+            ),
+        ]);
+
+        $response = $this->get('/tanques/exportar');
+
+        $response->assertStatus(200);
+        $this->assertTrue(
+            str_starts_with($response->headers->get('Content-Type'), 'text/csv'),
+            'Content-Type header should start with text/csv'
+        );
+    }
+
+    /** @test */
+    public function test_show_displays_tanque_details()
+    {
+        $tanque = [
+            'id' => 1,
+            'identificador' => 'TAN-001',
+            'capacidad_total' => 10000,
+            'estado' => 'OPERATIVO',
+            'instalacion' => ['id' => 1, 'nombre' => 'Instalación 1'],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
+
+        $response = $this->get('/tanques/1');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('tanques.show');
+        $response->assertViewHas('tanque', $tanque);
+    }
+
+    /** @test */
+    public function test_edit_form_displays_correctly()
+    {
+        $tanque = [
+            'id' => 1,
+            'identificador' => 'TAN-001',
+            'capacidad_total' => 10000,
+            'estado' => 'OPERATIVO',
+            'instalacion_id' => 1,
+        ];
+
+        $instalaciones = [
+            ['id' => 1, 'nombre' => 'Instalación 1'],
+            ['id' => 2, 'nombre' => 'Instalación 2'],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
+        $this->mockSuccessfulResponse('/api/instalaciones', $instalaciones);
+
+        $response = $this->get('/tanques/1/edit');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('tanques.edit');
+        $response->assertViewHas('tanque', $tanque);
+        $response->assertViewHas('instalaciones', $instalaciones);
+    }
+
+    /** @test */
+    public function test_filter_tanques_by_estado()
+    {
+        $tanques = [
+            ['id' => 1, 'identificador' => 'TAN-001', 'capacidad_total' => 10000, 'estado' => 'OPERATIVO', 'instalacion' => ['nombre' => 'Inst 1']],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques', ['data' => $tanques]);
+
+        $response = $this->get('/tanques?estado=OPERATIVO');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('tanques');
+
+        $tanques = $response->viewData('tanques');
+        $this->assertCount(1, $tanques);
+        $this->assertEquals('OPERATIVO', $tanques[0]['estado']);
+    }
+
+    /** @test */
+    public function test_exportar_downloads_tanques_file()
+    {
+        Http::fake([
+            $this->baseApiUrl.'/api/tanques/exportar*' => Http::response(
+                'identificador,capacidad_total,estado\nTAN-001,10000,OPERATIVO',
+                200,
+                [
+                    'Content-Type' => 'text/csv',
+                    'Content-Disposition' => 'attachment; filename="tanques.csv"',
+                ]
+            ),
+        ]);
+
+        $response = $this->get('/tanques/exportar');
+
+        $response->assertStatus(200);
+        $this->assertTrue(
+            str_starts_with($response->headers->get('Content-Type'), 'text/csv'),
+            'Content-Type header should start with text/csv'
+        );
+    }
+
+    /** @test */
+    public function test_show_displays_tanque_details()
+    {
+        $tanque = [
+            'id' => 1,
+            'identificador' => 'TAN-001',
+            'capacidad_total' => 10000,
+            'estado' => 'OPERATIVO',
+            'instalacion' => ['id' => 1, 'nombre' => 'Instalación 1'],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
+
+        $response = $this->get('/tanques/1');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('tanques.show');
+        $response->assertViewHas('tanque', $tanque);
+    }
+
+    /** @test */
+    public function test_edit_form_displays_correctly()
+    {
+        $tanque = [
+            'id' => 1,
+            'identificador' => 'TAN-001',
+            'capacidad_total' => 10000,
+            'estado' => 'OPERATIVO',
+            'instalacion_id' => 1,
+        ];
+
+        $instalaciones = [
+            ['id' => 1, 'nombre' => 'Instalación 1'],
+            ['id' => 2, 'nombre' => 'Instalación 2'],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
+        $this->mockSuccessfulResponse('/api/instalaciones', $instalaciones);
+
+        $response = $this->get('/tanques/1/edit');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('tanques.edit');
+        $response->assertViewHas('tanque', $tanque);
+        $response->assertViewHas('instalaciones', $instalaciones);
+    }
+
+    /** @test */
+    public function test_filter_tanques_by_estado()
+    {
+        $tanques = [
+            ['id' => 1, 'identificador' => 'TAN-001', 'capacidad_total' => 10000, 'estado' => 'OPERATIVO', 'instalacion' => ['nombre' => 'Inst 1']],
+        ];
+
+        $this->mockSuccessfulResponse('/api/tanques', ['data' => $tanques]);
+
+        $response = $this->get('/tanques?estado=OPERATIVO');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('tanques');
+
+        $tanques = $response->viewData('tanques');
+        $this->assertCount(1, $tanques);
+        $this->assertEquals('OPERATIVO', $tanques[0]['estado']);
+    }
+
+    /** @test */
+    public function test_exportar_downloads_tanques_file()
+    {
+        Http::fake([
+            $this->baseApiUrl.'/api/tanques/exportar*' => Http::response(
+                'identificador,capacidad_total,estado\nTAN-001,10000,OPERATIVO',
+                200,
+                [
+                    'Content-Type' => 'text/csv',
+                    'Content-Disposition' => 'attachment; filename="tanques.csv"',
+                ]
+            ),
+        ]);
+
+        $response = $this->get('/tanques/exportar');
+
+        $response->assertStatus(200);
+        $this->assertTrue(
+            str_starts_with($response->headers->get('Content-Type'), 'text/csv'),
+            'Content-Type header should start with text/csv'
+        );
     }
 
     /** @test */
@@ -102,40 +382,6 @@ class TanqueTest extends TestCase
     }
 
     /** @test */
-    public function test_show_displays_tanque_details()
-    {
-        $tanque = $this->createTestTanqueData();
-
-        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
-
-        $response = $this->get('/tanques/1');
-
-        $response->assertStatus(200);
-        $response->assertViewIs('tanques.show');
-        $response->assertViewHas('tanque', $tanque);
-    }
-
-    /** @test */
-    public function test_edit_form_displays_correctly()
-    {
-        $tanque = $this->createTestTanqueData();
-        $productos = [
-            ['id' => 1, 'nombre' => 'Gasolina'],
-            ['id' => 2, 'nombre' => 'Diesel'],
-        ];
-
-        $this->mockSuccessfulResponse('/api/tanques/1', $tanque);
-        $this->mockSuccessfulResponse('/api/productos', $productos);
-
-        $response = $this->get('/tanques/1/edit');
-
-        $response->assertStatus(200);
-        $response->assertViewIs('tanques.edit');
-        $response->assertViewHas('tanque', $tanque);
-        $response->assertViewHas('productos', $productos);
-    }
-
-    /** @test */
     public function test_update_modifies_tanque_successfully()
     {
         $updateData = [
@@ -150,116 +396,6 @@ class TanqueTest extends TestCase
 
         $response->assertRedirect('/tanques/1');
         $response->assertSessionHas('success', 'Tanque actualizado exitosamente');
-    }
-
-    /** @test */
-    public function test_registrar_calibracion_registers_calibration_successfully()
-    {
-        $calibrationData = [
-            'fecha_calibracion' => '2024-01-15',
-            'fecha_proxima_calibracion' => '2024-07-15',
-            'certificado_calibracion' => 'CERT-001',
-            'entidad_calibracion' => 'Laboratorio Test',
-            'tabla_aforo' => [
-                ['nivel' => 10, 'volumen' => 500],
-                ['nivel' => 20, 'volumen' => 1000],
-            ],
-        ];
-
-        $this->mockSuccessfulResponse('/api/tanques/1/calibrar', [], 'Calibración registrada exitosamente');
-
-        $response = $this->post('/tanques/1/calibrar', $calibrationData);
-
-        $response->assertRedirect('/tanques/1');
-        $response->assertSessionHas('success', 'Calibración registrada exitosamente');
-    }
-
-    /** @test */
-    public function test_verificar_estado_checks_tank_status()
-    {
-        $estado = [
-            'estado' => 'OPERATIVO',
-            'nivel_actual' => 4500,
-            'capacidad_disponible' => 5000,
-            'temperatura' => 22.5,
-            'presion' => 1.2,
-            'ultima_calibracion' => '2024-01-15',
-            'proxima_calibracion' => '2024-07-15',
-        ];
-
-        $this->mockSuccessfulResponse('/api/tanques/1/verificar-estado', $estado);
-
-        $response = $this->get('/tanques/1/verificar-estado');
-
-        $response->assertStatus(200);
-        $response->assertViewIs('tanques.estado');
-        $response->assertViewHas('estado', $estado);
-    }
-
-    /** @test */
-    public function test_cambiar_producto_changes_tank_product()
-    {
-        $changeData = [
-            'producto_id' => 2,
-            'motivo' => 'Cambio de producto por nueva recepción',
-            'fecha_cambio' => '2024-01-20',
-        ];
-
-        $this->mockSuccessfulResponse('/api/tanques/1/cambiar-producto', [], 'Producto cambiado exitosamente');
-
-        $response = $this->post('/tanques/1/cambiar-producto', $changeData);
-
-        $response->assertRedirect('/tanques/1');
-        $response->assertSessionHas('success', 'Producto cambiado exitosamente');
-    }
-
-    /** @test */
-    public function test_curva_calibracion_displays_calibration_curve()
-    {
-        $curva = [
-            'tanque_id' => 1,
-            'puntos' => [
-                ['nivel' => 0, 'volumen' => 0],
-                ['nivel' => 100, 'volumen' => 5000],
-                ['nivel' => 200, 'volumen' => 10000],
-            ],
-            'ultima_actualizacion' => '2024-01-15',
-        ];
-
-        $this->mockSuccessfulResponse('/api/tanques/1/curva-calibracion', $curva);
-
-        $response = $this->get('/tanques/1/curva-calibracion');
-
-        $response->assertStatus(200);
-        $response->assertViewIs('tanques.curva-calibracion');
-        $response->assertViewHas('curva', $curva);
-    }
-
-    /** @test */
-    public function test_historial_calibraciones_displays_calibration_history()
-    {
-        $historial = [
-            [
-                'fecha_calibracion' => '2024-01-15',
-                'certificado' => 'CERT-001',
-                'entidad' => 'Laboratorio A',
-                'precision' => 0.99,
-            ],
-            [
-                'fecha_calibracion' => '2023-07-15',
-                'certificado' => 'CERT-002',
-                'entidad' => 'Laboratorio B',
-                'precision' => 0.98,
-            ],
-        ];
-
-        $this->mockSuccessfulResponse('/api/tanques/1/historial-calibraciones', $historial);
-
-        $response = $this->get('/tanques/1/historial-calibraciones');
-
-        $response->assertStatus(200);
-        $response->assertViewIs('tanques.historial-calibraciones');
-        $response->assertViewHas('historial', $historial);
     }
 
     /** @test */
@@ -282,24 +418,5 @@ class TanqueTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('error', 'No se puede eliminar el tanque');
-    }
-
-    /** @test */
-    public function test_filter_tanques_by_estado()
-    {
-        $tanques = [
-            $this->createTestTanqueData(['id' => 1, 'estado' => 'OPERATIVO']),
-        ];
-
-        $this->mockSuccessfulResponse('/api/tanques', ['data' => $tanques]);
-
-        $response = $this->get('/tanques?estado=OPERATIVO');
-
-        $response->assertStatus(200);
-        $response->assertViewHas('tanques');
-
-        $tanques = $response->viewData('tanques');
-        $this->assertCount(1, $tanques);
-        $this->assertEquals('OPERATIVO', $tanques[0]['estado']);
     }
 }

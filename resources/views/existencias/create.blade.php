@@ -55,8 +55,9 @@
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="producto_id" class="form-label">Producto</label>
-                            <input type="text" class="form-control bg-light" id="producto_id" readonly placeholder="Se cargará del tanque">
+                            <label for="producto_nombre" class="form-label">Producto</label>
+                            <input type="text" class="form-control bg-light" id="producto_nombre" readonly placeholder="Se cargará del tanque">
+                            <input type="hidden" id="producto_id" name="producto_id" value="">
                         </div>
                     </div>
                     
@@ -263,7 +264,6 @@ $(document).ready(function() {
         width: '100%'
     });
     
-    let apiBaseUrl = 'http://127.0.0.1:8000';
     let tanqueSeleccionado = false;
     
     function mostrarCarga(mensaje) {
@@ -288,7 +288,8 @@ $(document).ready(function() {
         if (!tanqueId) {
             $('#volumen_medido, #volumen_corregido, #volumen_disponible, #temperatura, #densidad').val('');
             $('#volumen_agua, #volumen_sedimentos, #factor_correccion, #nivel_porcentaje').val('');
-            $('#tipo_operacion, #producto_id').val('');
+            $('#tipo_operacion, #producto_nombre').val('');
+            $('#producto_id').val('');
             $('#capacidad_total, #capacidad_util, #capacidad_operativa, #capacidad_minima').val('');
             $('#temperatura_referencia, #presion_referencia').val('');
             $('#btnGuardar').prop('disabled', true);
@@ -300,7 +301,7 @@ $(document).ready(function() {
         mostrarCarga('Cargando datos del emulador...');
         
         $.ajax({
-            url: apiBaseUrl + '/api/emulador/lectura/' + tanqueId,
+            url: '/api/emulador/lectura/' + tanqueId,
             type: 'GET',
             dataType: 'json',
             timeout: 10000,
@@ -324,7 +325,8 @@ $(document).ready(function() {
                     $('#volumen_sedimentos').val('0');
                     
                     if (data.tanque) {
-                        $('#producto_id').val(data.tanque.producto || '');
+                        $('#producto_nombre').val(data.tanque.producto || '');
+                        $('#producto_id').val(data.tanque.producto_id || '');
                     }
                     
                     if (data.datos_tanque) {
